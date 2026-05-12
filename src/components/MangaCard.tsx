@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,28 +6,27 @@ import Link from 'next/link';
 import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import { Flame, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import SafeImage from '@/components/SafeImage';
 
 interface MangaCardProps {
   manga: Manga;
   isTrending?: boolean;
 }
 
+/**
+ * Modern Manga card using SafeImage proxy for reliable loading.
+ */
 export default function MangaCard({ manga, isTrending }: MangaCardProps) {
   const coverUrl = getCoverUrl(manga, '512');
   const title = getMangaTitle(manga);
 
   return (
     <Link href={`/series/${manga.id}`} className="group block">
-      <div className="shinigami-card aspect-[2/3] relative">
-        <img
+      <div className="shinigami-card aspect-[2/3] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 transition-all duration-500 hover:border-accent/40 hover:-translate-y-1">
+        <SafeImage
           src={coverUrl}
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 brightness-[0.85] group-hover:brightness-100"
-          onError={(e) => {
-            e.currentTarget.src = 'https://placehold.co/300x450/0a0a0f/6366f1?text=No+Cover';
-          }}
-          loading="lazy"
+          className="group-hover:scale-110 transition-transform duration-1000"
         />
         
         {isTrending && (
@@ -35,7 +35,7 @@ export default function MangaCard({ manga, isTrending }: MangaCardProps) {
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 flex flex-col justify-end p-4 z-10">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 flex flex-col justify-end p-4 z-10">
            <h3 className="font-bold text-[10px] leading-tight line-clamp-2 text-glow uppercase tracking-wider">{title}</h3>
         </div>
       </div>
