@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile' | 'readerSettings' | 'editProfile';
+type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile' | 'readerSettings' | 'editProfile' | 'appSettings';
 
 interface ReaderSettings {
   direction: 'vertical' | 'rtl' | 'ltr';
@@ -12,20 +12,30 @@ interface ReaderSettings {
   theme: 'dark' | 'sepia' | 'light';
 }
 
+interface AppSettings {
+  notifications: boolean;
+  highQualityImages: boolean;
+  incognitoMode: boolean;
+  autoUpdateLibrary: boolean;
+}
+
 interface UIState {
   activePanel: PanelType;
   isOpen: boolean;
   readerSettings: ReaderSettings;
+  appSettings: AppSettings;
   bookmarks: any[];
   readingHistory: any[];
   activeGenreId: string | null;
   openPanel: (name: PanelType) => void;
   closePanel: () => void;
   updateReaderSettings: (settings: Partial<ReaderSettings>) => void;
+  updateAppSettings: (settings: Partial<AppSettings>) => void;
   addBookmark: (manga: any) => void;
   removeBookmark: (mangaId: string) => void;
   addToHistory: (entry: any) => void;
   setActiveGenreId: (id: string | null) => void;
+  clearCache: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -40,6 +50,12 @@ export const useUIStore = create<UIState>()(
         autoScrollSpeed: 1,
         theme: 'dark',
       },
+      appSettings: {
+        notifications: true,
+        highQualityImages: false,
+        incognitoMode: false,
+        autoUpdateLibrary: true,
+      },
       bookmarks: [],
       readingHistory: [],
       activeGenreId: null,
@@ -47,6 +63,8 @@ export const useUIStore = create<UIState>()(
       closePanel: () => set({ isOpen: false, activePanel: 'none' }),
       updateReaderSettings: (settings) =>
         set((state) => ({ readerSettings: { ...state.readerSettings, ...settings } })),
+      updateAppSettings: (settings) =>
+        set((state) => ({ appSettings: { ...state.appSettings, ...settings } })),
       addBookmark: (manga) =>
         set((state) => ({
           bookmarks: [manga, ...state.bookmarks.filter((b) => b.id !== manga.id)].slice(0, 50),
@@ -60,9 +78,10 @@ export const useUIStore = create<UIState>()(
           readingHistory: [entry, ...state.readingHistory.filter((h) => h.mangaId !== entry.mangaId)].slice(0, 50),
         })),
       setActiveGenreId: (id) => set({ activeGenreId: id }),
+      clearCache: () => set({ bookmarks: [], readingHistory: [] }),
     }),
     {
-      name: 'noir-manhwa-storage-v2',
+      name: 'noir-manhwa-storage-v3',
     }
   )
 );

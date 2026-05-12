@@ -4,19 +4,30 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useUIStore } from '@/store/ui';
 import { cn } from '@/lib/utils';
-import { X, Search, Bookmark, Grid, User, Trash2, Settings, ArrowRight, Check, Camera, Save, ArrowLeft, Loader2 } from 'lucide-react';
+import { 
+  X, Search, Bookmark, Grid, User, Trash2, Settings, ArrowRight, Check, 
+  Camera, Save, ArrowLeft, Loader2, Bell, Shield, Cloud, LogIn, Mail, Lock
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { useUser, useFirestore, useDoc } from '@/firebase';
+import { useUser, useFirestore, useDoc, useAuth } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function BottomSheet() {
-  const { activePanel, isOpen, closePanel, openPanel, bookmarks, removeBookmark, readerSettings, updateReaderSettings } = useUIStore();
+  const { 
+    activePanel, isOpen, closePanel, openPanel, bookmarks, 
+    removeBookmark, readerSettings, updateReaderSettings,
+    appSettings, updateAppSettings, clearCache
+  } = useUIStore();
+  
   const sheetRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user } = useUser();
+  const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
 
@@ -29,6 +40,12 @@ export default function BottomSheet() {
   const [bio, setBio] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Auth States
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -46,10 +63,33 @@ export default function BottomSheet() {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 800000) { // Limit to ~800kb for Firestore safety
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "Please select an image smaller than 800KB.",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSaveProfile = async () => {
-    if (!profileRef) return;
+    if (!profileRef) {
+      toast({
+        title: "Account Required",
+        description: "Please log in to save your profile to the cloud.",
+      });
+      return;
+    }
     setSaving(true);
     try {
       await setDoc(profileRef, {
@@ -60,7 +100,7 @@ export default function BottomSheet() {
       }, { merge: true });
       toast({
         title: "Profile Updated",
-        description: "Your changes have been saved to the cloud.",
+        description: "Your changes have been synced successfully.",
       });
       openPanel('profile');
     } catch (error) {
@@ -73,6 +113,41 @@ export default function BottomSheet() {
       setSaving(false);
     }
   };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, authEmail, authPassword);
+        toast({ title: "Welcome!", description: "Account created successfully." });
+      } else {
+        await signInWithEmailAndPassword(auth, authEmail, authPassword);
+        toast({ title: "Welcome back!", description: "Logged in successfully." });
+      }
+      openPanel('profile');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Auth Failed",
+        description: error.message,
+      });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Logged Out", description: "You have been signed out safely." });
+      closePanel();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (!isOpen) return null;
 
   const renderContent = () => {
     switch (activePanel) {
@@ -97,14 +172,19 @@ export default function BottomSheet() {
                 </div>
                 <button 
                   className="absolute bottom-0 right-0 p-2 bg-accent rounded-full shadow-lg border-2 border-background"
-                  onClick={() => {
-                    const url = prompt("Enter a image URL for your profile picture:");
-                    if (url) setPhotoUrl(url);
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <Camera className="w-4 h-4 text-white" />
                 </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                />
               </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase">Tap camera to upload from gallery</p>
             </div>
 
             <div className="space-y-4">
@@ -141,6 +221,194 @@ export default function BottomSheet() {
             </button>
           </div>
         );
+
+      case 'appSettings':
+        return (
+          <div className="p-6 space-y-8">
+            <div className="flex items-center gap-4">
+              <button onClick={() => openPanel('profile')} className="p-2 bg-white/5 rounded-full">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold">App Settings</h2>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5 text-accent" />
+                  <div>
+                    <p className="text-sm font-bold">Push Notifications</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">New chapter alerts</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={appSettings.notifications} 
+                  onCheckedChange={(val) => updateAppSettings({ notifications: val })} 
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Cloud className="w-5 h-5 text-accent" />
+                  <div>
+                    <p className="text-sm font-bold">HD Images</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Higher bandwidth usage</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={appSettings.highQualityImages} 
+                  onCheckedChange={(val) => updateAppSettings({ highQualityImages: val })} 
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-accent" />
+                  <div>
+                    <p className="text-sm font-bold">Incognito Mode</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Disable reading history</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={appSettings.incognitoMode} 
+                  onCheckedChange={(val) => updateAppSettings({ incognitoMode: val })} 
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/5">
+               <button 
+                onClick={() => {
+                  clearCache();
+                  toast({ title: "Cache Cleared", description: "Local history and bookmarks removed." });
+                  closePanel();
+                }}
+                className="w-full flex items-center justify-between p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive hover:bg-destructive/20 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Trash2 className="w-5 h-5" />
+                  <span className="font-bold">Reset All Data</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'profile':
+        if (!user) {
+          return (
+            <div className="p-6 space-y-6">
+              <h2 className="text-2xl font-black tracking-tighter">JOIN NOIR</h2>
+              <p className="text-sm text-muted-foreground">Log in to sync your bookmarks and customize your profile.</p>
+              
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input 
+                      type="email" 
+                      required
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      placeholder="Email Address" 
+                      className="w-full bg-secondary/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input 
+                      type="password" 
+                      required
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      placeholder="Password" 
+                      className="w-full bg-secondary/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                  </div>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={authLoading}
+                  className="w-full py-4 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-accent transition-all disabled:opacity-50"
+                >
+                  {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+                  {isSignUp ? 'CREATE ACCOUNT' : 'LOG IN'}
+                </button>
+              </form>
+
+              <div className="text-center">
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-xs font-bold text-muted-foreground uppercase tracking-widest hover:text-accent transition-colors"
+                >
+                  {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="p-6 space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-accent/30 text-accent font-bold text-2xl overflow-hidden">
+                {profile?.photoUrl ? (
+                  <img src={profile.photoUrl} className="w-full h-full object-cover" alt="Profile" />
+                ) : (
+                  profile?.displayName?.[0] || user.email?.[0] || 'U'
+                )}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold truncate">{profile?.displayName || 'Noir User'}</h2>
+                <p className="text-xs text-accent uppercase tracking-widest font-black">Member</p>
+              </div>
+              <button 
+                onClick={() => openPanel('editProfile')}
+                className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {profile?.bio && (
+              <p className="text-sm text-muted-foreground italic bg-white/5 p-4 rounded-xl border border-white/5">
+                "{profile.bio}"
+              </p>
+            )}
+
+            <div className="space-y-2">
+              <button onClick={() => openPanel('editProfile')} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-accent" />
+                  <span className="font-medium">Edit Profile</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              <button onClick={() => openPanel('appSettings')} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-accent" />
+                  <span className="font-medium">App Settings</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-destructive/10 group transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <LogIn className="rotate-180 w-5 h-5 text-muted-foreground group-hover:text-destructive" />
+                  <span className="font-medium group-hover:text-destructive">Log Out</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        );
+
       case 'readerSettings':
         return (
           <div className="p-6 space-y-8">
@@ -243,6 +511,7 @@ export default function BottomSheet() {
             </button>
           </div>
         );
+
       case 'search':
         return (
           <div className="p-6 space-y-6">
@@ -275,6 +544,7 @@ export default function BottomSheet() {
             </div>
           </div>
         );
+
       case 'bookmark':
         return (
           <div className="p-6 space-y-6">
@@ -312,6 +582,7 @@ export default function BottomSheet() {
             )}
           </div>
         );
+
       case 'genre':
         return (
           <div className="p-6 space-y-6">
@@ -328,74 +599,6 @@ export default function BottomSheet() {
                   {genre}
                 </button>
               ))}
-            </div>
-          </div>
-        );
-      case 'profile':
-        return (
-          <div className="p-6 space-y-8">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-accent/30 text-accent font-bold text-2xl overflow-hidden">
-                {profile?.photoUrl ? (
-                  <img src={profile.photoUrl} className="w-full h-full object-cover" alt="Profile" />
-                ) : (
-                  profile?.displayName?.[0] || 'G'
-                )}
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold truncate">{profile?.displayName || 'Noir Guest'}</h2>
-                <p className="text-xs text-accent uppercase tracking-widest font-black">Free Member</p>
-              </div>
-              <button 
-                onClick={() => openPanel('editProfile')}
-                className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
-              >
-                <Settings className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-            
-            {profile?.bio && (
-              <p className="text-sm text-muted-foreground italic bg-white/5 p-4 rounded-xl border border-white/5">
-                "{profile.bio}"
-              </p>
-            )}
-
-            <div className="space-y-2">
-              <button onClick={() => openPanel('editProfile')} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-accent" />
-                  <span className="font-medium">Edit Profile</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-              
-              <button className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-accent" />
-                  <span className="font-medium">App Settings</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-              
-              <button 
-                onClick={() => {
-                  toast({ title: "Cache Cleared", description: "Temporary data removed." });
-                  closePanel();
-                }}
-                className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Trash2 className="w-5 h-5 text-destructive" />
-                  <span className="font-medium text-destructive">Clear App Cache</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-              
-              {!user && (
-                <button className="w-full p-4 mt-4 text-center bg-primary text-white rounded-xl font-bold hover:bg-accent transition-colors shadow-lg shadow-primary/20">
-                  Log In / Create Account
-                </button>
-              )}
             </div>
           </div>
         );
