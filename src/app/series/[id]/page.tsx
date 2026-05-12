@@ -1,12 +1,13 @@
+
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import SafeImage from '@/components/SafeImage';
 import { getMangaTitle, formatTimeAgo, getCoverUrl, cleanDescription } from '@/lib/utils';
 import Link from 'next/link';
+import BookmarkButton from '@/components/BookmarkButton';
 import { 
   ArrowLeft, 
   Play, 
-  BookmarkPlus, 
   Info, 
   List, 
   ChevronRight, 
@@ -65,7 +66,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                 </span>
               ))}
             </div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter leading-tight text-glow">{title}</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tighter leading-tight text-glow text-white">{title}</h1>
             <div className="flex items-center justify-center gap-6 text-neutral-500 font-black text-[8px] uppercase tracking-[0.2em]">
               <span className="flex items-center gap-2 text-accent"><Calendar className="w-3 h-3" /> {manga.attributes.year || 'Unknown'}</span>
               <span className="w-1 h-1 rounded-full bg-neutral-800" />
@@ -74,9 +75,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center gap-3 py-5 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 hover:scale-[1.02] transition-all">
-               <BookmarkPlus className="w-4 h-4" /> ARCHIVE DATA
-             </button>
+             <BookmarkButton manga={manga} />
              <Link 
               href={chapters.length > 0 ? `/reader/${chapters[0].id}` : '#'} 
               className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
@@ -97,7 +96,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
         <section className="space-y-8">
           <div className="flex items-center justify-between px-4">
-            <h2 className="text-[11px] font-black uppercase tracking-tighter flex items-center gap-3">
+            <h2 className="text-[11px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
               <List className="w-4 h-4 text-accent" /> Chapter Stack
             </h2>
             <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{chapters.length} Units</span>
