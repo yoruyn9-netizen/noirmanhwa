@@ -1,4 +1,3 @@
-
 import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from './types';
 
 /**
