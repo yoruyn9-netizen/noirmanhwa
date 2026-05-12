@@ -5,41 +5,61 @@
 
 const MANGADEX_BASE = 'https://api.mangadex.org';
 
+async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
+  const url = `${MANGADEX_BASE}${endpoint}`;
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Accept': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!res.ok) {
+      console.error(`[API Error] ${res.status} on ${endpoint}`);
+      const errorData = await res.json().catch(() => ({}));
+      return { error: true, status: res.status, data: errorData };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error(`[API Failure] Network error on ${endpoint}:`, error);
+    return { error: true, message: 'Connection failed' };
+  }
+}
+
 export const mangaApi = {
   getTrending: async () => {
     console.log('[API] Fetching Trending Manga');
-    const res = await fetch(`${MANGADEX_BASE}/manga?limit=10&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive`, {
+    return fetchMangaDex('/manga?limit=10&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive', {
       next: { revalidate: 3600 }
     });
-    return res.json();
   },
 
   getLatest: async (offset = 0) => {
     console.log(`[API] Fetching Latest Manga (Offset: ${offset})`);
-    const res = await fetch(`${MANGADEX_BASE}/manga?limit=24&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe`, {
+    return fetchMangaDex(`/manga?limit=24&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe`, {
       next: { revalidate: 1800 }
     });
-    return res.json();
   },
 
   getMangaDetails: async (id: string) => {
     console.log(`[API] Fetching Details for: ${id}`);
-    const res = await fetch(`${MANGADEX_BASE}/manga/${id}?includes[]=cover_art&includes[]=author`, {
+    return fetchMangaDex(`/manga/${id}?includes[]=cover_art&includes[]=author`, {
       next: { revalidate: 3600 }
     });
-    return res.json();
   },
 
   getChapters: async (mangaId: string) => {
     console.log(`[API] Fetching Chapters for: ${mangaId}`);
-    const res = await fetch(
-      `${MANGADEX_BASE}/manga/${mangaId}/feed?translatedLanguage[]=en&translatedLanguage[]=id&order[chapter]=asc&order[volume]=asc&limit=500`,
+    const data = await fetchMangaDex(
+      `/manga/${mangaId}/feed?translatedLanguage[]=en&translatedLanguage[]=id&order[chapter]=asc&order[volume]=asc&limit=500`,
       { next: { revalidate: 1800 } }
     );
-    const data = await res.json();
     
     // Manual sort to ensure numerical accuracy
-    if (data.data) {
+    if (data && data.data) {
       data.data.sort((a: any, b: any) => {
         const chapA = parseFloat(a.attributes.chapter) || 0;
         const chapB = parseFloat(b.attributes.chapter) || 0;
@@ -51,30 +71,35 @@ export const mangaApi = {
 
   getAtHomeServer: async (chapterId: string) => {
     console.log(`[API] Fetching At-Home Server for Chapter: ${chapterId}`);
-    const res = await fetch(`${MANGADEX_BASE}/at-home/server/${chapterId}`, {
+    return fetchMangaDex(`/at-home/server/${chapterId}`, {
       next: { revalidate: 3600 }
     });
-    return res.json();
   },
 
-  search: async (title: string, tags: string[] = [], status: string[] = []) => {
-    console.log(`[API] Searching: "${title}" with Tags: ${tags.join(',')}`);
+  search: async ({ title, includedTags = [], status = [], limit = 24 }: { 
+    title?: string; 
+    includedTags?: string[]; 
+    status?: string[]; 
+    limit?: number 
+  }) => {
+    console.log(`[API] Searching: "${title}"`);
     const params = new URLSearchParams({
-      limit: '24',
-      includes: 'cover_art',
+      limit: limit.toString(),
+      'includes[]': 'cover_art',
     });
-    if (title) params.append('title', title);
-    tags.forEach(t => params.append('includedTags[]', t));
-    status.forEach(s => params.append('status[]', s));
     
-    const res = await fetch(`${MANGADEX_BASE}/manga?${params.toString()}`, {
+    if (title) params.append('title', title);
+    includedTags.forEach(t => params.append('includedTags[]', t));
+    status.forEach(s => params.append('status[]', s));
+    params.append('contentRating[]', 'safe');
+    params.append('contentRating[]', 'suggestive');
+    
+    return fetchMangaDex(`/manga?${params.toString()}`, {
       next: { revalidate: 600 }
     });
-    return res.json();
   },
 
   getTags: async () => {
-    const res = await fetch(`${MANGADEX_BASE}/manga/tag`);
-    return res.json();
+    return fetchMangaDex('/manga/tag');
   }
 };
