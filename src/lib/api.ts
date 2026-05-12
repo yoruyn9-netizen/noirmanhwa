@@ -1,9 +1,13 @@
 
 /**
  * Simple Direct MangaDex API Wrapper
+ * Optimized for NoirManhwa: Filters for Manga, Manhwa, and Manhua only.
  */
 
 const MANGADEX_BASE = 'https://api.mangadex.org';
+
+// Format Tag IDs
+const NOVEL_TAG_ID = '107fd519-ad95-4296-bd74-3232824da344';
 
 async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
   const url = `${MANGADEX_BASE}${endpoint}`;
@@ -18,8 +22,7 @@ async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
 
     if (!res.ok) {
       console.error(`[API Error] ${res.status} on ${endpoint}`);
-      const errorData = await res.json().catch(() => ({}));
-      return { error: true, status: res.status, data: errorData };
+      return { error: true, status: res.status };
     }
 
     return res.json();
@@ -29,17 +32,46 @@ async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
   }
 }
 
+/**
+ * Common filters to ensure only Manga, Manhwa, and Manhua are returned.
+ * Excludes Novel adaptations to keep the feed clean.
+ */
+function getStrictFilterParams() {
+  const params = new URLSearchParams();
+  // Filter by origin languages: Japanese, Korean, Chinese, and Hong Kong Chinese
+  params.append('originalLanguage[]', 'ja');
+  params.append('originalLanguage[]', 'ko');
+  params.append('originalLanguage[]', 'zh');
+  params.append('originalLanguage[]', 'zh-hk');
+  // Exclude Novel tag
+  params.append('excludedTags[]', NOVEL_TAG_ID);
+  params.append('contentRating[]', 'safe');
+  params.append('contentRating[]', 'suggestive');
+  return params;
+}
+
 export const mangaApi = {
   getTrending: async () => {
-    console.log('[API] Fetching Trending Manga');
-    return fetchMangaDex('/manga?limit=10&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive', {
+    console.log('[API] Fetching Trending Manga/Manhwa/Manhua');
+    const params = getStrictFilterParams();
+    params.append('limit', '10');
+    params.append('includes[]', 'cover_art');
+    params.append('order[followedCount]', 'desc');
+    
+    return fetchMangaDex(`/manga?${params.toString()}`, {
       next: { revalidate: 3600 }
     });
   },
 
   getLatest: async (offset = 0) => {
-    console.log(`[API] Fetching Latest Manga (Offset: ${offset})`);
-    return fetchMangaDex(`/manga?limit=24&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe`, {
+    console.log(`[API] Fetching Latest Uploads (Offset: ${offset})`);
+    const params = getStrictFilterParams();
+    params.append('limit', '24');
+    params.append('offset', offset.toString());
+    params.append('includes[]', 'cover_art');
+    params.append('order[latestUploadedChapter]', 'desc');
+    
+    return fetchMangaDex(`/manga?${params.toString()}`, {
       next: { revalidate: 1800 }
     });
   },
@@ -58,7 +90,6 @@ export const mangaApi = {
       { next: { revalidate: 1800 } }
     );
     
-    // Manual sort to ensure numerical accuracy
     if (data && data.data) {
       data.data.sort((a: any, b: any) => {
         const chapA = parseFloat(a.attributes.chapter) || 0;
@@ -70,7 +101,6 @@ export const mangaApi = {
   },
 
   getAtHomeServer: async (chapterId: string) => {
-    console.log(`[API] Fetching At-Home Server for Chapter: ${chapterId}`);
     return fetchMangaDex(`/at-home/server/${chapterId}`, {
       next: { revalidate: 3600 }
     });
@@ -82,17 +112,14 @@ export const mangaApi = {
     status?: string[]; 
     limit?: number 
   }) => {
-    console.log(`[API] Searching: "${title}"`);
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-      'includes[]': 'cover_art',
-    });
+    console.log(`[API] Searching Matrix: "${title}"`);
+    const params = getStrictFilterParams();
+    params.append('limit', limit.toString());
+    params.append('includes[]', 'cover_art');
     
     if (title) params.append('title', title);
     includedTags.forEach(t => params.append('includedTags[]', t));
     status.forEach(s => params.append('status[]', s));
-    params.append('contentRating[]', 'safe');
-    params.append('contentRating[]', 'suggestive');
     
     return fetchMangaDex(`/manga?${params.toString()}`, {
       next: { revalidate: 600 }

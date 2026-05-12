@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import SafeImage from './SafeImage';
 
 interface MangaCoverProps {
   mangaId: string;
@@ -10,38 +11,47 @@ interface MangaCoverProps {
   className?: string;
 }
 
+/**
+ * Resilient Manga Cover component.
+ * Uses a triple-redundant strategy:
+ * 1. Proxied Thumbnail (512px)
+ * 2. Proxied Original (Full Res)
+ * 3. Styled Placeholder
+ */
 export default function MangaCover({ mangaId, relationships, title, className }: MangaCoverProps) {
-  const [errorCount, setErrorCount] = useState(0);
+  const [useOriginal, setUseOriginal] = useState(false);
+  const [isError, setIsError] = useState(false);
+
   const cover = relationships?.find(r => r.type === 'cover_art');
   const fileName = cover?.attributes?.fileName;
-  
-  // URL construction for MangaDex Covers
-  // Attempt 1: 512px thumbnail
-  // Attempt 2: Original image
-  const getUrl = () => {
-    if (!fileName) return null;
-    if (errorCount === 0) return `https://uploads.mangadex.org/covers/${mangaId}/${fileName}.512.jpg`;
-    return `https://uploads.mangadex.org/covers/${mangaId}/${fileName}`;
-  };
 
-  const imageUrl = getUrl();
-
-  if (errorCount >= 2 || !imageUrl) {
+  if (isError || !fileName) {
     return (
-      <div className={`w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center p-4 rounded-xl border border-white/5 ${className}`}>
-        <span className="text-[10px] text-neutral-500 font-black uppercase text-center line-clamp-2">{title}</span>
+      <div className={`w-full h-full bg-gradient-to-br from-neutral-800 to-[#0a0a0f] flex items-center justify-center p-6 rounded-2xl border border-white/5 ${className}`}>
+        <span className="text-[9px] text-neutral-500 font-black uppercase text-center leading-tight tracking-widest opacity-60">
+          {title}
+        </span>
       </div>
     );
   }
 
+  // Construct URL. Fallback to original if 512px fails.
+  const baseUrl = `https://uploads.mangadex.org/covers/${mangaId}/${fileName}`;
+  const imageUrl = useOriginal ? baseUrl : `${baseUrl}.512.jpg`;
+
   return (
-    <img
+    <SafeImage
       src={imageUrl}
       alt={title}
-      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${className}`}
-      loading="lazy"
+      className={className}
       onError={() => {
-        setErrorCount(prev => prev + 1);
+        if (!useOriginal) {
+          // Attempt loading original if thumbnail fails
+          setUseOriginal(true);
+        } else {
+          // Total failure, show placeholder
+          setIsError(true);
+        }
       }}
     />
   );
