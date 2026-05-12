@@ -63,6 +63,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
         title={chapterRes.data?.attributes?.title}
         prevChapterId={prevChapterId}
         nextChapterId={nextChapterId}
+        mangaId={mangaId}
       />
     );
   } catch (err: any) {

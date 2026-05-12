@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -6,6 +7,7 @@ import SafeImage from '@/components/SafeImage';
 import { ReaderPrefs, loadReaderPrefs, saveReaderPrefs, smoothScroll } from '@/lib/reader-utils';
 import ReaderSettings from '@/components/ReaderSettings';
 import { cn } from '@/lib/utils';
+import { useUIStore } from '@/store/ui';
 import { 
   ArrowLeft, 
   Settings, 
@@ -32,10 +34,11 @@ interface ReaderViewProps {
   title: string;
   prevChapterId: string | null;
   nextChapterId: string | null;
+  mangaId?: string;
 }
 
 export default function ReaderView({ 
-  pages, baseUrl, hash, chapterNum, title, prevChapterId, nextChapterId 
+  chapterId, pages, baseUrl, hash, chapterNum, title, prevChapterId, nextChapterId, mangaId 
 }: ReaderViewProps) {
   const router = useRouter();
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadReaderPrefs());
@@ -43,6 +46,21 @@ export default function ReaderView({
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { addToHistory } = useUIStore();
+
+  // Save to history when chapter is opened
+  useEffect(() => {
+    if (mangaId && chapterId) {
+      console.log(`[Reader] Logging transmission to history: ${chapterId}`);
+      addToHistory({
+        mangaId,
+        chapterId,
+        chapterNum,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [mangaId, chapterId, chapterNum, addToHistory]);
 
   // Persistence
   useEffect(() => {
@@ -95,7 +113,6 @@ export default function ReaderView({
   const getThemeClass = () => {
     if (prefs.theme === 'light') return "bg-white text-black";
     if (prefs.theme === 'sepia') return "bg-[#f4ecd8] text-[#5b4636]";
-    // Default Dark: Uses the global Noir background
     return "";
   };
 
