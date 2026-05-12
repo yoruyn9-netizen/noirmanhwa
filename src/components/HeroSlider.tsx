@@ -5,7 +5,7 @@ import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Play, TrendingUp } from 'lucide-react';
+import { Play, TrendingUp, ImageOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeroSliderProps {
@@ -14,8 +14,10 @@ interface HeroSliderProps {
 
 export default function HeroSlider({ trending }: HeroSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    if (trending.length === 0) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % Math.min(trending.length, 5));
     }, 5000);
@@ -24,6 +26,10 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
 
   if (!trending.length) return null;
   const items = trending.slice(0, 5);
+
+  const handleImageError = (mangaId: string) => {
+    setFailedImages(prev => ({ ...prev, [mangaId]: true }));
+  };
 
   return (
     <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-2xl group border border-white/5">
@@ -35,13 +41,21 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
             idx === activeIndex ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-105 translate-x-full pointer-events-none"
           )}
         >
-          <Image
-            src={getCoverUrl(manga, 'original')}
-            alt={getMangaTitle(manga)}
-            fill
-            className="object-cover object-top brightness-[0.6] saturate-[1.2]"
-            priority={idx === 0}
-          />
+          {!failedImages[manga.id] ? (
+            <Image
+              src={getCoverUrl(manga, 'original')}
+              alt={getMangaTitle(manga)}
+              fill
+              className="object-cover object-top brightness-[0.6] saturate-[1.2]"
+              priority={idx === 0}
+              onError={() => handleImageError(manga.id)}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-secondary flex items-center justify-center">
+              <ImageOff className="w-12 h-12 text-muted-foreground/30" />
+            </div>
+          )}
+          
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/20" />
           
           <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 max-w-2xl">
@@ -54,12 +68,12 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
               {getMangaTitle(manga)}
             </h1>
             <p className="text-sm md:text-base text-gray-300 line-clamp-2 md:line-clamp-3 mb-8 max-w-lg leading-relaxed font-medium">
-              {manga.attributes.description.en || Object.values(manga.attributes.description)[0]}
+              {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No description available."}
             </p>
             <div className="flex gap-4">
               <Link
                 href={`/series/${manga.id}`}
-                className="flex items-center gap-2 px-8 py-4 bg-primary text-white font-black rounded-xl hover:bg-accent transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(153,27,27,0.5)] active:scale-95"
+                className="flex items-center gap-2 px-8 py-4 bg-primary text-white font-black rounded-xl hover:bg-accent transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(153,27,27,0.5)] active:scale-95 z-20"
               >
                 <Play className="w-5 h-5 fill-current" /> BACA SEKARANG
               </Link>
@@ -68,7 +82,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
         </div>
       ))}
 
-      <div className="absolute bottom-6 right-8 flex gap-2">
+      <div className="absolute bottom-6 right-8 flex gap-2 z-20">
         {items.map((_, idx) => (
           <button
             key={idx}

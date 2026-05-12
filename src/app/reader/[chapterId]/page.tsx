@@ -1,7 +1,7 @@
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import Link from 'next/link';
-import { ArrowLeft, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Settings, ImageOff } from 'lucide-react';
 import Image from 'next/image';
 
 interface ReaderPageProps {
@@ -33,16 +33,24 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
         </header>
 
         <div className="pt-16 flex flex-col items-center">
-          {pages.map((page, idx) => (
-            <div key={idx} className="relative w-full max-w-4xl bg-secondary/5 min-h-[300px]">
-              <img
-                src={`${baseUrl}/data/${hash}/${page}`}
-                alt={`Page ${idx + 1}`}
-                className="w-full h-auto object-contain"
-                loading={idx < 3 ? "eager" : "lazy"}
-              />
-            </div>
-          ))}
+          {pages.map((page, idx) => {
+            const pageUrl = `${baseUrl}/data/${hash}/${page}`;
+            return (
+              <div key={idx} className="relative w-full max-w-4xl bg-secondary/5 min-h-[300px] flex items-center justify-center overflow-hidden">
+                {/* We use next/image with unoptimized=true for webtoon pages because ratios vary wildly */}
+                <Image
+                  src={pageUrl}
+                  alt={`Page ${idx + 1}`}
+                  width={1000}
+                  height={1500}
+                  className="w-full h-auto object-contain"
+                  loading={idx < 3 ? "eager" : "lazy"}
+                  unoptimized={true}
+                  priority={idx < 2}
+                />
+              </div>
+            );
+          })}
         </div>
 
         <footer className="fixed bottom-0 inset-x-0 h-20 glass z-50 flex items-center justify-around px-4">
@@ -59,8 +67,10 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       </div>
     );
   } catch (error) {
+    console.error("Reader Error:", error);
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-black">
+        <ImageOff className="w-16 h-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-4">Error Loading Images</h1>
         <p className="text-muted-foreground mb-8">The images for this chapter couldn't be loaded from the MangaDex network.</p>
         <Link href="/" className="px-6 py-3 bg-primary rounded-xl font-bold">Return to Library</Link>
