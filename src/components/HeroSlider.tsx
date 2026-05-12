@@ -27,7 +27,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
   const items = trending.slice(0, 5);
 
   return (
-    <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-2xl border border-white/5 bg-[#08080a] shadow-2xl">
+    <div className="relative w-full aspect-[21/10] overflow-hidden rounded-2xl border border-white/5 bg-[#08080a] shadow-2xl">
       {items.map((manga, idx) => {
         const title = getMangaTitle(manga);
         const coverUrl = getCoverUrl(manga, 'original');
@@ -36,7 +36,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
           <div
             key={manga.id}
             className={cn(
-              "absolute inset-0 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]",
+              "absolute inset-0 transition-all duration-1000",
               idx === activeIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
             )}
           >
@@ -44,40 +44,36 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
               src={coverUrl}
               alt={title}
               fill
-              className="object-cover object-top brightness-[0.35] saturate-[1.1]"
+              className="object-cover object-top brightness-[0.4]"
               priority={idx === 0}
             />
             
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent" />
             
-            <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 max-w-4xl">
-              <div className="flex items-center gap-2 mb-4 animate-in slide-in-from-left duration-700 delay-200">
-                <span className="px-3 py-1 bg-accent/90 text-[9px] font-black rounded-lg text-white uppercase tracking-widest flex items-center gap-1.5 backdrop-blur-xl border border-white/10">
-                  <Flame className="w-2.5 h-2.5 fill-white" /> RANK #{idx + 1}
-                </span>
-                <span className="px-3 py-1 bg-white/5 text-[9px] font-black rounded-lg text-muted-foreground uppercase tracking-widest backdrop-blur-xl border border-white/5">
-                  {manga.attributes.status}
+            <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8 max-w-2xl">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2 py-0.5 bg-accent/90 text-[8px] font-black rounded text-white uppercase tracking-widest flex items-center gap-1 border border-white/10">
+                  <Flame className="w-2.5 h-2.5 fill-white" /> Rank #{idx + 1}
                 </span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-black mb-4 leading-none tracking-tighter drop-shadow-2xl animate-in slide-in-from-left duration-700 delay-300">
+              <h1 className="text-xl md:text-2xl font-black mb-2 leading-tight tracking-tighter uppercase text-glow">
                 {title}
               </h1>
-              <p className="text-xs md:text-base text-gray-400 line-clamp-2 mb-8 max-w-xl leading-relaxed font-medium animate-in slide-in-from-left duration-700 delay-400">
-                {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No description available."}
+              <p className="text-[10px] md:text-xs text-gray-400 line-clamp-2 mb-6 leading-relaxed font-medium opacity-80">
+                {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No synapsis available."}
               </p>
-              <div className="flex flex-wrap gap-3 animate-in slide-in-from-left duration-700 delay-500">
+              <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/series/${manga.id}`}
-                  className="flex items-center gap-2 px-6 py-3.5 bg-accent text-white font-black rounded-xl hover:bg-red-600 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest text-[10px]"
+                  className="flex items-center gap-1.5 px-5 py-2.5 bg-accent text-white font-black rounded-lg hover:bg-red-600 transition-all uppercase tracking-widest text-[9px]"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" /> READ NOW
+                  <Play className="w-3 h-3 fill-current" /> Read Now
                 </Link>
                 <Link
                   href={`/series/${manga.id}`}
-                  className="flex items-center gap-2 px-5 py-3.5 bg-white/5 text-white font-black rounded-xl hover:bg-white/10 transition-all border border-white/5 backdrop-blur-xl uppercase tracking-widest text-[10px]"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-white/5 text-white font-black rounded-lg hover:bg-white/10 transition-all border border-white/5 backdrop-blur-xl uppercase tracking-widest text-[9px]"
                 >
-                  <Info className="w-3.5 h-3.5" /> DETAILS
+                  <Info className="w-3 h-3" /> Details
                 </Link>
               </div>
             </div>
@@ -85,14 +81,14 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
         );
       })}
 
-      <div className="absolute bottom-6 right-6 flex gap-2 z-20">
+      <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
         {items.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setActiveIndex(idx)}
             className={cn(
               "h-1 transition-all duration-500 rounded-full",
-              idx === activeIndex ? "w-8 bg-accent shadow-[0_0_10px_rgba(153,27,27,1)]" : "w-2 bg-white/20 hover:bg-white/40"
+              idx === activeIndex ? "w-6 bg-accent shadow-[0_0_5px_rgba(153,27,27,1)]" : "w-1.5 bg-white/20"
             )}
           />
         ))}

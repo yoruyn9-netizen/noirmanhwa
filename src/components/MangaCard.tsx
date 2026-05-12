@@ -26,35 +26,34 @@ export default function MangaCard({ manga, isTrending }: MangaCardProps) {
             src={coverUrl}
             alt={title}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, 25vw"
             loading="lazy"
             onError={() => setImgError(true)}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a23] to-black p-4 text-center">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest text-white/40">{title}</span>
+            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">{title}</span>
           </div>
         )}
         
         {isTrending && (
-          <div className="absolute top-3 left-3 px-2 py-1 bg-accent text-[9px] font-black uppercase tracking-widest rounded-md flex items-center gap-1 shadow-2xl z-10 border border-white/10 backdrop-blur-md">
-            <Flame className="w-3 h-3 fill-white" /> HOT
+          <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-accent text-[8px] font-black uppercase tracking-widest rounded flex items-center gap-1 z-10 border border-white/10 backdrop-blur-md">
+            <Flame className="w-2.5 h-2.5 fill-white" /> Hot
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-5 z-10">
-           <p className="text-[9px] text-accent font-black uppercase tracking-widest mb-1">{manga.attributes.status}</p>
-           <h3 className="font-bold text-sm leading-tight line-clamp-2 text-glow">{title}</h3>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-3 z-10">
+           <h3 className="font-bold text-[11px] leading-tight line-clamp-2 text-glow">{title}</h3>
         </div>
       </div>
-      <div className="mt-4 space-y-1.5 px-1">
-        <h3 className="font-bold text-sm line-clamp-1 group-hover:text-accent transition-colors duration-300 tracking-tight">{title}</h3>
-        <div className="flex items-center gap-3">
+      <div className="mt-2.5 space-y-1 px-1">
+        <h3 className="font-bold text-[12px] line-clamp-1 group-hover:text-accent transition-colors tracking-tight">{title}</h3>
+        <div className="flex items-center gap-2">
            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-             <Clock className="w-3 h-3" /> {manga.attributes.year || '2024'}
+             <Clock className="w-2.5 h-2.5" /> {manga.attributes.year || '2024'}
            </span>
-           <span className="w-1 h-1 rounded-full bg-white/10" />
+           <span className="w-0.5 h-0.5 rounded-full bg-white/10" />
            <span className="text-[9px] font-black text-accent uppercase tracking-widest">{manga.attributes.status}</span>
         </div>
       </div>
