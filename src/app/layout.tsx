@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import BottomNav from '@/components/BottomNav';
 import BottomSheet from '@/components/BottomSheet';
+import WelcomeScreen from '@/components/WelcomeScreen';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 
@@ -31,8 +32,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-sans bg-background text-foreground antialiased min-h-screen">
+      <body className="font-sans bg-background text-foreground antialiased min-h-screen overflow-x-hidden">
         <FirebaseClientProvider>
+          <WelcomeScreen />
           <main className="pb-28 max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
             {children}
           </main>

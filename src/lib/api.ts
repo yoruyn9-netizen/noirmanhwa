@@ -3,7 +3,7 @@ import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from '
 const BASE_URL = 'https://api.mangadex.org';
 
 async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 45000 } = options; // Increased to 45 seconds for high-latency environments
+  const { timeout = 45000 } = options; 
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -11,7 +11,9 @@ async function fetchWithTimeout(resource: string, options: RequestInit & { timeo
   try {
     const response = await fetch(resource, {
       ...options,
-      signal: controller.signal
+      signal: controller.signal,
+      // Removed 'next' property as it is server-side only
+      cache: 'no-store' 
     });
     return response;
   } finally {
@@ -35,7 +37,7 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, ret
     if (!res.ok) {
       // Retry on rate limit (429) or temporary server errors (5xx)
       if ((res.status === 429 || res.status >= 500) && retries > 0) {
-        const backoff = (4 - retries) * 2000; // 2s, 4s, 6s delay
+        const backoff = (4 - retries) * 2000; 
         console.warn(`[MangaDex API] ${res.status} on ${endpoint}. Retrying in ${backoff}ms...`);
         await new Promise(resolve => setTimeout(resolve, backoff));
         return fetchMangaDex<T>(endpoint, options, retries - 1);
@@ -48,7 +50,6 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, ret
 
     return await res.json();
   } catch (error: any) {
-    // Retry on connection timeout (AbortError)
     if (error.name === 'AbortError' && retries > 0) {
       const backoff = (4 - retries) * 1500;
       console.warn(`[MangaDex API] Timeout on ${endpoint}. Retrying in ${backoff}ms... (${retries} retries left)`);
@@ -58,7 +59,7 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, ret
     
     if (error.name === 'AbortError') {
       console.error(`[MangaDex API] Permanent Timeout on ${endpoint}`);
-      throw new Error('Connection timeout. MangaDex is taking too long to respond. This might be a temporary network issue.');
+      throw new Error('Connection timeout. MangaDex node is not responding.');
     }
     
     throw error;
@@ -68,15 +69,14 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, ret
 export const mangaApi = {
   getTrending: async (): Promise<MangaDexResponse<Manga[]>> => {
     return fetchMangaDex<MangaDexResponse<Manga[]>>(
-      '/manga?limit=12&includes[]=cover_art&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive',
-      { next: { revalidate: 3600 } }
+      '/manga?limit=12&includes[]=cover_art&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive'
     );
   },
 
   getLatest: async (offset = 0, tags: string[] = []): Promise<MangaDexResponse<Manga[]>> => {
     const tagParams = tags.length > 0 ? tags.map(t => `includedTags[]=${t}`).join('&') : '';
     const endpoint = `/manga?limit=24&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe${tagParams ? `&${tagParams}` : ''}`;
-    return fetchMangaDex<MangaDexResponse<Manga[]>>(endpoint, { next: { revalidate: 1800 } });
+    return fetchMangaDex<MangaDexResponse<Manga[]>>(endpoint);
   },
 
   getMangaDetails: async (id: string): Promise<{ data: Manga }> => {
@@ -84,12 +84,11 @@ export const mangaApi = {
   },
 
   getChapters: async (mangaId: string, offset = 0): Promise<MangaDexResponse<Chapter[]>> => {
-    const languages = ['en', 'id', 'pt', 'pt-br', 'es-la'];
+    const languages = ['en', 'id'];
     const langParams = languages.map(l => `translatedLanguage[]=${l}`).join('&');
     
     return fetchMangaDex<MangaDexResponse<Chapter[]>>(
-      `/manga/${mangaId}/feed?${langParams}&order[chapter]=desc&limit=100&offset=${offset}`,
-      { next: { revalidate: 600 } }
+      `/manga/${mangaId}/feed?${langParams}&order[chapter]=desc&limit=100&offset=${offset}`
     );
   },
 

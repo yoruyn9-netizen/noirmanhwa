@@ -24,26 +24,43 @@ export default function Home() {
   ];
 
   const fetchData = async () => {
-    setLoading(true);
+    // We don't want to reset everything if just changing genre, 
+    // but for the first load we need the skeletons.
+    if (!latest.length) setLoading(true);
     setError(null);
+    
     try {
-      const tagsRes = await mangaApi.getTags().catch(() => ({ data: [] }));
-      const filteredTags = tagsRes.data.filter((t: any) => 
-        GENRES_TO_SHOW.includes(t.attributes.name.en)
-      ).sort((a: any, b: any) => GENRES_TO_SHOW.indexOf(a.attributes.name.en) - GENRES_TO_SHOW.indexOf(b.attributes.name.en));
-      setGenres(filteredTags);
+      // 1. Fetch tags independently
+      if (genres.length === 0) {
+        mangaApi.getTags().then(tagsRes => {
+          const filteredTags = tagsRes.data.filter((t: any) => 
+            GENRES_TO_SHOW.includes(t.attributes.name.en)
+          ).sort((a: any, b: any) => GENRES_TO_SHOW.indexOf(a.attributes.name.en) - GENRES_TO_SHOW.indexOf(b.attributes.name.en));
+          setGenres(filteredTags);
+        }).catch(() => console.warn("Failed to load tags"));
+      }
 
-      const [trendingRes, latestRes] = await Promise.all([
-        mangaApi.getTrending().catch(() => ({ data: [] })),
-        mangaApi.getLatest(0, activeGenre ? [activeGenre] : []).catch(() => ({ data: [] }))
+      // 2. Fetch data streams
+      const [trendingRes, latestRes] = await Promise.allSettled([
+        mangaApi.getTrending(),
+        mangaApi.getLatest(0, activeGenre ? [activeGenre] : [])
       ]);
       
-      setTrending(trendingRes.data as Manga[]);
-      setLatest(latestRes.data as Manga[]);
-      
-      if (!trendingRes.data?.length && !latestRes.data?.length) {
-        setError("Network latency detected. Retrying node sync...");
+      if (trendingRes.status === 'fulfilled') {
+        setTrending(trendingRes.value.data as Manga[]);
       }
+      
+      if (latestRes.status === 'fulfilled') {
+        setLatest(latestRes.value.data as Manga[]);
+      } else {
+        setError("Primary node connection failed. Retrying...");
+      }
+
+      // If both failed
+      if (trendingRes.status === 'rejected' && latestRes.status === 'rejected') {
+        throw new Error("MangaDex Network Error: Nodes are unreachable.");
+      }
+
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -57,8 +74,8 @@ export default function Home() {
 
   if (loading && !latest.length) {
     return (
-      <div className="space-y-8 max-w-5xl mx-auto">
-        <Skeleton className="w-full aspect-[21/10] rounded-2xl" />
+      <div className="space-y-8 max-w-5xl mx-auto py-10">
+        <Skeleton className="w-full aspect-[21/10] rounded-[2.5rem]" />
         <div className="flex gap-2 overflow-hidden">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-full flex-shrink-0" />)}
         </div>
@@ -82,7 +99,7 @@ export default function Home() {
             onClick={() => setActiveGenre(null)}
             className={cn(
               "px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-              activeGenre === null ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
+              activeGenre === null ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
             )}
           >
             All Nodes
@@ -93,7 +110,7 @@ export default function Home() {
               onClick={() => setActiveGenre(tag.id)}
               className={cn(
                 "px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                activeGenre === tag.id ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
+                activeGenre === tag.id ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
               )}
             >
               {tag.attributes.name.en}
@@ -115,13 +132,28 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className="manga-grid">
-          {latest.map((manga) => (
-            <MangaCard key={manga.id} manga={manga} isTrending={manga.attributes.status === 'ongoing'} />
-          ))}
-        </div>
+        {error && latest.length === 0 ? (
+          <div className="py-24 text-center glass rounded-[2.5rem] space-y-6">
+            <AlertCircle className="w-12 h-12 text-accent/20 mx-auto" />
+            <div className="space-y-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{error}</p>
+              <button 
+                onClick={() => fetchData()}
+                className="px-8 py-3 bg-accent text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+              >
+                Reconnect to Nodes
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="manga-grid">
+            {latest.map((manga) => (
+              <MangaCard key={manga.id} manga={manga} isTrending={manga.attributes.status === 'ongoing'} />
+            ))}
+          </div>
+        )}
 
-        {latest.length === 0 && !loading && (
+        {latest.length === 0 && !loading && !error && (
           <div className="py-24 text-center glass rounded-3xl border-dashed">
             <AlertCircle className="w-10 h-10 text-accent/20 mx-auto mb-4" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">No Signal Detected</p>
