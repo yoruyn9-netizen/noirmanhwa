@@ -3,7 +3,7 @@ import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from '
 const BASE_URL = 'https://api.mangadex.org';
 
 async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 45000 } = options; 
+  const { timeout = 15000 } = options; 
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -12,7 +12,6 @@ async function fetchWithTimeout(resource: string, options: RequestInit & { timeo
     const response = await fetch(resource, {
       ...options,
       signal: controller.signal,
-      // Removed 'next' property as it is server-side only
       cache: 'no-store' 
     });
     return response;

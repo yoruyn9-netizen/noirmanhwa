@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { mangaApi } from '@/lib/api';
 import HeroSlider from '@/components/HeroSlider';
 import MangaCard from '@/components/MangaCard';
-import { ChevronRight, Sparkles, Flame, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
+import { ChevronRight, Sparkles, Flame, AlertCircle, TrendingUp, ArrowRight, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { Manga } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [genres, setGenres] = useState<any[]>([]);
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
+  const [showReloadHint, setShowReloadHint] = useState(false);
 
   const GENRES_TO_SHOW = [
     'Action', 'Comedy', 'Drama', 'Fantasy', 'Romance', 
@@ -24,13 +25,11 @@ export default function Home() {
   ];
 
   const fetchData = async () => {
-    // We don't want to reset everything if just changing genre, 
-    // but for the first load we need the skeletons.
     if (!latest.length) setLoading(true);
     setError(null);
+    setShowReloadHint(false);
     
     try {
-      // 1. Fetch tags independently
       if (genres.length === 0) {
         mangaApi.getTags().then(tagsRes => {
           const filteredTags = tagsRes.data.filter((t: any) => 
@@ -40,7 +39,6 @@ export default function Home() {
         }).catch(() => console.warn("Failed to load tags"));
       }
 
-      // 2. Fetch data streams
       const [trendingRes, latestRes] = await Promise.allSettled([
         mangaApi.getTrending(),
         mangaApi.getLatest(0, activeGenre ? [activeGenre] : [])
@@ -56,7 +54,6 @@ export default function Home() {
         setError("Primary node connection failed. Retrying...");
       }
 
-      // If both failed
       if (trendingRes.status === 'rejected' && latestRes.status === 'rejected') {
         throw new Error("MangaDex Network Error: Nodes are unreachable.");
       }
@@ -72,9 +69,27 @@ export default function Home() {
     fetchData();
   }, [activeGenre]);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      timer = setTimeout(() => {
+        setShowReloadHint(true);
+      }, 5000);
+    } else {
+      setShowReloadHint(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   if (loading && !latest.length) {
     return (
       <div className="space-y-8 max-w-5xl mx-auto py-10">
+        {showReloadHint && (
+          <div className="flex flex-col items-center justify-center py-4 animate-bounce text-accent">
+            <ArrowDown className="w-5 h-5 mb-1" />
+            <p className="text-[8px] font-black uppercase tracking-widest">Swipe Down to Resync</p>
+          </div>
+        )}
         <Skeleton className="w-full aspect-[21/10] rounded-[2.5rem]" />
         <div className="flex gap-2 overflow-hidden">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-full flex-shrink-0" />)}
@@ -88,6 +103,13 @@ export default function Home() {
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto animate-in fade-in duration-1000">
+      {showReloadHint && loading && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center py-2 text-accent animate-in slide-in-from-top-4">
+          <ArrowDown className="w-4 h-4 mb-1 animate-bounce" />
+          <p className="text-[7px] font-black uppercase tracking-[0.3em] bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-accent/20">Spectral Resync Recommended</p>
+        </div>
+      )}
+
       <HeroSlider trending={trending} />
 
       <section className="space-y-4">
