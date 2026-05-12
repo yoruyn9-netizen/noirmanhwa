@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -8,7 +7,6 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function BottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
 
   const navItems = [
@@ -20,8 +18,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-black/40 backdrop-blur-2xl rounded-full border border-white/10 px-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] w-auto min-w-[300px] transition-all duration-500">
-      <div className="flex justify-around items-center h-14 md:h-16 gap-1 px-2">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 px-1 shadow-2xl w-auto transition-all duration-500">
+      <div className="flex justify-around items-center h-12 md:h-14 gap-0.5 px-1.5">
         {navItems.map((item) => {
           const isActive = pathname === item.path;
           
@@ -30,23 +28,23 @@ export default function BottomNav() {
               key={item.id}
               href={item.path}
               className={cn(
-                "relative flex flex-col items-center justify-center flex-1 transition-all duration-300 py-1.5 px-3 rounded-full group",
+                "relative flex flex-col items-center justify-center transition-all duration-300 py-1 px-3 min-w-[56px] rounded-xl group",
                 isActive ? "text-accent" : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5"
               )}
             >
               <item.icon className={cn(
-                "w-5 h-5 transition-all duration-500", 
-                isActive && "scale-110 drop-shadow-[0_0_10px_rgba(153,27,27,0.8)]"
+                "w-4 h-4 transition-all duration-500", 
+                isActive && "scale-110 drop-shadow-[0_0_8px_rgba(153,27,27,0.8)]"
               )} />
               <span className={cn(
-                "text-[8px] font-black uppercase tracking-[0.15em] mt-1 transition-all duration-300",
+                "text-[7px] font-black uppercase tracking-[0.1em] mt-1 transition-all duration-300",
                 isActive ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
               )}>
                 {item.label}
               </span>
               
               {isActive && (
-                <div className="absolute -bottom-1 w-1 h-1 bg-accent shadow-[0_0_10px_rgba(153,27,27,1)] rounded-full animate-in fade-in zoom-in" />
+                <div className="absolute -bottom-0.5 w-1 h-0.5 bg-accent shadow-[0_0_8px_rgba(153,27,27,1)] rounded-full animate-in fade-in zoom-in" />
               )}
             </Link>
           );
