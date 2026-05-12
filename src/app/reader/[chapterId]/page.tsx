@@ -1,18 +1,23 @@
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import Link from 'next/link';
-import { ArrowLeft, ChevronLeft, ChevronRight, Settings, ImageOff } from 'lucide-react';
+import { ArrowLeft, Settings, ImageOff } from 'lucide-react';
 import Image from 'next/image';
 
 interface ReaderPageProps {
-  params: { chapterId: string };
+  params: Promise<{ chapterId: string }>;
 }
 
 export default async function ReaderPage({ params }: ReaderPageProps) {
-  const { chapterId } = params;
+  const { chapterId } = await params;
 
   try {
     const atHome = await mangaApi.getAtHomeServer(chapterId);
+    
+    if (!atHome || !atHome.chapter || !atHome.chapter.data) {
+      throw new Error("Invalid response from MangaDex @Home server");
+    }
+
     const baseUrl = atHome.baseUrl;
     const hash = atHome.chapter.hash;
     const pages = atHome.chapter.data;
@@ -32,37 +37,38 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
           </button>
         </header>
 
-        <div className="pt-16 flex flex-col items-center">
-          {pages.map((page, idx) => {
-            const pageUrl = `${baseUrl}/data/${hash}/${page}`;
-            return (
-              <div key={idx} className="relative w-full max-w-4xl bg-secondary/5 min-h-[300px] flex items-center justify-center overflow-hidden">
-                {/* We use next/image with unoptimized=true for webtoon pages because ratios vary wildly */}
-                <Image
-                  src={pageUrl}
-                  alt={`Page ${idx + 1}`}
-                  width={1000}
-                  height={1500}
-                  className="w-full h-auto object-contain"
-                  loading={idx < 3 ? "eager" : "lazy"}
-                  unoptimized={true}
-                  priority={idx < 2}
-                />
-              </div>
-            );
-          })}
+        <div className="pt-16 pb-24 flex flex-col items-center">
+          {pages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
+              <ImageOff className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">This chapter has no pages available.</p>
+            </div>
+          ) : (
+            pages.map((page, idx) => {
+              // Construct URL: {baseUrl}/data/{hash}/{page}
+              const pageUrl = `${baseUrl}/data/${hash}/${page}`;
+              return (
+                <div key={idx} className="relative w-full max-w-4xl bg-secondary/5 min-h-[300px] flex items-center justify-center overflow-hidden">
+                  <Image
+                    src={pageUrl}
+                    alt={`Page ${idx + 1}`}
+                    width={1000}
+                    height={1500}
+                    className="w-full h-auto object-contain"
+                    unoptimized={true}
+                    loading={idx < 2 ? "eager" : "lazy"}
+                    priority={idx < 2}
+                  />
+                </div>
+              );
+            })
+          )}
         </div>
 
-        <footer className="fixed bottom-0 inset-x-0 h-20 glass z-50 flex items-center justify-around px-4">
-           <button className="flex items-center gap-2 px-6 py-2 bg-secondary/50 rounded-xl font-bold text-sm disabled:opacity-30" disabled>
-             <ChevronLeft className="w-4 h-4" /> Previous
-           </button>
+        <footer className="fixed bottom-0 inset-x-0 h-16 glass z-50 flex items-center justify-center px-4">
            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
              {pages.length} Pages Loaded
            </div>
-           <button className="flex items-center gap-2 px-6 py-2 bg-primary rounded-xl font-bold text-sm">
-             Next <ChevronRight className="w-4 h-4" />
-           </button>
         </footer>
       </div>
     );
@@ -72,7 +78,10 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-black">
         <ImageOff className="w-16 h-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-4">Error Loading Images</h1>
-        <p className="text-muted-foreground mb-8">The images for this chapter couldn't be loaded from the MangaDex network.</p>
+        <p className="text-muted-foreground mb-8">
+          The images for this chapter couldn't be loaded. 
+          The MangaDex node might be offline or busy.
+        </p>
         <Link href="/" className="px-6 py-3 bg-primary rounded-xl font-bold">Return to Library</Link>
       </div>
     );

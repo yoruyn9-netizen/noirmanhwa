@@ -3,22 +3,30 @@ import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from '
 const BASE_URL = 'https://api.mangadex.org';
 
 async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  console.log(`[MangaDex API] Fetching: ${url}`);
+  
+  const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...options.headers,
     },
   });
 
   if (!res.ok) {
     if (res.status === 429) {
+      console.error(`[MangaDex API] Rate limited on ${endpoint}`);
       throw new Error('Rate limited. Please wait a moment.');
     }
+    const errorText = await res.text();
+    console.error(`[MangaDex API] Error on ${endpoint}: ${res.status} ${res.statusText}`, errorText);
     throw new Error(`MangaDex API error: ${res.statusText}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  return data;
 }
 
 export const mangaApi = {
@@ -41,8 +49,13 @@ export const mangaApi = {
   },
 
   getChapters: async (mangaId: string, offset = 0): Promise<MangaDexResponse<Chapter[]>> => {
+    // Support English, Indonesian, Portuguese, and Spanish for broader chapter availability
+    const languages = ['en', 'id', 'pt', 'pt-br', 'es-la'];
+    const langParams = languages.map(l => `translatedLanguage[]=${l}`).join('&');
+    
     return fetchMangaDex<MangaDexResponse<Chapter[]>>(
-      `/manga/${mangaId}/feed?translatedLanguage[]=en&translatedLanguage[]=id&order[chapter]=desc&limit=50&offset=${offset}`
+      `/manga/${mangaId}/feed?${langParams}&order[chapter]=desc&limit=50&offset=${offset}`,
+      { next: { revalidate: 600 } }
     );
   },
 

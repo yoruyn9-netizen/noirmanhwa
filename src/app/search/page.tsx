@@ -4,12 +4,13 @@ import MangaCard from '@/components/MangaCard';
 import { Search as SearchIcon, SlidersHorizontal } from 'lucide-react';
 
 interface SearchPageProps {
-  searchParams: { q?: string; genre?: string };
+  searchParams: Promise<{ q?: string; genre?: string }>;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q || '';
-  const genre = searchParams.genre || '';
+  const { q, genre } = await searchParams;
+  const query = q || '';
+  const genreId = genre || '';
 
   try {
     const resultsRes = await mangaApi.search({ 
@@ -23,7 +24,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="space-y-2">
           <h1 className="text-4xl font-black tracking-tighter">Search Results</h1>
           <p className="text-muted-foreground font-medium">
-            Showing results for <span className="text-accent">"{query || genre || 'Latest'}"</span>
+            Showing results for <span className="text-accent">"{query || genreId || 'Latest'}"</span>
           </p>
         </div>
 

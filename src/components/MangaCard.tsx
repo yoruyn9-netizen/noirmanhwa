@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
-import { TrendingUp, Clock, ImageOff } from 'lucide-react';
+import { TrendingUp, Clock } from 'lucide-react';
 
 interface MangaCardProps {
   manga: Manga;
@@ -20,7 +20,7 @@ export default function MangaCard({ manga, isTrending }: MangaCardProps) {
   return (
     <Link href={`/series/${manga.id}`} className="group block h-full">
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-secondary/30 border border-white/5 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
-        {!imgError ? (
+        {!imgError && coverUrl ? (
           <Image
             src={coverUrl}
             alt={title}
@@ -31,9 +31,8 @@ export default function MangaCard({ manga, isTrending }: MangaCardProps) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-background p-4 text-center">
-            <ImageOff className="w-8 h-8 text-muted-foreground/50 mb-2" />
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-2">{title}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-red-900/20 to-neutral-900 p-4 text-center">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-3 text-white/40">{title}</span>
           </div>
         )}
         

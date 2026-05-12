@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { BookOpen, Calendar, Star, Info, List, ArrowLeft, BookmarkPlus } from 'lucide-react';
 
 interface SeriesPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function SeriesPage({ params }: SeriesPageProps) {
-  const { id } = params;
+  const { id } = await params;
   
   try {
     const [mangaRes, chaptersRes] = await Promise.all([
@@ -31,7 +31,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
         <div className="flex flex-col md:flex-row gap-8">
           <div className="w-full md:w-80 flex-shrink-0">
-            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
+            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-secondary/30">
               <Image 
                 src={coverUrl} 
                 alt={title} 
@@ -65,7 +65,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             <div className="space-y-3">
               <h3 className="text-lg font-bold flex items-center gap-2"><Info className="w-5 h-5 text-accent" /> Synopsis</h3>
               <p className="text-muted-foreground leading-relaxed font-medium">
-                {manga.attributes.description.en || Object.values(manga.attributes.description)[0]}
+                {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No description available."}
               </p>
             </div>
           </div>
@@ -76,13 +76,14 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             <h2 className="text-2xl font-black tracking-tighter flex items-center gap-2">
               <List className="w-6 h-6 text-accent" /> CHAPTER LIST
             </h2>
-            <span className="text-sm font-bold text-muted-foreground">{chapters.length} Chapters Available</span>
+            <span className="text-sm font-bold text-muted-foreground">{chapters.length} Chapters Found</span>
           </div>
 
           <div className="grid gap-2">
             {chapters.length === 0 ? (
-              <div className="text-center py-20 bg-secondary/10 rounded-2xl">
-                <p className="text-muted-foreground">No chapters available in selected languages.</p>
+              <div className="text-center py-20 bg-secondary/10 rounded-2xl border border-dashed border-white/5">
+                <p className="text-muted-foreground">No chapters available in selected languages (EN/ID/PT).</p>
+                <p className="text-[10px] mt-2 text-muted-foreground/50 uppercase tracking-widest font-bold">Try checking other scanlation sites</p>
               </div>
             ) : (
               chapters.map((chapter) => (
@@ -93,7 +94,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-black text-sm group-hover:bg-accent group-hover:text-white transition-colors">
-                      {chapter.attributes.chapter}
+                      {chapter.attributes.chapter || '?'}
                     </div>
                     <div>
                       <h4 className="font-bold text-sm">Chapter {chapter.attributes.chapter} {chapter.attributes.title ? `: ${chapter.attributes.title}` : ''}</h4>
@@ -101,7 +102,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] font-black uppercase">{chapter.attributes.translatedLanguage}</span>
+                    <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] font-black uppercase text-accent/80">{chapter.attributes.translatedLanguage}</span>
                   </div>
                 </Link>
               ))
@@ -111,10 +112,11 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
       </div>
     );
   } catch (error) {
+    console.error("Detail page error:", error);
     return (
        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
         <h1 className="text-2xl font-bold mb-4">Manga Detail Unavailable</h1>
-        <p className="text-muted-foreground mb-8">We couldn't retrieve the details for this series. Please try again later.</p>
+        <p className="text-muted-foreground mb-8">We couldn't retrieve the details for this series. MangaDex might be experiencing high traffic.</p>
         <Link href="/" className="px-6 py-3 bg-primary rounded-xl font-bold">Back to Home</Link>
       </div>
     );
