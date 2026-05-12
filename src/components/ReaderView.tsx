@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -14,7 +13,6 @@ import {
   ChevronRight, 
   ArrowUp, 
   ArrowDown, 
-  Info,
   Zap
 } from 'lucide-react';
 import {
@@ -93,13 +91,18 @@ export default function ReaderView({
     stretch: "w-full"
   };
 
-  // Theme Overlay
-  const themeFilter = prefs.theme === 'sepia' ? "sepia(0.4) brightness(0.9)" : "none";
+  // Theme Logic
+  const getThemeClass = () => {
+    if (prefs.theme === 'light') return "bg-white text-black";
+    if (prefs.theme === 'sepia') return "bg-[#f4ecd8] text-[#5b4636]";
+    // Default Dark: Uses the global Noir background
+    return "";
+  };
 
   return (
     <div className={cn(
       "min-h-screen transition-colors duration-500",
-      prefs.theme === 'light' ? "bg-white text-black" : prefs.theme === 'sepia' ? "bg-[#1a1a14] text-[#d1d1c1]" : "bg-black text-white"
+      getThemeClass()
     )}>
       {/* Top Header */}
       <header className={cn(
@@ -133,7 +136,7 @@ export default function ReaderView({
       <main 
         className={cn("pt-16 pb-32 flex", directionClasses[prefs.direction])}
         onClick={toggleUI}
-        style={{ filter: themeFilter }}
+        style={{ filter: prefs.theme === 'sepia' ? 'sepia(0.2)' : 'none' }}
       >
         {pages.map((page, index) => (
           <div 

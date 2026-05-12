@@ -6,12 +6,11 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { 
   User, Settings, LogOut, Loader2, Mail, Lock, 
-  Camera, Save, Bell, Cloud, Shield, Trash2, ArrowRight, Bookmark,
+  Camera, Save, Bell, Cloud, Trash2, ArrowRight, Bookmark,
   Cpu, Terminal, Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUIStore } from '@/store/ui';
-import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 
 export default function ProfilePage() {
@@ -84,10 +83,10 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto py-24 space-y-12 animate-in fade-in duration-1000">
+      <div className="max-w-md mx-auto py-24 space-y-12 animate-in fade-in duration-1000 relative">
         <div className="text-center space-y-4">
           <div className="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mx-auto border border-accent/20 shadow-2xl shadow-accent/10">
-            <Shield className="w-10 h-10 text-accent" />
+            <Zap className="w-10 h-10 text-accent animate-pulse" />
           </div>
           <div className="space-y-1.5">
             <h1 className="text-2xl font-black tracking-tighter uppercase text-glow">Establish Core</h1>
@@ -102,7 +101,7 @@ export default function ProfilePage() {
               <input 
                 type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
                 placeholder="Database ID (Email)" 
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[11px] relative z-10 uppercase tracking-widest shadow-2xl"
+                className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[11px] relative z-10 uppercase tracking-widest shadow-2xl"
               />
             </div>
             <div className="relative group">
@@ -110,7 +109,7 @@ export default function ProfilePage() {
               <input 
                 type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)}
                 placeholder="Core Passkey" 
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[11px] relative z-10 uppercase tracking-widest shadow-2xl"
+                className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[11px] relative z-10 uppercase tracking-widest shadow-2xl"
               />
             </div>
           </div>
@@ -138,7 +137,7 @@ export default function ProfilePage() {
         <div className="space-y-10 animate-in slide-in-from-bottom-4">
            <div className="flex items-center justify-between">
             <h2 className="text-xl font-black tracking-tighter uppercase text-glow">Identity Override</h2>
-            <button onClick={() => setIsEditing(false)} className="px-5 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black text-muted-foreground uppercase tracking-widest hover:text-white transition-all">Abort</button>
+            <button onClick={() => setIsEditing(false)} className="px-5 py-2 glass rounded-xl text-[9px] font-black text-muted-foreground uppercase tracking-widest hover:text-white transition-all">Abort</button>
           </div>
 
           <div className="flex flex-col items-center gap-6 py-4">
@@ -161,7 +160,7 @@ export default function ProfilePage() {
               <label className="text-[9px] font-black uppercase tracking-[0.2em] text-accent ml-2">Operative Alias</label>
               <input 
                 type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[12px] uppercase tracking-widest shadow-2xl"
+                className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[12px] uppercase tracking-widest shadow-2xl"
                 placeholder="Enter new signal alias..."
               />
             </div>
@@ -169,7 +168,7 @@ export default function ProfilePage() {
               <label className="text-[9px] font-black uppercase tracking-[0.2em] text-accent ml-2">Transmission Log (Bio)</label>
               <textarea 
                 value={bio} onChange={(e) => setBio(e.target.value)} rows={4}
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-medium text-[12px] leading-relaxed resize-none shadow-2xl"
+                className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-medium text-[12px] leading-relaxed resize-none shadow-2xl"
                 placeholder="Brief operational history..."
               />
             </div>
@@ -185,7 +184,7 @@ export default function ProfilePage() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row items-center gap-10 p-10 bg-[#0a0a0f] border border-white/5 rounded-[3rem] relative overflow-hidden group shadow-2xl">
+          <div className="flex flex-col sm:flex-row items-center gap-10 p-10 bg-[#0a0a0f]/40 backdrop-blur-xl border border-white/5 rounded-[3rem] relative overflow-hidden group shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent z-0" />
             <div className="relative z-10 w-28 h-28 rounded-[2rem] bg-accent/5 border border-accent/20 flex items-center justify-center text-accent font-black text-4xl overflow-hidden shadow-2xl">
                {profile?.photoUrl ? <img src={profile.photoUrl} className="w-full h-full object-cover" /> : profile?.displayName?.[0] || 'A'}
@@ -205,17 +204,17 @@ export default function ProfilePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-             <div className="p-8 bg-[#0a0a0f] border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
+             <div className="p-8 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
                <Bookmark className="w-5 h-5 text-accent mx-auto mb-2 opacity-30 group-hover:opacity-100 transition-opacity" />
                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Archived</p>
                <p className="text-3xl font-black text-glow text-accent">{bookmarks.length}</p>
              </div>
-             <div className="p-8 bg-[#0a0a0f] border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
+             <div className="p-8 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
                <Cpu className="w-5 h-5 text-accent mx-auto mb-2 opacity-30 group-hover:opacity-100 transition-opacity" />
                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Efficiency</p>
                <p className="text-3xl font-black text-white">99%</p>
              </div>
-             <div className="hidden md:block p-8 bg-[#0a0a0f] border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
+             <div className="hidden md:block p-8 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-[2rem] text-center space-y-2 group hover:border-accent/40 transition-all duration-500 shadow-2xl">
                <Zap className="w-5 h-5 text-accent mx-auto mb-2 opacity-30 group-hover:opacity-100 transition-opacity" />
                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Signal</p>
                <p className="text-3xl font-black text-indigo-400">Stable</p>
@@ -225,7 +224,7 @@ export default function ProfilePage() {
           <section className="space-y-6">
              <h3 className="text-[10px] font-black tracking-[0.3em] uppercase px-4 text-glow opacity-60">Neural Matrix Parameters</h3>
              <div className="grid gap-4">
-               <div className="flex items-center justify-between p-8 bg-[#0a0a0f] border border-white/5 rounded-[2rem] shadow-2xl group hover:border-accent/20 transition-all">
+               <div className="flex items-center justify-between p-8 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-[2rem] shadow-2xl group hover:border-accent/20 transition-all">
                  <div className="flex items-center gap-5">
                    <div className="w-12 h-12 rounded-2xl bg-accent/5 flex items-center justify-center border border-accent/10">
                      <Bell className="w-6 h-6 text-accent" />
@@ -238,7 +237,7 @@ export default function ProfilePage() {
                  <Switch checked={appSettings.notifications} onCheckedChange={(val) => updateAppSettings({ notifications: val })} />
                </div>
 
-               <div className="flex items-center justify-between p-8 bg-[#0a0a0f] border border-white/5 rounded-[2rem] shadow-2xl group hover:border-accent/20 transition-all">
+               <div className="flex items-center justify-between p-8 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-[2rem] shadow-2xl group hover:border-accent/20 transition-all">
                  <div className="flex items-center gap-5">
                    <div className="w-12 h-12 rounded-2xl bg-accent/5 flex items-center justify-center border border-accent/10">
                      <Cloud className="w-6 h-6 text-accent" />
