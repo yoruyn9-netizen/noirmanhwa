@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import { Flame, Clock } from 'lucide-react';
@@ -14,28 +13,21 @@ interface MangaCardProps {
 }
 
 export default function MangaCard({ manga, isTrending }: MangaCardProps) {
-  const [imgError, setImgError] = useState(false);
   const coverUrl = getCoverUrl(manga, '512');
   const title = getMangaTitle(manga);
 
   return (
     <Link href={`/series/${manga.id}`} className="group block">
-      <div className="shinigami-card aspect-[2/3]">
-        {!imgError && coverUrl ? (
-          <Image
-            src={coverUrl}
-            alt={title}
-            fill
-            className="object-cover transition-transform duration-1000 group-hover:scale-110 brightness-[0.85] group-hover:brightness-100"
-            sizes="(max-width: 640px) 50vw, 25vw"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0a0f] to-black p-4 text-center">
-            <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">{title}</span>
-          </div>
-        )}
+      <div className="shinigami-card aspect-[2/3] relative">
+        <img
+          src={coverUrl}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 brightness-[0.85] group-hover:brightness-100"
+          onError={(e) => {
+            e.currentTarget.src = 'https://placehold.co/300x450/0a0a0f/6366f1?text=No+Cover';
+          }}
+          loading="lazy"
+        />
         
         {isTrending && (
           <div className="absolute top-3 left-3 px-2 py-0.5 bg-accent text-[8px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1.5 z-10 border border-white/10 backdrop-blur-md shadow-lg shadow-accent/20">

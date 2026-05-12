@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Play, Flame, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +22,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
     return () => clearInterval(timer);
   }, [trending]);
 
-  if (!trending.length) return null;
+  if (!trending || !trending.length) return null;
   const items = trending.slice(0, 5);
 
   return (
@@ -40,12 +39,13 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
               idx === activeIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
             )}
           >
-            <Image
+            <img
               src={coverUrl}
               alt={title}
-              fill
-              className="object-cover object-top brightness-[0.35]"
-              priority={idx === 0}
+              className="w-full h-full object-cover object-top brightness-[0.35]"
+              onError={(e) => {
+                e.currentTarget.src = 'https://placehold.co/1200x600/050508/6366f1?text=No+Cover';
+              }}
             />
             
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
@@ -53,27 +53,27 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
             <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 max-w-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <span className="px-3 py-1 bg-accent text-[9px] font-black rounded-xl text-white uppercase tracking-widest flex items-center gap-1.5 border border-white/10 shadow-xl shadow-accent/20">
-                  <Flame className="w-3 h-3 fill-white" /> Elite Node #{idx + 1}
+                  <Flame className="w-3 h-3 fill-white" /> Trending Series
                 </span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black mb-3 leading-tight tracking-tighter uppercase text-glow">
                 {title}
               </h1>
               <p className="text-[10px] md:text-xs text-gray-400 line-clamp-2 mb-8 leading-relaxed font-medium opacity-60 max-w-lg">
-                {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No terminal summary available for this node."}
+                {manga.attributes.description.en || Object.values(manga.attributes.description)[0] || "No summary available for this series."}
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
                   href={`/series/${manga.id}`}
                   className="flex items-center gap-2 px-8 py-3.5 bg-white text-black font-black rounded-2xl hover:bg-accent hover:text-white transition-all duration-500 uppercase tracking-widest text-[10px] shadow-2xl"
                 >
-                  <Play className="w-4 h-4 fill-current" /> Begin Sync
+                  <Play className="w-4 h-4 fill-current" /> Read Now
                 </Link>
                 <Link
                   href={`/series/${manga.id}`}
                   className="flex items-center gap-2 px-6 py-3.5 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 transition-all border border-white/10 backdrop-blur-3xl uppercase tracking-widest text-[10px]"
                 >
-                  <Info className="w-4 h-4" /> Node Data
+                  <Info className="w-4 h-4" /> Series Info
                 </Link>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
             onClick={() => setActiveIndex(idx)}
             className={cn(
               "h-1.5 transition-all duration-700 rounded-full",
-              idx === activeIndex ? "w-10 bg-accent shadow-[0_0_15px_rgba(139,92,246,1)]" : "w-3 bg-white/10"
+              idx === activeIndex ? "w-10 bg-accent shadow-[0_0_15px_rgba(99,102,241,1)]" : "w-3 bg-white/10"
             )}
           />
         ))}

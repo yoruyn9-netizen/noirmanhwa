@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { mangaApi } from '@/lib/api';
 import HeroSlider from '@/components/HeroSlider';
 import MangaCard from '@/components/MangaCard';
-import { ChevronRight, Sparkles, Flame, AlertCircle, TrendingUp, ArrowDown } from 'lucide-react';
+import { Flame, Sparkles, TrendingUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { Manga } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
@@ -15,53 +13,31 @@ export default function Home() {
   const [latest, setLatest] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [genres, setGenres] = useState<any[]>([]);
-  const [activeGenre, setActiveGenre] = useState<string | null>(null);
-  const [showReloadHint, setShowReloadHint] = useState(false);
-
-  const GENRES_TO_SHOW = [
-    'Action', 'Comedy', 'Drama', 'Fantasy', 'Romance', 
-    'Isekai', 'Horror', 'Adventure', 'Martial Arts'
-  ];
 
   const fetchData = async () => {
-    if (!latest.length) setLoading(true);
+    setLoading(true);
     setError(null);
-    setShowReloadHint(false);
+    console.log('Fetching Home Data...');
     
     try {
-      // Non-blocking Tags Fetch
-      mangaApi.getTags().then(tagsRes => {
-        const filteredTags = tagsRes.data.filter((t: any) => 
-          GENRES_TO_SHOW.includes(t.attributes.name.en)
-        ).sort((a: any, b: any) => GENRES_TO_SHOW.indexOf(a.attributes.name.en) - GENRES_TO_SHOW.indexOf(b.attributes.name.en));
-        setGenres(filteredTags);
-      }).catch(() => {
-        // Fallback or silent fail for tags
-      });
-
-      // Fetch Trending and Latest in parallel
-      const [trendingRes, latestRes] = await Promise.allSettled([
-        mangaApi.getTrending(),
-        mangaApi.getLatest(0, activeGenre ? [activeGenre] : [])
+      const [trendingRes, latestRes] = await Promise.all([
+        fetch('https://api.mangadex.org/manga?limit=10&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive'),
+        fetch('https://api.mangadex.org/manga?limit=24&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe')
       ]);
-      
-      if (trendingRes.status === 'fulfilled') {
-        setTrending(trendingRes.value.data as Manga[]);
-      }
-      
-      if (latestRes.status === 'fulfilled') {
-        setLatest(latestRes.value.data as Manga[]);
-      } else {
-        setError("Primary node connection failed. Retrying...");
+
+      if (!trendingRes.ok || !latestRes.ok) {
+        throw new Error('API request failed');
       }
 
-      if (trendingRes.status === 'rejected' && latestRes.status === 'rejected') {
-        throw new Error("MangaDex Network Error: Nodes are unreachable.");
-      }
+      const trendingData = await trendingRes.json();
+      const latestData = await latestRes.json();
 
+      setTrending(trendingData.data);
+      setLatest(latestData.data);
+      console.log('Data Loaded Successfully:', { trending: trendingData.data.length, latest: latestData.data.length });
     } catch (err: any) {
-      setError(err.message || "Spectral signal lost.");
+      console.error('Fetch Error:', err);
+      setError("Failed to connect to MangaDex. Please check your network.");
     } finally {
       setLoading(false);
     }
@@ -69,28 +45,12 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-  }, [activeGenre]);
-
-  // Watchdog for "stuck load"
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (loading) {
-      timer = setTimeout(() => {
-        setShowReloadHint(true);
-      }, 5000);
-    } else {
-      setShowReloadHint(false);
-    }
-    return () => clearTimeout(timer);
-  }, [loading]);
+  }, []);
 
   if (loading && !latest.length) {
     return (
       <div className="space-y-8 max-w-5xl mx-auto py-10">
         <Skeleton className="w-full aspect-[21/10] rounded-[2.5rem]" />
-        <div className="flex gap-2 overflow-hidden">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-full flex-shrink-0" />)}
-        </div>
         <div className="manga-grid">
           {[...Array(12)].map((_, i) => <Skeleton key={i} className="aspect-[2/3] rounded-xl" />)}
         </div>
@@ -99,98 +59,54 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
-      {showReloadHint && loading && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center py-2 text-accent animate-in slide-in-from-top-4">
-          <ArrowDown className="w-4 h-4 mb-1 animate-bounce" />
-          <p className="text-[7px] font-black uppercase tracking-[0.3em] bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-accent/20 shadow-[0_0_20px_rgba(99,102,241,0.2)]">Spectral Resync Recommended</p>
-        </div>
-      )}
+    <div className="space-y-10 max-w-5xl mx-auto animate-in fade-in duration-1000">
+      <HeroSlider trending={trending} />
 
-      <div className="animate-in fade-in zoom-in-95 duration-1000 delay-100">
-        <HeroSlider trending={trending} />
-      </div>
-
-      <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-        <h2 className="text-[9px] font-black tracking-[0.2em] flex items-center gap-2 uppercase opacity-60 ml-1">
-          <TrendingUp className="w-3.5 h-3.5 text-accent" /> Spectral Segments
-        </h2>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar -mx-4 px-4">
-          <button 
-            onClick={() => setActiveGenre(null)}
-            className={cn(
-              "px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-              activeGenre === null ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
-            )}
-          >
-            All Nodes
-          </button>
-          {genres.map((tag) => (
-            <button 
-              key={tag.id}
-              onClick={() => setActiveGenre(tag.id)}
-              className={cn(
-                "px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                activeGenre === tag.id ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
-              )}
-            >
-              {tag.attributes.name.en}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+      <section className="space-y-6">
         <div className="flex items-center justify-between px-1">
           <div className="space-y-0.5">
             <h2 className="text-lg font-black tracking-tighter flex items-center gap-2 uppercase text-glow">
-              <Flame className="w-4.5 h-4.5 text-accent" /> {activeGenre ? "Curated Node" : "Live Transmissions"}
+              <Flame className="w-4.5 h-4.5 text-accent" /> Latest Uploads
             </h2>
-            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">Real-time database sync</p>
+            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">Direct MangaDex Stream</p>
           </div>
-          <Link href="/search" className="text-[9px] font-black text-accent hover:opacity-80 flex items-center gap-1.5 group uppercase tracking-widest bg-accent/5 px-4 py-2 rounded-xl border border-accent/10 transition-all">
-            Full Network <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
         </div>
         
-        {error && latest.length === 0 ? (
-          <div className="py-24 text-center glass rounded-[2.5rem] space-y-6 border-accent/10">
-            <AlertCircle className="w-12 h-12 text-accent/20 mx-auto" />
+        {error ? (
+          <div className="py-24 text-center glass rounded-[2.5rem] space-y-6">
             <div className="space-y-2">
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{error}</p>
               <button 
                 onClick={() => fetchData()}
                 className="px-8 py-3 bg-accent text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-accent/20"
               >
-                Reconnect to Nodes
+                Retry Connection
               </button>
             </div>
           </div>
         ) : (
           <div className="manga-grid">
-            {latest.map((manga, idx) => (
-              <div key={manga.id} className="animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${idx * 50}ms` }}>
-                <MangaCard manga={manga} isTrending={manga.attributes.status === 'ongoing'} />
-              </div>
+            {latest.map((manga) => (
+              <MangaCard key={manga.id} manga={manga} />
             ))}
           </div>
         )}
       </section>
 
-      <section className="relative rounded-[2.5rem] p-10 overflow-hidden group border border-white/5 animate-in fade-in zoom-in-95 duration-1000 delay-500">
+      <section className="relative rounded-[2.5rem] p-10 overflow-hidden group border border-white/5 bg-[#0a0a0f]">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent z-0" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-4 text-center md:text-left">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/20 text-accent rounded-full text-[8px] font-black uppercase tracking-widest border border-accent/20">
-              <Sparkles className="w-3 h-3" /> Neural Curator
+              <Sparkles className="w-3 h-3" /> Recommendation Engine
             </div>
-            <h2 className="text-2xl font-black tracking-tighter uppercase leading-none text-glow">Evolve your taste</h2>
+            <h2 className="text-2xl font-black tracking-tighter uppercase leading-none text-glow">Expand your library</h2>
             <p className="text-[11px] text-muted-foreground font-medium max-w-sm leading-relaxed opacity-70">
-              Our AI analyzes your reading patterns to discover high-fidelity series across the global network.
+              Discover the most followed and trending series across the global network.
             </p>
-            <button className="px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-accent hover:text-white transition-all duration-500 flex items-center gap-3 shadow-2xl active:scale-95 text-[10px] uppercase tracking-widest mx-auto md:mx-0">
-              Initialize Discovery <ArrowDown className="w-4 h-4" />
-            </button>
+            <Link href="/search" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-accent hover:text-white transition-all duration-500 text-[10px] uppercase tracking-widest mx-auto md:mx-0">
+              Go to Search <ArrowDown className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

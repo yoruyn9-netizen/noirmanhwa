@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,29 +21,9 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'placehold.co',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'picsum.photos',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 's2.mangadex.org',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 's5.mangadex.org',
-        pathname: '/**',
-      }
     ],
   },
 };

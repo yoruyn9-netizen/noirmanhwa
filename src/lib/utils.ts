@@ -7,14 +7,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getCoverUrl(manga: Manga, size: '256' | '512' | 'original' = '512'): string {
-  if (!manga) return 'https://placehold.co/400x600/080505/991B1B?text=No+Data';
+  if (!manga) return 'https://placehold.co/400x600/0a0a0f/6366f1?text=No+Data';
   
   const coverRel = manga.relationships?.find(rel => rel.type === 'cover_art');
   const fileName = coverRel?.attributes?.fileName;
   
   if (!fileName) {
-    // If no cover_art relationship is present with attributes, check if we have it in some other form or use placeholder
-    return 'https://placehold.co/400x600/080505/991B1B?text=No+Cover';
+    return 'https://placehold.co/400x600/0a0a0f/6366f1?text=No+Cover';
   }
   
   const suffix = size === 'original' ? '' : `.${size}.jpg`;
