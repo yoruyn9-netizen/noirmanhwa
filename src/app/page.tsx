@@ -4,51 +4,92 @@ import React, { useEffect, useState } from 'react';
 import { mangaApi } from '@/lib/api';
 import HeroSlider from '@/components/HeroSlider';
 import MangaCard from '@/components/MangaCard';
-import { ChevronRight, Sparkles, Flame, Clock } from 'lucide-react';
+import { ChevronRight, Sparkles, Flame, AlertCircle, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Manga } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const [trending, setTrending] = useState<Manga[]>([]);
   const [latest, setLatest] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [genres, setGenres] = useState<any[]>([]);
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [trendingRes, latestRes, tagsRes] = await Promise.all([
-          mangaApi.getTrending(),
-          mangaApi.getLatest(0, activeGenre ? [activeGenre] : []),
-          mangaApi.getTags()
-        ]);
-        
-        setTrending(trendingRes.data);
-        setLatest(latestRes.data);
-        
-        // Pick some popular tags for the filter
-        const popularTags = tagsRes.data.filter((t: any) => 
-          ['Action', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Horror', 'Adventure'].includes(t.attributes.name.en)
-        ).slice(0, 10);
-        setGenres(popularTags);
-        
-      } catch (error) {
-        console.error("Home fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch tags first to build the filter, but don't let it block everything
+      const tagsRes = await mangaApi.getTags().catch(err => {
+        console.error("Tags fetch failed", err);
+        return { data: [] };
+      });
+      
+      const popularTags = tagsRes.data.filter((t: any) => 
+        ['Action', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Horror', 'Adventure'].includes(t.attributes.name.en)
+      ).slice(0, 10);
+      setGenres(popularTags);
 
+      // Fetch trending and latest in parallel with individual error handling
+      const [trendingRes, latestRes] = await Promise.all([
+        mangaApi.getTrending().catch(err => {
+          console.error("Trending fetch error:", err);
+          return { data: [] };
+        }),
+        mangaApi.getLatest(0, activeGenre ? [activeGenre] : []).catch(err => {
+          console.error("Latest fetch error:", err);
+          return { data: [] };
+        })
+      ]);
+      
+      setTrending(trendingRes.data as Manga[]);
+      setLatest(latestRes.data as Manga[]);
+      
+      if ((trendingRes.data as any[]).length === 0 && (latestRes.data as any[]).length === 0) {
+        setError("MangaDex is currently unresponsive. Please check your connection or try again later.");
+      }
+
+    } catch (err: any) {
+      console.error("Home main fetch error:", err);
+      setError(err.message || "An unexpected error occurred while summoning manga.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [activeGenre]);
+
+  if (error && trending.length === 0 && latest.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 animate-in fade-in duration-500">
+        <div className="p-6 bg-destructive/10 rounded-full">
+          <AlertCircle className="w-12 h-12 text-destructive" />
+        </div>
+        <div className="space-y-2 max-w-md">
+          <h2 className="text-xl font-black tracking-tighter uppercase">Connection Interrupted</h2>
+          <p className="text-sm text-muted-foreground font-medium">{error}</p>
+        </div>
+        <Button 
+          onClick={() => fetchData()} 
+          variant="outline"
+          className="rounded-xl font-black gap-2 border-white/10"
+        >
+          <RefreshCcw className="w-4 h-4" /> TRY AGAIN
+        </Button>
+      </div>
+    );
+  }
 
   if (loading && trending.length === 0) {
     return (
       <div className="space-y-12 animate-pulse">
         <div className="w-full aspect-[21/9] bg-secondary/20 rounded-2xl" />
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="aspect-[2/3] bg-secondary/20 rounded-xl" />
           ))}
@@ -102,6 +143,11 @@ export default function Home() {
           {latest.map((manga) => (
             <MangaCard key={manga.id} manga={manga} isTrending={manga.attributes.status === 'ongoing'} />
           ))}
+          {latest.length === 0 && !loading && (
+            <div className="col-span-full py-20 text-center">
+              <p className="text-muted-foreground italic font-medium">No titles found in this category.</p>
+            </div>
+          )}
         </div>
       </section>
 

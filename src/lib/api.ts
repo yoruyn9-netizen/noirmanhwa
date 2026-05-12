@@ -2,29 +2,52 @@ import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from '
 
 const BASE_URL = 'https://api.mangadex.org';
 
+async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
+  const { timeout = 10000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal
+  });
+  clearTimeout(id);
+  
+  return response;
+}
+
 async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
   
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers,
-    },
-  });
+  try {
+    const res = await fetchWithTimeout(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers,
+      },
+      timeout: 15000 // 15 seconds timeout
+    });
 
-  if (!res.ok) {
-    if (res.status === 429) {
-      throw new Error('Rate limited. Please wait a moment.');
+    if (!res.ok) {
+      if (res.status === 429) {
+        throw new Error('MangaDex is busy (Rate Limited). Please try again in a few seconds.');
+      }
+      const errorText = await res.text();
+      console.error(`[MangaDex API Error] ${res.status}:`, errorText);
+      throw new Error(`MangaDex API error: ${res.statusText}`);
     }
-    const errorText = await res.text();
-    console.error(`[MangaDex API Error] ${res.status}:`, errorText);
-    throw new Error(`MangaDex API error: ${res.statusText}`);
-  }
 
-  const data = await res.json();
-  return data;
+    const data = await res.json();
+    return data;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Connection timeout. MangaDex is taking too long to respond.');
+    }
+    throw error;
+  }
 }
 
 export const mangaApi = {
