@@ -3,7 +3,7 @@ import { Manga, Chapter, AtHomeResponse, SearchParams, MangaDexResponse } from '
 const BASE_URL = 'https://api.mangadex.org';
 
 async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 30000 } = options; // Increased to 30 seconds
+  const { timeout = 45000 } = options; // Increased to 45 seconds for high-latency environments
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -19,7 +19,7 @@ async function fetchWithTimeout(resource: string, options: RequestInit & { timeo
   }
 }
 
-async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, retries = 2): Promise<T> {
+async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, retries = 3): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
   
   try {
@@ -33,28 +33,34 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}, ret
     });
 
     if (!res.ok) {
-      if (res.status === 429 && retries > 0) {
-        // Wait 2 seconds and retry on Rate Limit
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      // Retry on rate limit (429) or temporary server errors (5xx)
+      if ((res.status === 429 || res.status >= 500) && retries > 0) {
+        const backoff = (4 - retries) * 2000; // 2s, 4s, 6s delay
+        console.warn(`[MangaDex API] ${res.status} on ${endpoint}. Retrying in ${backoff}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoff));
         return fetchMangaDex<T>(endpoint, options, retries - 1);
       }
       
-      const errorText = await res.text();
-      console.error(`[MangaDex API Error] ${res.status}:`, errorText);
-      throw new Error(res.status === 429 ? 'MangaDex is busy. Please wait.' : `MangaDex error: ${res.status}`);
+      const errorText = await res.text().catch(() => 'No error body');
+      console.error(`[MangaDex API Error] ${res.status} on ${endpoint}:`, errorText);
+      throw new Error(res.status === 429 ? 'MangaDex is currently busy (Rate Limit). Please wait a moment.' : `MangaDex error: ${res.status}`);
     }
 
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (error: any) {
+    // Retry on connection timeout (AbortError)
     if (error.name === 'AbortError' && retries > 0) {
-      console.warn(`[MangaDex API] Timeout on ${endpoint}, retrying...`);
+      const backoff = (4 - retries) * 1500;
+      console.warn(`[MangaDex API] Timeout on ${endpoint}. Retrying in ${backoff}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchMangaDex<T>(endpoint, options, retries - 1);
     }
     
     if (error.name === 'AbortError') {
-      throw new Error('Connection timeout. MangaDex is taking too long to respond.');
+      console.error(`[MangaDex API] Permanent Timeout on ${endpoint}`);
+      throw new Error('Connection timeout. MangaDex is taking too long to respond. This might be a temporary network issue.');
     }
+    
     throw error;
   }
 }
