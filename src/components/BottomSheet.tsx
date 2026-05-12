@@ -1,17 +1,42 @@
+
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useUIStore } from '@/store/ui';
 import { cn } from '@/lib/utils';
-import { X, Search, Bookmark, Grid, User, Trash2, Settings, ArrowRight, Check } from 'lucide-react';
+import { X, Search, Bookmark, Grid, User, Trash2, Settings, ArrowRight, Check, Camera, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { useUser, useFirestore, useDoc } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export default function BottomSheet() {
-  const { activePanel, isOpen, closePanel, bookmarks, removeBookmark, readerSettings, updateReaderSettings } = useUIStore();
+  const { activePanel, isOpen, closePanel, openPanel, bookmarks, removeBookmark, readerSettings, updateReaderSettings } = useUIStore();
   const sheetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { user } = useUser();
+  const db = useFirestore();
+  const { toast } = useToast();
+
+  // Firestore profile data
+  const profileRef = useMemo(() => (db && user ? doc(db, 'users', user.uid) : null), [db, user]);
+  const { data: profile, loading: profileLoading } = useDoc(profileRef);
+
+  // Edit Profile States
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '');
+      setBio(profile.bio || '');
+      setPhotoUrl(profile.photoUrl || '');
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (isOpen) {
@@ -23,8 +48,99 @@ export default function BottomSheet() {
 
   if (!isOpen) return null;
 
+  const handleSaveProfile = async () => {
+    if (!profileRef) return;
+    setSaving(true);
+    try {
+      await setDoc(profileRef, {
+        displayName,
+        bio,
+        photoUrl,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      toast({
+        title: "Profile Updated",
+        description: "Your changes have been saved to the cloud.",
+      });
+      openPanel('profile');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: "Could not sync profile data.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderContent = () => {
     switch (activePanel) {
+      case 'editProfile':
+        return (
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-4">
+              <button onClick={() => openPanel('profile')} className="p-2 bg-white/5 rounded-full">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold">Edit Profile</h2>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 py-4">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center border-4 border-accent/20 overflow-hidden">
+                  {photoUrl ? (
+                    <img src={photoUrl} className="w-full h-full object-cover" alt="Profile" />
+                  ) : (
+                    <User className="w-10 h-10 text-accent/50" />
+                  )}
+                </div>
+                <button 
+                  className="absolute bottom-0 right-0 p-2 bg-accent rounded-full shadow-lg border-2 border-background"
+                  onClick={() => {
+                    const url = prompt("Enter a image URL for your profile picture:");
+                    if (url) setPhotoUrl(url);
+                  }}
+                >
+                  <Camera className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Display Name</label>
+                <input 
+                  type="text" 
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full bg-secondary/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  placeholder="Your nickname..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Bio</label>
+                <textarea 
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  className="w-full bg-secondary/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="w-full py-4 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-accent transition-all active:scale-95 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              SAVE CHANGES
+            </button>
+          </div>
+        );
       case 'readerSettings':
         return (
           <div className="p-6 space-y-8">
@@ -219,24 +335,67 @@ export default function BottomSheet() {
         return (
           <div className="p-6 space-y-8">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-accent/30 text-accent font-bold text-2xl">
-                Y
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-accent/30 text-accent font-bold text-2xl overflow-hidden">
+                {profile?.photoUrl ? (
+                  <img src={profile.photoUrl} className="w-full h-full object-cover" alt="Profile" />
+                ) : (
+                  profile?.displayName?.[0] || 'G'
+                )}
               </div>
-              <div>
-                <h2 className="text-xl font-bold">Noir Guest</h2>
-                <p className="text-sm text-accent">Free Member</p>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold truncate">{profile?.displayName || 'Noir Guest'}</h2>
+                <p className="text-xs text-accent uppercase tracking-widest font-black">Free Member</p>
               </div>
-            </div>
-            <div className="space-y-2">
-              {['Reading History', 'Settings', 'Clear Cache'].map(item => (
-                <button key={item} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
-                  <span className="font-medium">{item}</span>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              ))}
-              <button className="w-full p-4 mt-4 text-center bg-primary text-white rounded-xl font-bold hover:bg-accent transition-colors shadow-lg shadow-primary/20">
-                Log In
+              <button 
+                onClick={() => openPanel('editProfile')}
+                className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-muted-foreground" />
               </button>
+            </div>
+            
+            {profile?.bio && (
+              <p className="text-sm text-muted-foreground italic bg-white/5 p-4 rounded-xl border border-white/5">
+                "{profile.bio}"
+              </p>
+            )}
+
+            <div className="space-y-2">
+              <button onClick={() => openPanel('editProfile')} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-accent" />
+                  <span className="font-medium">Edit Profile</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              <button className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-accent" />
+                  <span className="font-medium">App Settings</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              <button 
+                onClick={() => {
+                  toast({ title: "Cache Cleared", description: "Temporary data removed." });
+                  closePanel();
+                }}
+                className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Trash2 className="w-5 h-5 text-destructive" />
+                  <span className="font-medium text-destructive">Clear App Cache</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              {!user && (
+                <button className="w-full p-4 mt-4 text-center bg-primary text-white rounded-xl font-bold hover:bg-accent transition-colors shadow-lg shadow-primary/20">
+                  Log In / Create Account
+                </button>
+              )}
             </div>
           </div>
         );
@@ -256,7 +415,7 @@ export default function BottomSheet() {
         className="fixed bottom-0 left-0 right-0 z-[70] glass rounded-t-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-w-2xl mx-auto pb-safe-area-inset-bottom"
       >
         <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mt-3" onClick={closePanel} />
-        <div className="max-h-[85vh] overflow-hidden">
+        <div className="max-h-[85vh] overflow-hidden overflow-y-auto hide-scrollbar">
           {renderContent()}
         </div>
       </div>

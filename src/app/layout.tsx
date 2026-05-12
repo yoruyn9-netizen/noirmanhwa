@@ -1,8 +1,10 @@
+
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import BottomNav from '@/components/BottomNav';
 import BottomSheet from '@/components/BottomSheet';
 import { Toaster } from '@/components/ui/toaster';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'NoirManhwa | Read Modern Manhwa Online',
@@ -31,12 +33,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body bg-background text-foreground antialiased min-h-screen">
-        <main className="pb-24 max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          {children}
-        </main>
-        <BottomNav />
-        <BottomSheet />
-        <Toaster />
+        <FirebaseClientProvider>
+          <main className="pb-24 max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            {children}
+          </main>
+          <BottomNav />
+          <BottomSheet />
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

@@ -1,7 +1,8 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile' | 'readerSettings';
+type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile' | 'readerSettings' | 'editProfile';
 
 interface ReaderSettings {
   direction: 'vertical' | 'rtl' | 'ltr';

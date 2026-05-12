@@ -1,0 +1,39 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and preferences",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's chosen display name"
+        },
+        "bio": {
+          "type": "string",
+          "description": "The user's personal biography"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the profile was last updated"
+        }
+      },
+      "required": ["displayName"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/backend/entities/UserProfile",
+      "description": "User profile document stored by unique user ID"
+    }
+  }
+}
