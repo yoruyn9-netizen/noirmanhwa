@@ -1,114 +1,110 @@
-"use client";
 
-import React, { useEffect, useState } from 'react';
-import HeroSlider from '@/components/HeroSlider';
-import MangaCard from '@/components/MangaCard';
-import { Flame, Sparkles, TrendingUp, ArrowDown } from 'lucide-react';
+import React from 'react';
+import { mangaApi } from '@/lib/api';
+import MangaCover from '@/components/MangaCover';
 import Link from 'next/link';
-import { Manga } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Flame, Play, Clock } from 'lucide-react';
+import { getMangaTitle } from '@/lib/utils';
 
-export default function Home() {
-  const [trending, setTrending] = useState<Manga[]>([]);
-  const [latest, setLatest] = useState<Manga[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default async function Home() {
+  console.log('[Page] Loading Homepage');
+  
+  let trending: any[] = [];
+  let latest: any[] = [];
+  let error: string | null = null;
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    console.log('Fetching Home Data...');
-    
-    try {
-      const [trendingRes, latestRes] = await Promise.all([
-        fetch('https://api.mangadex.org/manga?limit=10&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive'),
-        fetch('https://api.mangadex.org/manga?limit=24&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe')
-      ]);
-
-      if (!trendingRes.ok || !latestRes.ok) {
-        throw new Error('API request failed');
-      }
-
-      const trendingData = await trendingRes.json();
-      const latestData = await latestRes.json();
-
-      setTrending(trendingData.data);
-      setLatest(latestData.data);
-      console.log('Data Loaded Successfully:', { trending: trendingData.data.length, latest: latestData.data.length });
-    } catch (err: any) {
-      console.error('Fetch Error:', err);
-      setError("Failed to connect to MangaDex. Please check your network.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  if (loading && !latest.length) {
-    return (
-      <div className="space-y-8 max-w-5xl mx-auto py-10">
-        <Skeleton className="w-full aspect-[21/10] rounded-[2.5rem]" />
-        <div className="manga-grid">
-          {[...Array(12)].map((_, i) => <Skeleton key={i} className="aspect-[2/3] rounded-xl" />)}
-        </div>
-      </div>
-    );
+  try {
+    const [trendingRes, latestRes] = await Promise.all([
+      mangaApi.getTrending(),
+      mangaApi.getLatest()
+    ]);
+    trending = trendingRes.data || [];
+    latest = latestRes.data || [];
+  } catch (err) {
+    console.error('[Page Error] Home Fetch Failure:', err);
+    error = "Connection lost. Tap to retry.";
   }
 
-  return (
-    <div className="space-y-10 max-w-5xl mx-auto animate-in fade-in duration-1000">
-      <HeroSlider trending={trending} />
+  const heroManga = trending[0];
 
+  return (
+    <div className="space-y-10 animate-in fade-in duration-1000 max-w-2xl mx-auto px-4">
+      {/* Hero Section */}
+      {heroManga && (
+        <section className="relative w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden group border border-white/5 bg-neutral-900 shadow-2xl">
+          <MangaCover 
+            mangaId={heroManga.id} 
+            relationships={heroManga.relationships} 
+            title={getMangaTitle(heroManga)}
+            className="brightness-[0.4]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-8 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 border border-accent/20 rounded-full">
+              <Flame className="w-3 h-3 text-accent fill-accent" />
+              <span className="text-[8px] font-black uppercase tracking-widest text-accent">Hot Transmission</span>
+            </div>
+            <h1 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+              {getMangaTitle(heroManga)}
+            </h1>
+            <p className="text-[10px] text-neutral-400 font-medium line-clamp-2 leading-relaxed max-w-xs">
+              {heroManga.attributes.description.en || "Synchronizing data summary..."}
+            </p>
+            <Link 
+              href={`/series/${heroManga.id}`}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-xl"
+            >
+              <Play className="w-3 h-3 fill-current" /> Initialize Link
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Grid Section */}
       <section className="space-y-6">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between px-2">
           <div className="space-y-0.5">
-            <h2 className="text-lg font-black tracking-tighter flex items-center gap-2 uppercase text-glow">
-              <Flame className="w-4.5 h-4.5 text-accent" /> Latest Uploads
-            </h2>
-            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">Direct MangaDex Stream</p>
+            <h2 className="text-sm font-black uppercase tracking-tighter text-white">Latest Uploads</h2>
+            <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Real-time Data Stream</p>
           </div>
         </div>
-        
+
         {error ? (
-          <div className="py-24 text-center glass rounded-[2.5rem] space-y-6">
-            <div className="space-y-2">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{error}</p>
-              <button 
-                onClick={() => fetchData()}
-                className="px-8 py-3 bg-accent text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-accent/20"
-              >
-                Retry Connection
-              </button>
-            </div>
+          <div className="py-20 text-center space-y-4 bg-neutral-900/50 rounded-[2rem] border border-dashed border-white/5">
+            <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500">{error}</p>
+            <Link href="/" className="inline-block px-6 py-2 bg-accent text-white rounded-lg text-[8px] font-black uppercase tracking-widest">Resync Node</Link>
           </div>
         ) : (
-          <div className="manga-grid">
+          <div className="grid grid-cols-2 gap-4">
             {latest.map((manga) => (
-              <MangaCard key={manga.id} manga={manga} />
+              <Link key={manga.id} href={`/series/${manga.id}`} className="group space-y-3">
+                <div className="aspect-[2/3] relative rounded-2xl overflow-hidden border border-white/5 bg-neutral-900 shadow-lg">
+                  <MangaCover 
+                    mangaId={manga.id} 
+                    relationships={manga.relationships} 
+                    title={getMangaTitle(manga)} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    <span className="text-[8px] font-black uppercase text-accent tracking-widest">View Node</span>
+                  </div>
+                </div>
+                <div className="px-1 space-y-1">
+                  <h3 className="text-[11px] font-black uppercase tracking-tight text-white line-clamp-1 group-hover:text-accent transition-colors">
+                    {getMangaTitle(manga)}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" /> {manga.attributes.year || '2024'}
+                    </span>
+                    <span className="text-[8px] font-black text-accent uppercase tracking-widest opacity-60">
+                      {manga.attributes.status}
+                    </span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
-      </section>
-
-      <section className="relative rounded-[2.5rem] p-10 overflow-hidden group border border-white/5 bg-[#0a0a0f]">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent z-0" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-4 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/20 text-accent rounded-full text-[8px] font-black uppercase tracking-widest border border-accent/20">
-              <Sparkles className="w-3 h-3" /> Recommendation Engine
-            </div>
-            <h2 className="text-2xl font-black tracking-tighter uppercase leading-none text-glow">Expand your library</h2>
-            <p className="text-[11px] text-muted-foreground font-medium max-w-sm leading-relaxed opacity-70">
-              Discover the most followed and trending series across the global network.
-            </p>
-            <Link href="/search" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-accent hover:text-white transition-all duration-500 text-[10px] uppercase tracking-widest mx-auto md:mx-0">
-              Go to Search <ArrowDown className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
       </section>
     </div>
   );
