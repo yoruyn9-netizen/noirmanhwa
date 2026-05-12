@@ -4,7 +4,6 @@ const BASE_URL = 'https://api.mangadex.org';
 
 async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
-  console.log(`[MangaDex API] Fetching: ${url}`);
   
   const res = await fetch(url, {
     ...options,
@@ -17,11 +16,10 @@ async function fetchMangaDex<T>(endpoint: string, options: RequestInit = {}): Pr
 
   if (!res.ok) {
     if (res.status === 429) {
-      console.error(`[MangaDex API] Rate limited on ${endpoint}`);
       throw new Error('Rate limited. Please wait a moment.');
     }
     const errorText = await res.text();
-    console.error(`[MangaDex API] Error on ${endpoint}: ${res.status} ${res.statusText}`, errorText);
+    console.error(`[MangaDex API Error] ${res.status}:`, errorText);
     throw new Error(`MangaDex API error: ${res.statusText}`);
   }
 
@@ -37,11 +35,10 @@ export const mangaApi = {
     );
   },
 
-  getLatest: async (offset = 0): Promise<MangaDexResponse<Manga[]>> => {
-    return fetchMangaDex<MangaDexResponse<Manga[]>>(
-      `/manga?limit=20&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe`,
-      { next: { revalidate: 1800 } }
-    );
+  getLatest: async (offset = 0, tags: string[] = []): Promise<MangaDexResponse<Manga[]>> => {
+    const tagParams = tags.length > 0 ? tags.map(t => `includedTags[]=${t}`).join('&') : '';
+    const endpoint = `/manga?limit=24&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe${tagParams ? `&${tagParams}` : ''}`;
+    return fetchMangaDex<MangaDexResponse<Manga[]>>(endpoint, { next: { revalidate: 1800 } });
   },
 
   getMangaDetails: async (id: string): Promise<{ data: Manga }> => {
@@ -49,12 +46,11 @@ export const mangaApi = {
   },
 
   getChapters: async (mangaId: string, offset = 0): Promise<MangaDexResponse<Chapter[]>> => {
-    // Support English, Indonesian, Portuguese, and Spanish for broader chapter availability
     const languages = ['en', 'id', 'pt', 'pt-br', 'es-la'];
     const langParams = languages.map(l => `translatedLanguage[]=${l}`).join('&');
     
     return fetchMangaDex<MangaDexResponse<Chapter[]>>(
-      `/manga/${mangaId}/feed?${langParams}&order[chapter]=desc&limit=50&offset=${offset}`,
+      `/manga/${mangaId}/feed?${langParams}&order[chapter]=desc&limit=100&offset=${offset}`,
       { next: { revalidate: 600 } }
     );
   },
@@ -78,7 +74,7 @@ export const mangaApi = {
       params.status.forEach(s => searchParams.append('status[]', s));
     }
 
-    return fetchMangaDex<MangaDexResponse<Manga[]>>(`/manga?${searchParams.toString()}`);
+    return fetchMangaDex<MangaDexResponse<Manga[]>>(`/manga?${searchParams.toString()}&contentRating[]=safe&contentRating[]=suggestive`);
   },
 
   getTags: async (): Promise<any> => {

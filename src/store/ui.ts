@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile';
+type PanelType = 'none' | 'search' | 'bookmark' | 'genre' | 'profile' | 'readerSettings';
 
 interface ReaderSettings {
   direction: 'vertical' | 'rtl' | 'ltr';
   fitMode: 'fit' | 'original' | 'stretch';
   autoScroll: boolean;
+  autoScrollSpeed: number;
+  theme: 'dark' | 'sepia' | 'light';
 }
 
 interface UIState {
@@ -15,12 +17,14 @@ interface UIState {
   readerSettings: ReaderSettings;
   bookmarks: any[];
   readingHistory: any[];
+  activeGenreId: string | null;
   openPanel: (name: PanelType) => void;
   closePanel: () => void;
   updateReaderSettings: (settings: Partial<ReaderSettings>) => void;
   addBookmark: (manga: any) => void;
   removeBookmark: (mangaId: string) => void;
   addToHistory: (entry: any) => void;
+  setActiveGenreId: (id: string | null) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -32,9 +36,12 @@ export const useUIStore = create<UIState>()(
         direction: 'vertical',
         fitMode: 'fit',
         autoScroll: false,
+        autoScrollSpeed: 1,
+        theme: 'dark',
       },
       bookmarks: [],
       readingHistory: [],
+      activeGenreId: null,
       openPanel: (name) => set({ activePanel: name, isOpen: true }),
       closePanel: () => set({ isOpen: false, activePanel: 'none' }),
       updateReaderSettings: (settings) =>
@@ -51,9 +58,10 @@ export const useUIStore = create<UIState>()(
         set((state) => ({
           readingHistory: [entry, ...state.readingHistory.filter((h) => h.mangaId !== entry.mangaId)].slice(0, 50),
         })),
+      setActiveGenreId: (id) => set({ activeGenreId: id }),
     }),
     {
-      name: 'noir-manhwa-storage',
+      name: 'noir-manhwa-storage-v2',
     }
   )
 );

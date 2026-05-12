@@ -25,6 +25,30 @@
     --ring: 0 72% 35%;
     --radius: 0.75rem;
   }
+
+  /* Sepia Theme for Reader */
+  .theme-sepia {
+    --background: 35 30% 88%;
+    --foreground: 25 30% 15%;
+    --card: 35 25% 85%;
+    --card-foreground: 25 30% 15%;
+    --primary: 25 60% 35%;
+    --secondary: 35 20% 80%;
+    --muted-foreground: 25 10% 40%;
+    --border: 35 15% 75%;
+  }
+
+  /* Light Theme for Reader */
+  .theme-light {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --secondary: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --border: 240 5.9% 90%;
+  }
 }
 
 @layer base {
@@ -48,6 +72,9 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .reader-container {
+    @apply transition-colors duration-300;
+  }
 }
 
 input[type="text"], input[type="search"] {
@@ -56,4 +83,8 @@ input[type="text"], input[type="search"] {
 
 .manga-card-hover {
   @apply transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5),0_4px_10px_rgba(0,0,0,0.3)];
+}
+
+.bottom-nav-glow {
+  box-shadow: 0 -4px 10px rgba(153, 27, 27, 0.1);
 }

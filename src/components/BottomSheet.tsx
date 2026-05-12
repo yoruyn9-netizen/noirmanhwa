@@ -3,11 +3,13 @@
 import React, { useEffect, useRef } from 'react';
 import { useUIStore } from '@/store/ui';
 import { cn } from '@/lib/utils';
-import { X, Search, Bookmark, Grid, User, Trash2 } from 'lucide-react';
+import { X, Search, Bookmark, Grid, User, Trash2, Settings, ArrowRight, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 
 export default function BottomSheet() {
-  const { activePanel, isOpen, closePanel, bookmarks, removeBookmark } = useUIStore();
+  const { activePanel, isOpen, closePanel, bookmarks, removeBookmark, readerSettings, updateReaderSettings } = useUIStore();
   const sheetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -23,6 +25,108 @@ export default function BottomSheet() {
 
   const renderContent = () => {
     switch (activePanel) {
+      case 'readerSettings':
+        return (
+          <div className="p-6 space-y-8">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Settings className="w-5 h-5 text-accent" /> Reader Settings
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Reading Direction</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['vertical', 'ltr', 'rtl'] as const).map((dir) => (
+                    <button
+                      key={dir}
+                      onClick={() => updateReaderSettings({ direction: dir })}
+                      className={cn(
+                        "py-2 text-xs font-bold uppercase rounded-lg border transition-all",
+                        readerSettings.direction === dir ? "bg-accent border-accent text-white" : "bg-secondary/20 border-white/5 text-muted-foreground"
+                      )}
+                    >
+                      {dir}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Image Fit</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['fit', 'original', 'stretch'] as const).map((fit) => (
+                    <button
+                      key={fit}
+                      onClick={() => updateReaderSettings({ fitMode: fit })}
+                      className={cn(
+                        "py-2 text-xs font-bold uppercase rounded-lg border transition-all",
+                        readerSettings.fitMode === fit ? "bg-accent border-accent text-white" : "bg-secondary/20 border-white/5 text-muted-foreground"
+                      )}
+                    >
+                      {fit === 'fit' ? 'Fit Width' : fit}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Reader Theme</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['dark', 'sepia', 'light'] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => updateReaderSettings({ theme: t })}
+                      className={cn(
+                        "py-2 text-xs font-bold uppercase rounded-lg border transition-all",
+                        readerSettings.theme === t ? "ring-2 ring-accent border-transparent" : "border-white/5",
+                        t === 'dark' ? "bg-zinc-900 text-white" : t === 'sepia' ? "bg-[#f4ecd8] text-[#5b4636]" : "bg-white text-black"
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-bold">Auto Scroll</label>
+                    <p className="text-[10px] text-muted-foreground uppercase">Automatically scroll the pages</p>
+                  </div>
+                  <Switch 
+                    checked={readerSettings.autoScroll} 
+                    onCheckedChange={(checked) => updateReaderSettings({ autoScroll: checked })} 
+                  />
+                </div>
+                
+                {readerSettings.autoScroll && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                      <span>Slow</span>
+                      <span>Speed: {readerSettings.autoScrollSpeed}x</span>
+                      <span>Fast</span>
+                    </div>
+                    <Slider
+                      value={[readerSettings.autoScrollSpeed]}
+                      min={0.5}
+                      max={5}
+                      step={0.5}
+                      onValueChange={([val]) => updateReaderSettings({ autoScrollSpeed: val })}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <button 
+              onClick={closePanel}
+              className="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 mt-4"
+            >
+              Apply Settings
+            </button>
+          </div>
+        );
       case 'search':
         return (
           <div className="p-6 space-y-6">
@@ -119,19 +223,19 @@ export default function BottomSheet() {
                 Y
               </div>
               <div>
-                <h2 className="text-xl font-bold">Yan</h2>
-                <p className="text-sm text-accent">Pro Member</p>
+                <h2 className="text-xl font-bold">Noir Guest</h2>
+                <p className="text-sm text-accent">Free Member</p>
               </div>
             </div>
             <div className="space-y-2">
-              {['Reading History', 'Settings', 'Download Manager', 'App Theme'].map(item => (
+              {['Reading History', 'Settings', 'Clear Cache'].map(item => (
                 <button key={item} className="w-full flex items-center justify-between p-4 bg-secondary/20 rounded-xl hover:bg-secondary/40 transition-colors">
                   <span className="font-medium">{item}</span>
-                  <X className="w-4 h-4 rotate-45 text-muted-foreground" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 </button>
               ))}
               <button className="w-full p-4 mt-4 text-center bg-primary text-white rounded-xl font-bold hover:bg-accent transition-colors shadow-lg shadow-primary/20">
-                Log Out
+                Log In
               </button>
             </div>
           </div>
