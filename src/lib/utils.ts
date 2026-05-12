@@ -36,3 +36,14 @@ export function formatTimeAgo(dateString: string): string {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
+
+/**
+ * Strips markdown links and formatting for clean previews
+ */
+export function cleanDescription(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Strip markdown links but keep text
+    .replace(/[#*`~]/g, '') // Strip common markdown symbols
+    .trim();
+}
