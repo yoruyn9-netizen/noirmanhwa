@@ -20,6 +20,8 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -119,6 +121,9 @@ export default function ReaderView({
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[75vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-8">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Reader Calibration Settings</SheetTitle>
+            </SheetHeader>
             <ReaderSettings prefs={prefs} onChange={setPrefs} />
           </SheetContent>
         </Sheet>
