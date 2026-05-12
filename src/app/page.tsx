@@ -14,12 +14,23 @@ export default async function Home() {
   let error: string | null = null;
 
   try {
-    const [trendingRes, latestRes] = await Promise.all([
+    // Use allSettled to prevent the whole page from failing if one node is slow
+    const results = await Promise.allSettled([
       mangaApi.getTrending(),
       mangaApi.getLatest()
     ]);
-    trending = trendingRes.data || [];
-    latest = latestRes.data || [];
+
+    if (results[0].status === 'fulfilled') {
+      trending = results[0].value.data || [];
+    }
+    
+    if (results[1].status === 'fulfilled') {
+      latest = results[1].value.data || [];
+    }
+
+    if (trending.length === 0 && latest.length === 0) {
+      error = "Connection lost. Tap to retry.";
+    }
   } catch (err) {
     console.error('[Page Error] Home Fetch Failure:', err);
     error = "Connection lost. Tap to retry.";
@@ -44,15 +55,15 @@ export default async function Home() {
               <Flame className="w-3 h-3 text-accent fill-accent" />
               <span className="text-[8px] font-black uppercase tracking-widest text-accent">Hot Transmission</span>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+            <h1 className="text-xl font-black uppercase tracking-tighter leading-tight text-white drop-shadow-2xl">
               {getMangaTitle(heroManga)}
             </h1>
-            <p className="text-[10px] text-neutral-400 font-medium line-clamp-2 leading-relaxed max-w-xs">
+            <p className="text-[9px] text-neutral-400 font-medium line-clamp-2 leading-relaxed max-w-xs">
               {heroManga.attributes.description.en || "Synchronizing data summary..."}
             </p>
             <Link 
               href={`/series/${heroManga.id}`}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-xl"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-black font-black rounded-2xl text-[9px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-xl w-fit"
             >
               <Play className="w-3 h-3 fill-current" /> Initialize Link
             </Link>
@@ -64,7 +75,7 @@ export default async function Home() {
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <div className="space-y-0.5">
-            <h2 className="text-sm font-black uppercase tracking-tighter text-white">Latest Uploads</h2>
+            <h2 className="text-[11px] font-black uppercase tracking-tighter text-white">Latest Uploads</h2>
             <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Real-time Data Stream</p>
           </div>
         </div>
@@ -89,7 +100,7 @@ export default async function Home() {
                   </div>
                 </div>
                 <div className="px-1 space-y-1">
-                  <h3 className="text-[11px] font-black uppercase tracking-tight text-white line-clamp-1 group-hover:text-accent transition-colors">
+                  <h3 className="text-[10px] font-black uppercase tracking-tight text-white line-clamp-1 group-hover:text-accent transition-colors">
                     {getMangaTitle(manga)}
                   </h3>
                   <div className="flex items-center gap-2">
