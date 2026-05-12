@@ -12,16 +12,16 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { id: 'home', icon: Home, label: 'Home', action: () => { router.push('/'); closePanel(); } },
-    { id: 'search', icon: Search, label: 'Search', action: () => openPanel('search') },
-    { id: 'bookmark', icon: Bookmark, label: 'Books', action: () => openPanel('bookmark') },
-    { id: 'genre', icon: Grid, label: 'Genre', action: () => openPanel('genre') },
-    { id: 'profile', icon: User, label: 'Profile', action: () => openPanel('profile') },
+    { id: 'home', icon: Home, label: 'HOME', action: () => { router.push('/'); closePanel(); } },
+    { id: 'search', icon: Search, label: 'SEARCH', action: () => openPanel('search') },
+    { id: 'bookmark', icon: Bookmark, label: 'BOOKS', action: () => openPanel('bookmark') },
+    { id: 'genre', icon: Grid, label: 'GENRE', action: () => openPanel('genre') },
+    { id: 'profile', icon: User, label: 'PROFILE', action: () => openPanel('profile') },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/5 pb-safe-area-inset-bottom">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-4">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl border border-white/5 px-6 shadow-[0_15px_30px_rgba(0,0,0,0.8)] w-[90%] max-w-md pb-safe-area-inset-bottom">
+      <div className="flex justify-around items-center h-20">
         {navItems.map((item) => {
           const isActive = (item.id === 'home' && pathname === '/' && !isOpen) || 
                            (activePanel === item.id && isOpen);
@@ -31,14 +31,14 @@ export default function BottomNav() {
               key={item.id}
               onClick={item.action}
               className={cn(
-                "relative flex flex-col items-center justify-center w-full transition-all duration-300",
+                "relative flex flex-col items-center justify-center w-full transition-all duration-500 py-2",
                 isActive ? "text-accent" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className={cn("w-6 h-6 mb-1 transition-transform", isActive && "scale-110")} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">{item.label}</span>
+              <item.icon className={cn("w-6 h-6 mb-1.5 transition-all duration-500", isActive && "scale-110 drop-shadow-[0_0_8px_rgba(185,28,28,0.8)]")} />
+              <span className="text-[9px] font-black uppercase tracking-[0.15em]">{item.label}</span>
               {isActive && (
-                <div className="absolute -bottom-1 w-8 h-0.5 bg-accent shadow-[0_0_8px_rgba(185,28,28,0.8)] rounded-full animate-in fade-in zoom-in" />
+                <div className="absolute -bottom-1 w-6 h-1 bg-accent shadow-[0_0_15px_rgba(185,28,28,1)] rounded-full animate-in fade-in zoom-in" />
               )}
             </button>
           );

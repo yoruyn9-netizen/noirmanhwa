@@ -4,50 +4,26 @@
 
 @layer base {
   :root {
-    --background: 240 23% 3%;
+    --background: 240 23% 2%;
     --foreground: 210 40% 98%;
-    --card: 240 23% 6%;
+    --card: 240 23% 4%;
     --card-foreground: 210 40% 98%;
-    --popover: 240 23% 5%;
+    --popover: 240 23% 4%;
     --popover-foreground: 210 40% 98%;
     --primary: 0 72% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 240 3.7% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --muted: 240 3.7% 10%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 0 72% 42%;
+    --accent: 0 72% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 240 3.7% 12%;
+    --input: 240 3.7% 12%;
     --ring: 0 72% 35%;
-    --radius: 0.75rem;
-  }
-
-  /* Sepia Theme for Reader */
-  .theme-sepia {
-    --background: 35 30% 88%;
-    --foreground: 25 30% 15%;
-    --card: 35 25% 85%;
-    --card-foreground: 25 30% 15%;
-    --primary: 25 60% 35%;
-    --secondary: 35 20% 80%;
-    --muted-foreground: 25 10% 40%;
-    --border: 35 15% 75%;
-  }
-
-  /* Light Theme for Reader */
-  .theme-light {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --secondary: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --border: 240 5.9% 90%;
+    --radius: 1rem;
   }
 }
 
@@ -56,14 +32,14 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary selection:text-white;
-    -webkit-tap-highlight-color: transparent;
+    @apply bg-background text-foreground antialiased selection:bg-primary selection:text-white;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-[rgba(15,15,19,0.82)] backdrop-blur-2xl border border-white/5;
+    @apply bg-black/60 backdrop-blur-xl border border-white/5;
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
@@ -72,19 +48,36 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .reader-container {
-    @apply transition-colors duration-300;
+  .shinigami-card {
+    @apply relative overflow-hidden rounded-2xl bg-[#0f0f13] border border-white/5 transition-all duration-500 hover:border-accent/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(153,27,27,0.15)];
+  }
+  .text-glow {
+    text-shadow: 0 0 10px rgba(185, 28, 28, 0.5);
   }
 }
 
-input[type="text"], input[type="search"] {
+input[type="text"], input[type="search"], input[type="email"], input[type="password"], textarea {
   font-size: 16px !important;
 }
 
-.manga-card-hover {
-  @apply transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5),0_4px_10px_rgba(0,0,0,0.3)];
+.manga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
 }
 
-.bottom-nav-glow {
-  box-shadow: 0 -4px 10px rgba(153, 27, 27, 0.1);
+@media (max-width: 640px) {
+  .manga-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+.bottom-nav-active {
+  @apply text-accent;
+}
+
+.bottom-nav-active::after {
+  content: '';
+  @apply absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-accent rounded-full shadow-[0_0_15px_rgba(153,27,27,1)];
 }
