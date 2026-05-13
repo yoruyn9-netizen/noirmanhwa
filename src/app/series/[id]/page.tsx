@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import SafeImage from '@/components/SafeImage';
-import { getMangaTitle, formatTimeAgo, getCoverUrl, cleanDescription } from '@/lib/utils';
+import { getMangaTitle, formatTimeAgo, getCoverUrl, getMangaDescription } from '@/lib/utils';
 import Link from 'next/link';
 import BookmarkButton from '@/components/BookmarkButton';
 import { 
@@ -13,16 +12,14 @@ import {
   ChevronRight, 
   Calendar,
   Languages,
-  Clock
+  Clock,
+  Globe
 } from 'lucide-react';
 
 interface SeriesPageProps {
   params: Promise<{ id: string }>;
 }
 
-/**
- * Detailed Manga view with sorted chapter list and robust data handling.
- */
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { id } = await params;
   console.log(`[Series] Loading Node: ${id}`);
@@ -39,6 +36,10 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
     const chapters = chaptersRes.data || [];
     const title = getMangaTitle(manga);
     const coverUrl = getCoverUrl(manga, 'original');
+    const description = getMangaDescription(manga);
+
+    // Identify if Indonesian content exists
+    const hasIndonesian = chapters.some((c: any) => c.attributes.translatedLanguage === 'id');
 
     return (
       <div className="max-w-2xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
@@ -65,37 +66,42 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                   {tag.attributes.name.en}
                 </span>
               ))}
+              {hasIndonesian && (
+                <span className="text-[7px] font-black uppercase tracking-widest px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 flex items-center gap-1.5">
+                  <Globe className="w-2.5 h-2.5" /> ID
+                </span>
+              )}
             </div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter leading-tight text-glow text-white">{title}</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tighter leading-tight text-glow text-white px-4">{title}</h1>
             <div className="flex items-center justify-center gap-6 text-neutral-500 font-black text-[8px] uppercase tracking-[0.2em]">
-              <span className="flex items-center gap-2 text-accent"><Calendar className="w-3 h-3" /> {manga.attributes.year || 'Unknown'}</span>
+              <span className="flex items-center gap-2 text-accent"><Calendar className="w-3 h-3" /> {manga.attributes.year || '2024'}</span>
               <span className="w-1 h-1 rounded-full bg-neutral-800" />
               <span className="flex items-center gap-2"><Clock className="w-3 h-3" /> {manga.attributes.status}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 px-4">
              <BookmarkButton manga={manga} />
              <Link 
               href={chapters.length > 0 ? `/reader/${chapters[0].id}` : '#'} 
               className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
             >
-               <Play className="w-4 h-4 fill-current" /> START READING
+               <Play className="w-4 h-4 fill-current" /> READ NOW
              </Link>
           </div>
 
-          <div className="p-8 bg-[#0a0a0f] border border-white/5 rounded-[2.5rem] space-y-4 shadow-2xl">
+          <div className="mx-4 p-8 bg-[#0a0a0f] border border-white/5 rounded-[2.5rem] space-y-4 shadow-2xl">
             <h3 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-3 text-accent">
-              <Info className="w-3.5 h-3.5" /> TRANSMISSION LOG
+              <Info className="w-3.5 h-3.5" /> SYNOPSIS LOG {hasIndonesian && "(ID)"}
             </h3>
-            <p className="text-[11px] text-neutral-400 leading-relaxed font-medium opacity-80 italic">
-              {cleanDescription(manga.attributes.description.en || manga.attributes.description.ja || "Incomplete synopsis data.")}
+            <p className="text-[11px] text-neutral-400 leading-relaxed font-medium opacity-80">
+              {description}
             </p>
           </div>
         </div>
 
-        <section className="space-y-8">
-          <div className="flex items-center justify-between px-4">
+        <section className="space-y-8 px-4">
+          <div className="flex items-center justify-between px-2">
             <h2 className="text-[11px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
               <List className="w-4 h-4 text-accent" /> Chapter Stack
             </h2>
@@ -108,28 +114,36 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-600">No signals detected in this sector.</p>
               </div>
             ) : (
-              chapters.map((chapter: any) => (
-                <Link 
-                  key={chapter.id} 
-                  href={`/reader/${chapter.id}`}
-                  className="flex items-center justify-between p-5 bg-[#0a0a0f] rounded-2xl border border-white/5 hover:border-accent/40 hover:bg-accent/5 transition-all group shadow-xl"
-                >
-                  <div className="flex items-center gap-5">
-                    <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center text-accent font-black text-[10px] group-hover:bg-accent group-hover:text-white transition-all">
-                      {chapter.attributes.chapter}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-black text-[11px] uppercase tracking-tight text-white group-hover:text-accent transition-colors">Unit {chapter.attributes.chapter}</h4>
-                      <div className="flex items-center gap-3 text-[7px] font-black text-neutral-600 uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5"><Languages className="w-2.5 h-2.5" /> {chapter.attributes.translatedLanguage}</span>
-                        <span>•</span>
-                        <span>{formatTimeAgo(chapter.attributes.publishAt)}</span>
+              chapters.map((chapter: any) => {
+                const isIndo = chapter.attributes.translatedLanguage === 'id';
+                return (
+                  <Link 
+                    key={chapter.id} 
+                    href={`/reader/${chapter.id}`}
+                    className="flex items-center justify-between p-5 bg-[#0a0a0f] rounded-2xl border border-white/5 hover:border-accent/40 hover:bg-accent/5 transition-all group shadow-xl"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center font-black text-[10px] transition-all",
+                        isIndo ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-neutral-900 text-accent group-hover:bg-accent group-hover:text-white"
+                      )}>
+                        {chapter.attributes.chapter}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-black text-[11px] uppercase tracking-tight text-white group-hover:text-accent transition-colors">Unit {chapter.attributes.chapter}</h4>
+                        <div className="flex items-center gap-3 text-[7px] font-black text-neutral-600 uppercase tracking-widest">
+                          <span className={cn("flex items-center gap-1.5", isIndo && "text-green-500/60")}>
+                            <Languages className="w-2.5 h-2.5" /> {isIndo ? 'INDONESIA' : 'ENGLISH'}
+                          </span>
+                          <span>•</span>
+                          <span>{formatTimeAgo(chapter.attributes.publishAt)}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-neutral-800 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                </Link>
-              ))
+                    <ChevronRight className="w-4 h-4 text-neutral-800 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                  </Link>
+                );
+              })
             )}
           </div>
         </section>

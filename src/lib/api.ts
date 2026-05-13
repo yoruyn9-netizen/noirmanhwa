@@ -1,9 +1,9 @@
-
 /**
  * Direct MangaDex API Wrapper - Optimized for Manhwa/Manga/Manhua only.
  * Intelligent Environment Switching: 
  * - Server: Direct fast fetch
  * - Client: Proxied fetch to bypass CORS
+ * - Language: Prioritizes Indonesian (id) and English (en)
  */
 
 const MANGADEX_BASE = 'https://api.mangadex.org';
@@ -31,7 +31,6 @@ async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
 
 function getStrictFilterParams() {
   const params = new URLSearchParams();
-  // Default filtering if none specified
   params.append('excludedTags[]', NOVEL_TAG_ID); // Strict Novel Exclusion
   params.append('contentRating[]', 'safe');
   params.append('contentRating[]', 'suggestive');
@@ -76,8 +75,9 @@ export const mangaApi = {
   getChapters: async (mangaId: string) => {
     if (isClient) return fetch(`/api/manga/${mangaId}/feed`).then(res => res.json());
 
+    // Requesting both Indonesian and English chapters
     const data = await fetchMangaDex(
-      `/manga/${mangaId}/feed?translatedLanguage[]=en&translatedLanguage[]=id&order[chapter]=asc&limit=500`,
+      `/manga/${mangaId}/feed?translatedLanguage[]=id&translatedLanguage[]=en&order[chapter]=asc&limit=500`,
       { next: { revalidate: 1800 } }
     );
     
@@ -118,7 +118,6 @@ export const mangaApi = {
     status.forEach(s => params.append('status[]', s));
     languages.forEach(l => params.append('originalLanguage[]', l));
     
-    // If no languages specified, default to the three main ones
     if (languages.length === 0) {
       params.append('originalLanguage[]', 'ja');
       params.append('originalLanguage[]', 'ko');

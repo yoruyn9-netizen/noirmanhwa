@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import MangaCover from '@/components/MangaCover';
 import GenreSlider from '@/components/GenreSlider';
 import Link from 'next/link';
-import { Play, Clock, Activity, Wifi } from 'lucide-react';
-import { getMangaTitle, cleanDescription } from '@/lib/utils';
+import { Play, Clock, Activity } from 'lucide-react';
+import { getMangaTitle, getMangaDescription } from '@/lib/utils';
 
 export default async function Home() {
   console.log('[Page] Loading Homepage');
@@ -45,7 +44,7 @@ export default async function Home() {
             <span className="text-[6px] font-black text-accent uppercase tracking-[0.4em]">Signal: Stable</span>
             <div className="w-1 h-1 rounded-full bg-accent shadow-[0_0_8px_rgba(139,92,246,0.8)] animate-pulse" />
           </div>
-          <span className="text-[5px] font-bold text-neutral-600 uppercase tracking-[0.5em] opacity-40">Uplink: Active / 2.4GHz</span>
+          <span className="text-[5px] font-bold text-neutral-600 uppercase tracking-[0.5em] opacity-40">Uplink: Active / ID-Node</span>
         </div>
       </div>
 
@@ -62,13 +61,13 @@ export default async function Home() {
           <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-10 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 border border-accent/20 rounded-full w-fit backdrop-blur-md">
               <Activity className="w-3 h-3 text-accent animate-pulse" />
-              <span className="text-[7px] font-black uppercase tracking-widest text-accent">Hot Transmission</span>
+              <span className="text-[7px] font-black uppercase tracking-widest text-accent">Transmission Data (ID/EN)</span>
             </div>
             <h1 className="text-xl font-black uppercase tracking-tighter leading-tight text-white drop-shadow-2xl">
               {getMangaTitle(heroManga)}
             </h1>
             <p className="text-[9px] text-neutral-400 font-medium line-clamp-2 leading-relaxed max-w-xs opacity-80">
-              {cleanDescription(heroManga.attributes.description.en || heroManga.attributes.description.ja || "Synchronizing data summary...")}
+              {getMangaDescription(heroManga)}
             </p>
             <Link 
               href={`/series/${heroManga.id}`}
@@ -90,7 +89,7 @@ export default async function Home() {
         <div className="flex items-center justify-between px-2 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
           <div className="space-y-1">
             <h2 className="text-[11px] font-black uppercase tracking-tighter text-white">Latest Uploads</h2>
-            <p className="text-[7px] font-black text-neutral-600 uppercase tracking-widest">Real-time Data Stream</p>
+            <p className="text-[7px] font-black text-neutral-600 uppercase tracking-widest">Real-time Stream Index</p>
           </div>
           <div className="w-12 h-px bg-white/5" />
         </div>
@@ -117,12 +116,7 @@ export default async function Home() {
                     className="group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-4">
-                    <span className="text-[7px] font-black uppercase text-accent tracking-widest drop-shadow-md">Read Now</span>
-                  </div>
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
-                    <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
-                       <Play className="w-2.5 h-2.5 text-white fill-current" />
-                    </div>
+                    <span className="text-[7px] font-black uppercase text-accent tracking-widest drop-shadow-md">Access Node</span>
                   </div>
                 </div>
                 <div className="px-1 space-y-1.5">

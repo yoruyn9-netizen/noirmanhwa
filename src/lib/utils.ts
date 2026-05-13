@@ -22,7 +22,17 @@ export function getCoverUrl(manga: Manga, size: '256' | '512' | 'original' = '51
 
 export function getMangaTitle(manga: Manga): string {
   if (!manga?.attributes?.title) return 'Unknown Title';
-  return manga.attributes.title.en || manga.attributes.title.ja || manga.attributes.title['ja-ro'] || Object.values(manga.attributes.title)[0] || 'Unknown Title';
+  const t = manga.attributes.title;
+  // Prioritize Indonesian then English
+  return t.id || t.en || t.ja || t['ja-ro'] || Object.values(t)[0] || 'Unknown Title';
+}
+
+export function getMangaDescription(manga: Manga): string {
+  if (!manga?.attributes?.description) return 'Synchronizing data summary...';
+  const desc = manga.attributes.description;
+  // Prioritize Indonesian then English
+  const text = desc.id || desc.en || desc.ja || Object.values(desc)[0] || 'No summary data found.';
+  return cleanDescription(text);
 }
 
 export function formatTimeAgo(dateString: string): string {
