@@ -1,23 +1,29 @@
 
 "use client";
 
-import React from 'react';
-import { Home, Search, Bookmark, Grid, User } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Home, Search, Bookmark, Grid, User, Fingerprint } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useUIStore } from '@/store/ui';
+import { useAuthStore } from '@/store/authStore';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { isGlobalUIVisible } = useUIStore();
+  const { user, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const navItems = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
     { id: 'search', icon: Search, label: 'SCAN', path: '/search' },
     { id: 'bookmark', icon: Bookmark, label: 'ARCHIVE', path: '/bookmarks' },
     { id: 'genre', icon: Grid, label: 'GENRE', path: '/genre' },
-    { id: 'profile', icon: User, label: 'LOGIN', path: '/profile' },
+    { id: 'profile', icon: user ? User : Fingerprint, label: user ? 'PROFILE' : 'LOGIN', path: user ? '/profile' : '/login' },
   ];
 
   return (
