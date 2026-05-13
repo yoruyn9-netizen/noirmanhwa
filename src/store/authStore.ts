@@ -33,7 +33,7 @@ interface AuthState {
 
 // ⚠️ HARDCODED ADMIN - HAPUS SEBELUM PRODUCTION
 const ADMIN_EMAIL = "jullyan382@gmail.com";
-const ADMIN_PASS = "Yan123";
+const ADMIN_PASS = "YAN123";
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -117,7 +117,8 @@ export const useAuthStore = create<AuthState>()(
           input: email,
           normalized: normalizedEmail,
           target: targetAdminEmail,
-          match: normalizedEmail === targetAdminEmail
+          match: normalizedEmail === targetAdminEmail,
+          passMatch: password === ADMIN_PASS
         });
 
         try {
