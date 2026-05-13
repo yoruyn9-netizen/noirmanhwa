@@ -2,17 +2,15 @@
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import SafeImage from '@/components/SafeImage';
-import { getMangaTitle, formatTimeAgo, getCoverUrl, getMangaDescription, cn } from '@/lib/utils';
+import { getMangaTitle, getCoverUrl, getMangaDescription } from '@/lib/utils';
 import Link from 'next/link';
 import BookmarkButton from '@/components/BookmarkButton';
+import ChapterList from '@/components/ChapterList';
 import { 
   ArrowLeft, 
   Play, 
   Info, 
-  List, 
-  ChevronRight, 
   Calendar,
-  Languages,
   Clock,
   Globe
 } from 'lucide-react';
@@ -101,53 +99,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           </div>
         </div>
 
-        <section className="space-y-8 px-4">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-[11px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
-              <List className="w-4 h-4 text-accent" /> Chapter Stack
-            </h2>
-            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{chapters.length} Units</span>
-          </div>
-
-          <div className="grid gap-3">
-            {chapters.length === 0 ? (
-              <div className="text-center py-20 bg-[#0a0a0f] rounded-[2.5rem] border border-dashed border-white/10">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-600">No signals detected in this sector.</p>
-              </div>
-            ) : (
-              chapters.map((chapter: any) => {
-                const isIndo = chapter.attributes.translatedLanguage === 'id';
-                return (
-                  <Link 
-                    key={chapter.id} 
-                    href={`/reader/${chapter.id}`}
-                    className="flex items-center justify-between p-5 bg-[#0a0a0f] rounded-2xl border border-white/5 hover:border-accent/40 hover:bg-accent/5 transition-all group shadow-xl"
-                  >
-                    <div className="flex items-center gap-5">
-                      <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center font-black text-[10px] transition-all",
-                        isIndo ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-neutral-900 text-accent group-hover:bg-accent group-hover:text-white"
-                      )}>
-                        {chapter.attributes.chapter}
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-black text-[11px] uppercase tracking-tight text-white group-hover:text-accent transition-colors">Unit {chapter.attributes.chapter}</h4>
-                        <div className="flex items-center gap-3 text-[7px] font-black text-neutral-600 uppercase tracking-widest">
-                          <span className={cn("flex items-center gap-1.5", isIndo && "text-green-500/60")}>
-                            <Languages className="w-2.5 h-2.5" /> {isIndo ? 'INDONESIA' : 'ENGLISH'}
-                          </span>
-                          <span>•</span>
-                          <span>{formatTimeAgo(chapter.attributes.publishAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-neutral-800 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        </section>
+        <ChapterList chapters={chapters} />
       </div>
     );
   } catch (err: any) {
