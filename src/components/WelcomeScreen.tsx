@@ -1,19 +1,32 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
+import { useUIStore } from '@/store/ui';
 
 export default function WelcomeScreen() {
   const [visible, setVisible] = useState(true);
   const [fading, setFading] = useState(false);
+  const { setGlobalUIVisible } = useUIStore();
 
   useEffect(() => {
+    // Hide global UI immediately when welcome screen starts
+    setGlobalUIVisible(false);
+
     const timer = setTimeout(() => {
       setFading(true);
-      setTimeout(() => setVisible(false), 800);
+      setTimeout(() => {
+        setVisible(false);
+        // Restore global UI visibility once welcome screen is completely gone
+        setGlobalUIVisible(true);
+      }, 800);
     }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [setGlobalUIVisible]);
 
   if (!visible) return null;
 
