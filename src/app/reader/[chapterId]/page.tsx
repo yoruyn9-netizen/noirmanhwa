@@ -9,38 +9,32 @@ interface ReaderPageProps {
   params: Promise<{ chapterId: string }>;
 }
 
-/**
- * Server component that fetches all necessary chapter data for the reader.
- * Orchestrates chapter details, image servers, and navigation links.
- */
 export default async function ReaderPage({ params }: ReaderPageProps) {
   const { chapterId } = await params;
-  console.log(`[Reader] Initializing Transmission for Chapter: ${chapterId}`);
 
   try {
-    // 1. Fetch Chapter Metadata & Images
+    // Parallel fetch metadata and server node
     const [atHomeRes, chapterRes] = await Promise.all([
       mangaApi.getAtHomeServer(chapterId),
       fetch(`https://api.mangadex.org/chapter/${chapterId}`, { next: { revalidate: 3600 } }).then(res => res.json())
     ]);
 
-    // Enhanced response validation
     if (!atHomeRes || atHomeRes.error || !atHomeRes.chapter) {
-      throw new Error("Failed to initialize image server nodes.");
+      throw new Error("Target node synchronization failure.");
     }
 
     const { baseUrl, chapter: pagesData } = atHomeRes;
     
-    // Fallback logic: prefer dataSaver for mobile speed, but use data if dataSaver is empty
+    // Intelligent fallback: check both streams
     const pages = (pagesData.dataSaver && pagesData.dataSaver.length > 0) 
       ? pagesData.dataSaver 
       : (pagesData.data || []);
 
     if (!pages || pages.length === 0) {
-      throw new Error("Empty data stream detected in this sector.");
+      throw new Error("Null frequency detected in data stream.");
     }
 
-    // 2. Fetch Navigation context (Manga ID -> Feed)
+    // Navigation Context
     const mangaRelationship = chapterRes.data?.relationships?.find((r: any) => r.type === 'manga');
     const mangaId = mangaRelationship?.id;
     
@@ -53,6 +47,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       const currentIndex = chapters.findIndex((c: any) => c.id === chapterId);
       
       if (currentIndex !== -1) {
+        // Chapters are sorted ASC by default in mangaApi.getChapters
         prevChapterId = currentIndex > 0 ? chapters[currentIndex - 1].id : null;
         nextChapterId = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1].id : null;
       }
@@ -64,7 +59,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
         pages={pages}
         baseUrl={baseUrl}
         hash={pagesData.hash}
-        chapterNum={chapterRes.data?.attributes?.chapter || 'N/A'}
+        chapterNum={chapterRes.data?.attributes?.chapter || '?'}
         title={chapterRes.data?.attributes?.title}
         prevChapterId={prevChapterId}
         nextChapterId={nextChapterId}
@@ -72,24 +67,22 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       />
     );
   } catch (err: any) {
-    console.error('[Reader Error] Node Critical Failure:', err);
     return (
-      <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center p-8 space-y-8 text-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent pointer-events-none" />
-        <div className="w-20 h-20 bg-accent/5 rounded-[2.5rem] border border-accent/20 flex items-center justify-center animate-pulse shadow-2xl shadow-accent/10">
-          <AlertTriangle className="w-10 h-10 text-accent" />
+      <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center p-10 text-center space-y-8">
+        <div className="w-20 h-20 bg-accent/5 rounded-[2.5rem] border border-accent/20 flex items-center justify-center animate-pulse">
+          <AlertTriangle className="w-8 h-8 text-accent" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-black uppercase tracking-tighter text-white text-glow">Signal Lost</h1>
-          <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] max-w-xs leading-relaxed opacity-60">
-            {err.message || "Transmission interrupted by external node latency."}
+          <h1 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Signal Lost</h1>
+          <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-[200px] leading-relaxed opacity-60">
+            {err.message || "Uplink interrupted by node latency."}
           </p>
         </div>
         <Link 
           href="/" 
-          className="px-12 py-5 bg-white text-black hover:bg-accent hover:text-white transition-all duration-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl active:scale-95"
+          className="px-12 py-5 bg-white text-black hover:bg-accent hover:text-white transition-all duration-500 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em]"
         >
-          Return to Base
+          Return Home
         </Link>
       </div>
     );
