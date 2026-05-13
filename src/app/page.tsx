@@ -4,7 +4,7 @@ import { mangaApi } from '@/lib/api';
 import MangaCover from '@/components/MangaCover';
 import GenreSlider from '@/components/GenreSlider';
 import Link from 'next/link';
-import { Play, Clock, Activity } from 'lucide-react';
+import { Play, Clock, Activity, Wifi } from 'lucide-react';
 import { getMangaTitle, cleanDescription } from '@/lib/utils';
 
 export default async function Home() {
@@ -38,13 +38,15 @@ export default async function Home() {
 
   return (
     <div className="space-y-12 pb-20 max-w-2xl mx-auto px-4 relative">
-      {/* Top Right Status Animation */}
-      <div className="absolute top-0 right-4 flex items-center gap-2 pointer-events-none z-10">
-        <div className="flex flex-col items-end">
-          <span className="text-[7px] font-black text-accent uppercase tracking-[0.4em] animate-pulse">System Active</span>
-          <span className="text-[6px] font-bold text-neutral-600 uppercase tracking-widest opacity-60">Frequency 2.4GHz</span>
+      {/* Top Right Live Telemetry */}
+      <div className="absolute top-0 right-4 flex items-center gap-4 pointer-events-none z-10 select-none">
+        <div className="flex flex-col items-end gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[6px] font-black text-accent uppercase tracking-[0.4em]">Signal: Stable</span>
+            <div className="w-1 h-1 rounded-full bg-accent shadow-[0_0_8px_rgba(139,92,246,0.8)] animate-pulse" />
+          </div>
+          <span className="text-[5px] font-bold text-neutral-600 uppercase tracking-[0.5em] opacity-40">Uplink: Active / 2.4GHz</span>
         </div>
-        <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(139,92,246,0.8)] animate-pulse" />
       </div>
 
       {/* Hero Section */}
