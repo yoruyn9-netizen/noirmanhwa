@@ -2,12 +2,15 @@
 /**
  * Simple Direct MangaDex API Wrapper
  * Optimized for NoirManhwa: Filters for Manga, Manhwa, and Manhua only.
+ * Intelligent Environment Switching: 
+ * - Server-side: Direct MangaDex fetch (faster, supports Next.js cache tags)
+ * - Client-side: Proxied fetch via /api/* (bypasses CORS)
  */
 
 const MANGADEX_BASE = 'https://api.mangadex.org';
-
-// Format Tag IDs
 const NOVEL_TAG_ID = '107fd519-ad95-4296-bd74-3232824da344';
+
+const isClient = typeof window !== 'undefined';
 
 async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
   const url = `${MANGADEX_BASE}${endpoint}`;
@@ -34,16 +37,13 @@ async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
 
 /**
  * Common filters to ensure only Manga, Manhwa, and Manhua are returned.
- * Excludes Novel adaptations to keep the feed clean.
  */
 function getStrictFilterParams() {
   const params = new URLSearchParams();
-  // Filter by origin languages: Japanese, Korean, Chinese, and Hong Kong Chinese
   params.append('originalLanguage[]', 'ja');
   params.append('originalLanguage[]', 'ko');
   params.append('originalLanguage[]', 'zh');
   params.append('originalLanguage[]', 'zh-hk');
-  // Exclude Novel tag
   params.append('excludedTags[]', NOVEL_TAG_ID);
   params.append('contentRating[]', 'safe');
   params.append('contentRating[]', 'suggestive');
@@ -52,6 +52,10 @@ function getStrictFilterParams() {
 
 export const mangaApi = {
   getTrending: async () => {
+    if (isClient) {
+      return fetch('/api/manga?type=trending').then(res => res.json());
+    }
+    
     console.log('[API] Fetching Trending Manga/Manhwa/Manhua');
     const params = getStrictFilterParams();
     params.append('limit', '10');
@@ -64,6 +68,10 @@ export const mangaApi = {
   },
 
   getLatest: async (offset = 0) => {
+    if (isClient) {
+      return fetch(`/api/manga?type=latest&offset=${offset}`).then(res => res.json());
+    }
+
     console.log(`[API] Fetching Latest Uploads (Offset: ${offset})`);
     const params = getStrictFilterParams();
     params.append('limit', '24');
@@ -77,6 +85,10 @@ export const mangaApi = {
   },
 
   getMangaDetails: async (id: string) => {
+    if (isClient) {
+      return fetch(`/api/manga?type=details&id=${id}`).then(res => res.json());
+    }
+
     console.log(`[API] Fetching Details for: ${id}`);
     return fetchMangaDex(`/manga/${id}?includes[]=cover_art&includes[]=author`, {
       next: { revalidate: 3600 }
@@ -84,6 +96,10 @@ export const mangaApi = {
   },
 
   getChapters: async (mangaId: string) => {
+    if (isClient) {
+      return fetch(`/api/manga/${mangaId}/feed`).then(res => res.json());
+    }
+
     console.log(`[API] Fetching Chapters for: ${mangaId}`);
     const data = await fetchMangaDex(
       `/manga/${mangaId}/feed?translatedLanguage[]=en&translatedLanguage[]=id&order[chapter]=asc&order[volume]=asc&limit=500`,
@@ -101,6 +117,9 @@ export const mangaApi = {
   },
 
   getAtHomeServer: async (chapterId: string) => {
+    if (isClient) {
+      return fetch(`/api/at-home/${chapterId}`).then(res => res.json());
+    }
     return fetchMangaDex(`/at-home/server/${chapterId}`, {
       next: { revalidate: 3600 }
     });
@@ -112,6 +131,16 @@ export const mangaApi = {
     status?: string[]; 
     limit?: number 
   }) => {
+    if (isClient) {
+      const p = new URLSearchParams();
+      p.append('type', 'search');
+      if (title) p.append('title', title);
+      includedTags.forEach(t => p.append('includedTags[]', t));
+      status.forEach(s => p.append('status[]', s));
+      p.append('limit', limit.toString());
+      return fetch(`/api/manga?${p.toString()}`).then(res => res.json());
+    }
+
     console.log(`[API] Searching Matrix: "${title}"`);
     const params = getStrictFilterParams();
     params.append('limit', limit.toString());
@@ -127,6 +156,9 @@ export const mangaApi = {
   },
 
   getTags: async () => {
+    if (isClient) {
+      return fetch('/api/manga?type=tags').then(res => res.json());
+    }
     return fetchMangaDex('/manga/tag');
   }
 };
