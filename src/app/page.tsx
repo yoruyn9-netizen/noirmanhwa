@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { mangaApi } from '@/lib/api';
-import MangaCover from '@/components/MangaCover';
+import MangaCard from '@/components/MangaCard';
 import GenreSlider from '@/components/GenreSlider';
+import HeroSlider from '@/components/HeroSlider';
 import Link from 'next/link';
-import { Play, Clock, Activity } from 'lucide-react';
-import { getMangaTitle, getMangaDescription } from '@/lib/utils';
+import { Clock } from 'lucide-react';
+import { getMangaTitle } from '@/lib/utils';
 
 export default async function Home() {
   console.log('[Page] Loading Homepage');
@@ -33,10 +35,8 @@ export default async function Home() {
     error = "Connection lost. Tap to retry.";
   }
 
-  const heroManga = trending[0];
-
   return (
-    <div className="space-y-12 pb-20 max-w-2xl mx-auto px-4 relative">
+    <div className="space-y-12 pb-20 max-w-4xl mx-auto px-4 relative">
       {/* Top Right Live Telemetry */}
       <div className="absolute top-0 right-4 flex items-center gap-4 pointer-events-none z-10 select-none">
         <div className="flex flex-col items-end gap-0.5">
@@ -48,43 +48,17 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Hero Section */}
-      {heroManga && (
-        <section className="relative w-full aspect-[4/5] rounded-[3rem] overflow-hidden group border border-white/5 bg-neutral-900 shadow-2xl animate-in fade-in zoom-in-95 duration-1000">
-          <MangaCover 
-            mangaId={heroManga.id} 
-            relationships={heroManga.relationships} 
-            title={getMangaTitle(heroManga)}
-            className="brightness-[0.4] transition-transform duration-[3000ms] group-hover:scale-110"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-          <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-10 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 border border-accent/20 rounded-full w-fit backdrop-blur-md">
-              <Activity className="w-3 h-3 text-accent animate-pulse" />
-              <span className="text-[7px] font-black uppercase tracking-widest text-accent">Transmission Data (ID/EN)</span>
-            </div>
-            <h1 className="text-xl font-black uppercase tracking-tighter leading-tight text-white drop-shadow-2xl">
-              {getMangaTitle(heroManga)}
-            </h1>
-            <p className="text-[9px] text-neutral-400 font-medium line-clamp-2 leading-relaxed max-w-xs opacity-80">
-              {getMangaDescription(heroManga)}
-            </p>
-            <Link 
-              href={`/series/${heroManga.id}`}
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-black font-black rounded-2xl text-[8px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all duration-500 shadow-xl w-fit active:scale-95"
-            >
-              <Play className="w-3 h-3 fill-current" /> Read Now
-            </Link>
-          </div>
-        </section>
-      )}
+      {/* Recommended Hero Slider */}
+      <section className="w-full pt-4">
+        <HeroSlider trending={trending} />
+      </section>
 
       {/* Genre Slider */}
       <section className="animate-in fade-in slide-in-from-left duration-700 delay-300">
         <GenreSlider genres={genres} />
       </section>
 
-      {/* Grid Section */}
+      {/* Latest Updates Grid */}
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
           <div className="space-y-1">
@@ -100,40 +74,15 @@ export default async function Home() {
             <Link href="/" className="inline-block px-8 py-3 bg-accent text-white rounded-xl text-[7px] font-black uppercase tracking-widest shadow-lg shadow-accent/20">Resync Node</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-5 gap-y-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-10">
             {latest.map((manga, idx) => (
-              <Link 
+              <div 
                 key={manga.id} 
-                href={`/series/${manga.id}`} 
-                className="group space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000"
+                className="animate-in fade-in slide-in-from-bottom-8 duration-1000"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
-                <div className="aspect-[2/3] relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 shadow-lg group-hover:shadow-accent/10 transition-all duration-700">
-                  <MangaCover 
-                    mangaId={manga.id} 
-                    relationships={manga.relationships} 
-                    title={getMangaTitle(manga)} 
-                    className="group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-4">
-                    <span className="text-[7px] font-black uppercase text-accent tracking-widest drop-shadow-md">Access Node</span>
-                  </div>
-                </div>
-                <div className="px-1 space-y-1.5">
-                  <h3 className="text-[9px] font-black uppercase tracking-tight text-white line-clamp-1 group-hover:text-accent transition-colors duration-300">
-                    {getMangaTitle(manga)}
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[7px] font-black text-neutral-600 uppercase tracking-widest flex items-center gap-1.5">
-                      <Clock className="w-2 h-2" /> {manga.attributes.year || '2024'}
-                    </span>
-                    <div className="w-1 h-1 rounded-full bg-white/5" />
-                    <span className="text-[7px] font-black text-accent uppercase tracking-widest opacity-60">
-                      {manga.attributes.status}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+                <MangaCard manga={manga} />
+              </div>
             ))}
           </div>
         )}
