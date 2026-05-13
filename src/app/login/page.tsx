@@ -114,7 +114,7 @@ export default function LoginPage() {
                   <input 
                     type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                     placeholder="OPERATIVE EMAIL" 
-                    className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[10px] uppercase tracking-widest"
+                    className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[10px] normal-case tracking-widest"
                   />
                 </div>
                 <div className="relative group">
@@ -122,7 +122,7 @@ export default function LoginPage() {
                   <input 
                     type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
                     placeholder="CORE PASSKEY" 
-                    className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[10px] uppercase tracking-widest"
+                    className="w-full bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-black text-[10px] normal-case tracking-widest"
                   />
                 </div>
               </div>
@@ -141,7 +141,7 @@ export default function LoginPage() {
           {error && (
             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-2">
               <ShieldAlert className="w-5 h-5 text-destructive" />
-              <p className="text-[9px] font-black text-destructive uppercase tracking-widest leading-relaxed">
+              <p className="text-[9px] font-black text-destructive uppercase tracking-widest leading-relaxed whitespace-pre-wrap">
                 Protocol Interrupted: {error}
               </p>
             </div>

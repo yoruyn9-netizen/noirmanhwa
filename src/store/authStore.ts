@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         onAuthStateChanged(auth, (fbUser) => {
           if (fbUser) {
-            const isOwner = fbUser.email === ADMIN_EMAIL;
+            const isOwner = fbUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
             set({
               user: {
                 uid: fbUser.uid,
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const provider = new GoogleAuthProvider();
           const result = await signInWithPopup(auth, provider);
-          const isOwner = result.user.email === ADMIN_EMAIL;
+          const isOwner = result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
           
           set({
             user: {
@@ -84,9 +84,25 @@ export const useAuthStore = create<AuthState>()(
             },
             isLoading: false,
           });
+          
+          console.log('✅ Google login successful:', result.user.email);
         } catch (err: any) {
-          set({ error: err.message, isLoading: false });
-          setTimeout(() => get().clearError(), 5000);
+          console.error('❌ Google login error:', {
+            code: err.code,
+            message: err.message,
+            domain: typeof window !== 'undefined' ? window.location.origin : 'unknown'
+          });
+
+          let userFriendlyError = err.message || 'Login failed.';
+          
+          if (err.code === 'auth/unauthorized-domain') {
+            userFriendlyError = `Domain not authorized in Firebase. Please add "${window.location.hostname}" to authorized domains in Firebase Console.`;
+          } else if (err.code === 'auth/popup-closed-by-user') {
+            userFriendlyError = 'Login popup was closed.';
+          }
+
+          set({ error: userFriendlyError, isLoading: false });
+          setTimeout(() => get().clearError(), 8000);
         }
       },
 
@@ -94,10 +110,19 @@ export const useAuthStore = create<AuthState>()(
         const { auth } = initializeFirebase();
         set({ isLoading: true, error: null });
         
+        const normalizedEmail = email.toLowerCase().trim();
+        const targetAdminEmail = ADMIN_EMAIL.toLowerCase();
+
+        console.log('🔐 Admin Protocol Attempt:', {
+          input: email,
+          normalized: normalizedEmail,
+          target: targetAdminEmail,
+          match: normalizedEmail === targetAdminEmail
+        });
+
         try {
-          // Hardcoded bypass logic
-          if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-            const result = await signInWithEmailAndPassword(auth, email, password);
+          if (normalizedEmail === targetAdminEmail && password === ADMIN_PASS) {
+            const result = await signInWithEmailAndPassword(auth, normalizedEmail, password);
             set({
               user: {
                 uid: result.user.uid,
@@ -108,9 +133,10 @@ export const useAuthStore = create<AuthState>()(
               },
               isLoading: false,
             });
+            console.log('✅ Admin Protocol Authorized');
           } else {
             // Standard login for other users if they use email/pass
-            const result = await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(auth, normalizedEmail, password);
             set({
               user: {
                 uid: result.user.uid,
@@ -123,6 +149,7 @@ export const useAuthStore = create<AuthState>()(
             });
           }
         } catch (err: any) {
+          console.error('❌ Admin Protocol Rejected:', err.code);
           set({ error: "Invalid credentials or system rejection.", isLoading: false });
           setTimeout(() => get().clearError(), 5000);
         }
