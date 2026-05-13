@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MangaImage from '@/components/MangaImage';
-import { ReaderPrefs, loadReaderPrefs, saveReaderPrefs, smoothScroll } from '@/lib/reader-utils';
+import { ReaderPrefs, loadReaderPrefs, saveReaderPrefs, smoothScroll, DEFAULT_READER_PREFS } from '@/lib/reader-utils';
 import ReaderSettings from '@/components/ReaderSettings';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui';
@@ -42,7 +42,11 @@ export default function ReaderView({
   chapterId, pages, baseUrl, hash, chapterNum, title, prevChapterId, nextChapterId, mangaId 
 }: ReaderViewProps) {
   const router = useRouter();
-  const [prefs, setPrefs] = useState<ReaderPrefs>(loadReaderPrefs());
+  
+  // Initialize with stable defaults to avoid hydration mismatch
+  const [prefs, setPrefs] = useState<ReaderPrefs>(DEFAULT_READER_PREFS);
+  const [mounted, setMounted] = useState(false);
+  
   const [showUI, setShowUI] = useState(true);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -50,6 +54,13 @@ export default function ReaderView({
   
   const { addToHistory, setGlobalUIVisible } = useUIStore();
 
+  // Load preferences only once after mount
+  useEffect(() => {
+    setPrefs(loadReaderPrefs());
+    setMounted(true);
+  }, []);
+
+  // Record history
   useEffect(() => {
     if (mangaId && chapterId) {
       addToHistory({
@@ -61,9 +72,12 @@ export default function ReaderView({
     }
   }, [mangaId, chapterId, chapterNum, addToHistory]);
 
+  // Persist preferences when they change, but only after loading them
   useEffect(() => {
-    saveReaderPrefs(prefs);
-  }, [prefs]);
+    if (mounted) {
+      saveReaderPrefs(prefs);
+    }
+  }, [prefs, mounted]);
 
   // Sync with global UI visibility
   useEffect(() => {
