@@ -14,7 +14,7 @@ export default function BottomNav() {
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
     { id: 'search', icon: Search, label: 'SCAN', path: '/search' },
     { id: 'bookmark', icon: Bookmark, label: 'ARCHIVE', path: '/bookmarks' },
-    { id: 'genre', icon: Grid, label: 'MATRIX', path: '/genre' },
+    { id: 'genre', icon: Grid, label: 'GENRE', path: '/genre' },
     { id: 'profile', icon: User, label: 'NODE', path: '/profile' },
   ];
 
