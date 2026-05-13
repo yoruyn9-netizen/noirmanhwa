@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { mangaApi } from '@/lib/api';
 import SafeImage from '@/components/SafeImage';
-import { getMangaTitle, formatTimeAgo, getCoverUrl, getMangaDescription } from '@/lib/utils';
+import { getMangaTitle, formatTimeAgo, getCoverUrl, getMangaDescription, cn } from '@/lib/utils';
 import Link from 'next/link';
 import BookmarkButton from '@/components/BookmarkButton';
 import { 
