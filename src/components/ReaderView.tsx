@@ -15,7 +15,8 @@ import {
   ChevronRight, 
   ArrowUp, 
   ArrowDown, 
-  Zap
+  Zap,
+  Eye
 } from 'lucide-react';
 import {
   Sheet,
@@ -113,14 +114,22 @@ export default function ReaderView({
   const getThemeClass = () => {
     if (prefs.theme === 'light') return "bg-white text-black";
     if (prefs.theme === 'sepia') return "bg-[#f4ecd8] text-[#5b4636]";
-    return "";
+    // Default Noir Background
+    return "bg-[#020205]";
   };
 
   return (
     <div className={cn(
-      "min-h-screen transition-colors duration-500",
+      "min-h-screen transition-colors duration-500 relative",
       getThemeClass()
     )}>
+      {/* Global Background Glows (if in dark mode) */}
+      {prefs.theme === 'dark' && (
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-40" />
+        </div>
+      )}
+
       {/* Top Header */}
       <header className={cn(
         "fixed top-0 inset-x-0 h-16 bg-black/80 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-6 transition-transform duration-500",
@@ -151,7 +160,7 @@ export default function ReaderView({
 
       {/* Main Reader Canvas */}
       <main 
-        className={cn("pt-16 pb-32 flex", directionClasses[prefs.direction])}
+        className={cn("pt-16 pb-32 flex min-h-screen", directionClasses[prefs.direction])}
         onClick={toggleUI}
         style={{ filter: prefs.theme === 'sepia' ? 'sepia(0.2)' : 'none' }}
       >
@@ -182,7 +191,7 @@ export default function ReaderView({
       {/* Floating Controls */}
       <div className={cn(
         "fixed right-6 bottom-32 flex flex-col gap-3 transition-opacity duration-500 z-50",
-        !showScrollButtons && "opacity-0 pointer-events-none"
+        (!showScrollButtons || !showUI) && "opacity-0 pointer-events-none"
       )}>
         <button onClick={() => smoothScroll(0)} className="p-4 glass rounded-2xl text-accent hover:bg-accent hover:text-white transition-all shadow-2xl">
           <ArrowUp className="w-5 h-5" />
@@ -220,6 +229,16 @@ export default function ReaderView({
           <ChevronRight className="w-6 h-6" />
         </button>
       </footer>
+
+      {/* Clean Mode Indicator */}
+      {!showUI && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in duration-1000">
+           <div className="px-4 py-1.5 bg-accent/10 backdrop-blur-md rounded-full border border-accent/20 flex items-center gap-2">
+             <Eye className="w-2.5 h-2.5 text-accent" />
+             <span className="text-[7px] font-black text-accent uppercase tracking-widest">Clean Mode</span>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,12 +24,17 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       fetch(`https://api.mangadex.org/chapter/${chapterId}`, { next: { revalidate: 3600 } }).then(res => res.json())
     ]);
 
+    // Enhanced response validation
     if (!atHomeRes || atHomeRes.error || !atHomeRes.chapter) {
       throw new Error("Failed to initialize image server nodes.");
     }
 
     const { baseUrl, chapter: pagesData } = atHomeRes;
-    const pages = pagesData.dataSaver?.length > 0 ? pagesData.dataSaver : pagesData.data;
+    
+    // Fallback logic: prefer dataSaver for mobile speed, but use data if dataSaver is empty
+    const pages = (pagesData.dataSaver && pagesData.dataSaver.length > 0) 
+      ? pagesData.dataSaver 
+      : (pagesData.data || []);
 
     if (!pages || pages.length === 0) {
       throw new Error("Empty data stream detected in this sector.");
@@ -70,7 +75,8 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
     console.error('[Reader Error] Node Critical Failure:', err);
     return (
       <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center p-8 space-y-8 text-center">
-        <div className="w-20 h-20 bg-accent/5 rounded-[2.5rem] border border-accent/20 flex items-center justify-center animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent pointer-events-none" />
+        <div className="w-20 h-20 bg-accent/5 rounded-[2.5rem] border border-accent/20 flex items-center justify-center animate-pulse shadow-2xl shadow-accent/10">
           <AlertTriangle className="w-10 h-10 text-accent" />
         </div>
         <div className="space-y-2">
@@ -81,7 +87,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
         </div>
         <Link 
           href="/" 
-          className="px-12 py-5 bg-white text-black hover:bg-accent hover:text-white transition-all duration-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl"
+          className="px-12 py-5 bg-white text-black hover:bg-accent hover:text-white transition-all duration-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl active:scale-95"
         >
           Return to Base
         </Link>
