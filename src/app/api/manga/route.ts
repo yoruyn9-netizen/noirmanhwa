@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   switch (type) {
     case 'trending':
-      endpoint = '/manga?limit=12&includes[]=cover_art&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive';
+      endpoint = '/manga?limit=12&includes[]=cover_art&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&originalLanguage[]=ja&originalLanguage[]=ko&originalLanguage[]=zh';
       break;
     case 'latest':
       searchParams.forEach((val, key) => {
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
       proxyParams.append('includes[]', 'cover_art');
       proxyParams.append('order[latestUploadedChapter]', 'desc');
       proxyParams.append('contentRating[]', 'safe');
+      proxyParams.append('originalLanguage[]', 'ja');
+      proxyParams.append('originalLanguage[]', 'ko');
+      proxyParams.append('originalLanguage[]', 'zh');
       endpoint = `/manga?${proxyParams.toString()}`;
       break;
     case 'details':
@@ -35,6 +38,12 @@ export async function GET(request: NextRequest) {
       proxyParams.append('includes[]', 'cover_art');
       proxyParams.append('contentRating[]', 'safe');
       proxyParams.append('contentRating[]', 'suggestive');
+      // If no languages specified in the client request, we default them here
+      if (!searchParams.has('originalLanguage[]')) {
+        proxyParams.append('originalLanguage[]', 'ja');
+        proxyParams.append('originalLanguage[]', 'ko');
+        proxyParams.append('originalLanguage[]', 'zh');
+      }
       endpoint = `/manga?${proxyParams.toString()}`;
       break;
     case 'tags':

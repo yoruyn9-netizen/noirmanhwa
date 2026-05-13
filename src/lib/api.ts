@@ -31,9 +31,7 @@ async function fetchMangaDex(endpoint: string, options: RequestInit = {}) {
 
 function getStrictFilterParams() {
   const params = new URLSearchParams();
-  params.append('originalLanguage[]', 'ja');
-  params.append('originalLanguage[]', 'ko');
-  params.append('originalLanguage[]', 'zh');
+  // Default filtering if none specified
   params.append('excludedTags[]', NOVEL_TAG_ID); // Strict Novel Exclusion
   params.append('contentRating[]', 'safe');
   params.append('contentRating[]', 'suggestive');
@@ -48,6 +46,9 @@ export const mangaApi = {
     params.append('limit', '12');
     params.append('includes[]', 'cover_art');
     params.append('order[followedCount]', 'desc');
+    params.append('originalLanguage[]', 'ja');
+    params.append('originalLanguage[]', 'ko');
+    params.append('originalLanguage[]', 'zh');
     
     return fetchMangaDex(`/manga?${params.toString()}`, { next: { revalidate: 3600 } });
   },
@@ -60,6 +61,9 @@ export const mangaApi = {
     params.append('offset', offset.toString());
     params.append('includes[]', 'cover_art');
     params.append('order[latestUploadedChapter]', 'desc');
+    params.append('originalLanguage[]', 'ja');
+    params.append('originalLanguage[]', 'ko');
+    params.append('originalLanguage[]', 'zh');
     
     return fetchMangaDex(`/manga?${params.toString()}`, { next: { revalidate: 1800 } });
   },
@@ -92,8 +96,8 @@ export const mangaApi = {
     return fetchMangaDex(`/at-home/server/${chapterId}`, { next: { revalidate: 3600 } });
   },
 
-  search: async ({ title, includedTags = [], status = [], limit = 24 }: { 
-    title?: string; includedTags?: string[]; status?: string[]; limit?: number 
+  search: async ({ title, includedTags = [], status = [], languages = [], limit = 24 }: { 
+    title?: string; includedTags?: string[]; status?: string[]; languages?: string[]; limit?: number 
   }) => {
     if (isClient) {
       const p = new URLSearchParams();
@@ -101,6 +105,7 @@ export const mangaApi = {
       if (title) p.append('title', title);
       includedTags.forEach(t => p.append('includedTags[]', t));
       status.forEach(s => p.append('status[]', s));
+      languages.forEach(l => p.append('originalLanguage[]', l));
       p.append('limit', limit.toString());
       return fetch(`/api/manga?${p.toString()}`).then(res => res.json());
     }
@@ -111,6 +116,14 @@ export const mangaApi = {
     if (title) params.append('title', title);
     includedTags.forEach(t => params.append('includedTags[]', t));
     status.forEach(s => params.append('status[]', s));
+    languages.forEach(l => params.append('originalLanguage[]', l));
+    
+    // If no languages specified, default to the three main ones
+    if (languages.length === 0) {
+      params.append('originalLanguage[]', 'ja');
+      params.append('originalLanguage[]', 'ko');
+      params.append('originalLanguage[]', 'zh');
+    }
     
     return fetchMangaDex(`/manga?${params.toString()}`, { next: { revalidate: 600 } });
   },

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -10,7 +11,9 @@ import {
   Sparkles, 
   AlertCircle,
   Check,
-  RotateCcw
+  RotateCcw,
+  Globe,
+  Filter
 } from 'lucide-react';
 import { Manga } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -35,6 +38,12 @@ const STATUS_OPTIONS = [
   { label: 'Cancelled', value: 'cancelled' },
 ];
 
+const TYPE_OPTIONS = [
+  { label: 'Manga', value: 'ja' },
+  { label: 'Manhwa', value: 'ko' },
+  { label: 'Manhua', value: 'zh' },
+];
+
 export default function SearchPage({ searchParams }: SearchPageProps) {
   const params = use(searchParams);
   const router = useRouter();
@@ -46,6 +55,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   
   const [selectedTags, setSelectedTags] = useState<string[]>(params.genre ? [params.genre] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -70,6 +80,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           title: debouncedQuery, 
           includedTags: selectedTags,
           status: selectedStatus,
+          languages: selectedLanguages,
           limit: 24 
         });
         setResults(resultsRes.data || []);
@@ -90,7 +101,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
     else url.searchParams.delete('genre');
     
     router.replace(url.pathname + url.search);
-  }, [debouncedQuery, selectedTags, selectedStatus, router]);
+  }, [debouncedQuery, selectedTags, selectedStatus, selectedLanguages, router]);
 
   const toggleTag = (tagId: string) => {
     setSelectedTags(prev => 
@@ -104,13 +115,20 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
     );
   };
 
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    );
+  };
+
   const resetFilters = () => {
     setSelectedTags([]);
     setSelectedStatus([]);
+    setSelectedLanguages([]);
     setQuery('');
   };
 
-  const activeFilterCount = selectedTags.length + selectedStatus.length;
+  const activeFilterCount = selectedTags.length + selectedStatus.length + selectedLanguages.length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
@@ -173,7 +191,31 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
               <ScrollArea className="flex-1">
                 <div className="space-y-10 pb-12">
                   <section className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60">Node Status</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5" /> Signal Origin (Type)
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {TYPE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleLanguage(opt.value)}
+                          className={cn(
+                            "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500",
+                            selectedLanguages.includes(opt.value) 
+                              ? "bg-accent border-accent text-white shadow-xl shadow-accent/20" 
+                              : "bg-[#0a0a0f] border-white/5 text-muted-foreground"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
+                      <Filter className="w-3.5 h-3.5" /> Node Status
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                       {STATUS_OPTIONS.map((opt) => (
                         <button
