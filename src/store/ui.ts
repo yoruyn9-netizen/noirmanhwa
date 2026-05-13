@@ -22,6 +22,7 @@ interface AppSettings {
 interface UIState {
   activePanel: PanelType;
   isOpen: boolean;
+  isGlobalUIVisible: boolean;
   readerSettings: ReaderSettings;
   appSettings: AppSettings;
   bookmarks: any[];
@@ -29,6 +30,7 @@ interface UIState {
   activeGenreId: string | null;
   openPanel: (name: PanelType) => void;
   closePanel: () => void;
+  setGlobalUIVisible: (visible: boolean) => void;
   updateReaderSettings: (settings: Partial<ReaderSettings>) => void;
   updateAppSettings: (settings: Partial<AppSettings>) => void;
   addBookmark: (manga: any) => void;
@@ -43,6 +45,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       activePanel: 'none',
       isOpen: false,
+      isGlobalUIVisible: true,
       readerSettings: {
         direction: 'vertical',
         fitMode: 'fit',
@@ -61,6 +64,7 @@ export const useUIStore = create<UIState>()(
       activeGenreId: null,
       openPanel: (name) => set({ activePanel: name, isOpen: true }),
       closePanel: () => set({ isOpen: false, activePanel: 'none' }),
+      setGlobalUIVisible: (visible) => set({ isGlobalUIVisible: visible }),
       updateReaderSettings: (settings) =>
         set((state) => ({ readerSettings: { ...state.readerSettings, ...settings } })),
       updateAppSettings: (settings) =>
@@ -82,6 +86,12 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'noir-manhwa-storage-v3',
+      partialize: (state) => ({
+        readerSettings: state.readerSettings,
+        appSettings: state.appSettings,
+        bookmarks: state.bookmarks,
+        readingHistory: state.readingHistory,
+      }),
     }
   )
 );

@@ -48,7 +48,7 @@ export default function ReaderView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { addToHistory } = useUIStore();
+  const { addToHistory, setGlobalUIVisible } = useUIStore();
 
   useEffect(() => {
     if (mangaId && chapterId) {
@@ -64,6 +64,12 @@ export default function ReaderView({
   useEffect(() => {
     saveReaderPrefs(prefs);
   }, [prefs]);
+
+  // Sync with global UI visibility
+  useEffect(() => {
+    setGlobalUIVisible(showUI);
+    return () => setGlobalUIVisible(true);
+  }, [showUI, setGlobalUIVisible]);
 
   const toggleUI = useCallback(() => {
     setShowUI(prev => !prev);

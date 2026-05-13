@@ -6,9 +6,11 @@ import { Home, Search, Bookmark, Grid, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useUIStore } from '@/store/ui';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { isGlobalUIVisible } = useUIStore();
 
   const navItems = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
@@ -19,7 +21,10 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-[#050508]/60 backdrop-blur-2xl rounded-full border border-white/5 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-700">
+    <nav className={cn(
+      "fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-[#050508]/60 backdrop-blur-2xl rounded-full border border-white/5 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+      !isGlobalUIVisible ? "translate-y-[200%] opacity-0" : "translate-y-0 opacity-100"
+    )}>
       <div className="flex items-center gap-1">
         {navItems.map((item) => {
           const isActive = pathname === item.path;
