@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import Link from 'next/link';
 import { Play, Flame, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import MangaImage from '@/components/MangaImage';
 
 interface HeroSliderProps {
   trending: Manga[];
@@ -39,13 +41,11 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
               idx === activeIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
             )}
           >
-            <img
+            <MangaImage
               src={coverUrl}
               alt={title}
               className="w-full h-full object-cover object-top brightness-[0.35]"
-              onError={(e) => {
-                e.currentTarget.src = 'https://placehold.co/1200x600/050508/6366f1?text=No+Cover';
-              }}
+              priority={idx === 0}
             />
             
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />

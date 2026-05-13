@@ -6,16 +6,13 @@ import Link from 'next/link';
 import { Manga } from '@/lib/types';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import { Flame, Clock } from 'lucide-react';
-import SafeImage from '@/components/SafeImage';
+import MangaImage from '@/components/MangaImage';
 
 interface MangaCardProps {
   manga: Manga;
   isTrending?: boolean;
 }
 
-/**
- * Modern Manga card using SafeImage proxy for reliable loading.
- */
 export default function MangaCard({ manga, isTrending }: MangaCardProps) {
   const coverUrl = getCoverUrl(manga, '512');
   const title = getMangaTitle(manga);
@@ -23,10 +20,10 @@ export default function MangaCard({ manga, isTrending }: MangaCardProps) {
   return (
     <Link href={`/series/${manga.id}`} className="group block">
       <div className="shinigami-card aspect-[2/3] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 transition-all duration-500 hover:border-accent/40 hover:-translate-y-1">
-        <SafeImage
+        <MangaImage
           src={coverUrl}
           alt={title}
-          className="group-hover:scale-110 transition-transform duration-1000"
+          className="w-full h-full group-hover:scale-110"
         />
         
         {isTrending && (

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import SafeImage from '@/components/SafeImage';
+import MangaImage from '@/components/MangaImage';
 import { ReaderPrefs, loadReaderPrefs, saveReaderPrefs, smoothScroll } from '@/lib/reader-utils';
 import ReaderSettings from '@/components/ReaderSettings';
 import { cn } from '@/lib/utils';
@@ -50,10 +50,8 @@ export default function ReaderView({
   
   const { addToHistory } = useUIStore();
 
-  // Save to history when chapter is opened
   useEffect(() => {
     if (mangaId && chapterId) {
-      console.log(`[Reader] Logging transmission to history: ${chapterId}`);
       addToHistory({
         mangaId,
         chapterId,
@@ -63,17 +61,14 @@ export default function ReaderView({
     }
   }, [mangaId, chapterId, chapterNum, addToHistory]);
 
-  // Persistence
   useEffect(() => {
     saveReaderPrefs(prefs);
   }, [prefs]);
 
-  // Handle Visibility Toggle (Tap area)
   const toggleUI = useCallback(() => {
     setShowUI(prev => !prev);
   }, []);
 
-  // Handle Scroll Visibility
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButtons(window.scrollY > 400);
@@ -82,7 +77,6 @@ export default function ReaderView({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle Auto Scroll
   useEffect(() => {
     if (prefs.autoScroll && !isSettingsOpen) {
       autoScrollRef.current = setInterval(() => {
@@ -96,25 +90,21 @@ export default function ReaderView({
     };
   }, [prefs.autoScroll, prefs.autoScrollSpeed, isSettingsOpen]);
 
-  // Direction Class
   const directionClasses = {
     vertical: "flex-col",
     ltr: "flex-row overflow-x-auto snap-x snap-mandatory hide-scrollbar",
     rtl: "flex-row-reverse overflow-x-auto snap-x snap-mandatory hide-scrollbar"
   };
 
-  // Image Classes
   const imageClasses = {
     fit: "w-full max-w-2xl mx-auto",
     original: "w-auto max-w-full mx-auto",
     stretch: "w-full"
   };
 
-  // Theme Logic
   const getThemeClass = () => {
     if (prefs.theme === 'light') return "bg-white text-black";
     if (prefs.theme === 'sepia') return "bg-[#f4ecd8] text-[#5b4636]";
-    // Default Noir Background
     return "bg-[#020205]";
   };
 
@@ -123,14 +113,12 @@ export default function ReaderView({
       "min-h-screen transition-colors duration-500 relative",
       getThemeClass()
     )}>
-      {/* Global Background Glows (if in dark mode) */}
       {prefs.theme === 'dark' && (
         <div className="fixed inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-40" />
         </div>
       )}
 
-      {/* Top Header */}
       <header className={cn(
         "fixed top-0 inset-x-0 h-16 bg-black/80 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-6 transition-transform duration-500",
         !showUI && "-translate-y-full"
@@ -151,14 +139,13 @@ export default function ReaderView({
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[75vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-8">
             <SheetHeader className="sr-only">
-              <SheetTitle>Reader Calibration Settings</SheetTitle>
+              <SheetTitle>Reader Settings</SheetTitle>
             </SheetHeader>
             <ReaderSettings prefs={prefs} onChange={setPrefs} />
           </SheetContent>
         </Sheet>
       </header>
 
-      {/* Main Reader Canvas */}
       <main 
         className={cn("pt-16 pb-32 flex min-h-screen", directionClasses[prefs.direction])}
         onClick={toggleUI}
@@ -173,11 +160,10 @@ export default function ReaderView({
               imageClasses[prefs.fitMode]
             )}
           >
-            <SafeImage 
+            <MangaImage 
               src={`${baseUrl}/data-saver/${hash}/${page}`} 
               alt={`Page ${index + 1}`}
-              className="block h-auto"
-              fallbackText={`Frame ${index + 1}`}
+              className="block h-auto w-full"
             />
             {showUI && (
               <span className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[8px] font-black text-white uppercase tracking-widest border border-white/5">
@@ -188,7 +174,6 @@ export default function ReaderView({
         ))}
       </main>
 
-      {/* Floating Controls */}
       <div className={cn(
         "fixed right-6 bottom-32 flex flex-col gap-3 transition-opacity duration-500 z-50",
         (!showScrollButtons || !showUI) && "opacity-0 pointer-events-none"
@@ -201,7 +186,6 @@ export default function ReaderView({
         </button>
       </div>
 
-      {/* Bottom Navigation */}
       <footer className={cn(
         "fixed bottom-0 inset-x-0 h-20 bg-black/80 backdrop-blur-xl border-t border-white/5 z-50 flex items-center justify-center gap-10 px-6 transition-transform duration-500",
         !showUI && "translate-y-full"
@@ -230,7 +214,6 @@ export default function ReaderView({
         </button>
       </footer>
 
-      {/* Clean Mode Indicator */}
       {!showUI && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in duration-1000">
            <div className="px-4 py-1.5 bg-accent/10 backdrop-blur-md rounded-full border border-accent/20 flex items-center gap-2">
