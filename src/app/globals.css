@@ -102,9 +102,9 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: rgba(5, 5, 8, 0.9);
+  background: rgba(10, 10, 15, 0.95);
   backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 12px 8px 28px 8px;
   z-index: 1000;
 }
@@ -118,7 +118,7 @@
   padding: 6px 10px;
   min-width: 55px;
   text-decoration: none;
-  color: #555;
+  color: #666;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

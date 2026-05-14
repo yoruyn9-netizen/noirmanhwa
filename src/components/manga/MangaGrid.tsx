@@ -7,11 +7,11 @@ import { useFilterStore } from '@/store/filterStore';
 import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { AlertTriangle, RefreshCw, Zap, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function MangaGrid() {
-  const [mangas, setMangas] = useState<Manga[]>([]);
   const [allLoadedMangas, setAllLoadedMangas] = useState<Manga[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export default function MangaGrid() {
     setError(false);
     
     try {
-      const targetPage = reset ? 1 : page;
+      const targetPage = reset ? 1 : Math.ceil(allLoadedMangas.length / ITEMS_PER_PAGE) + 1;
       const data = await mangaApi.fetchMangaList({
         page: targetPage,
         type: contentType,
@@ -38,14 +38,9 @@ export default function MangaGrid() {
       });
       
       if (!data || data.length === 0) {
-        if (reset) {
-          setMangas([]);
-          setAllLoadedMangas([]);
-        }
         setHasMore(false);
       } else {
         if (reset) {
-          setMangas(data);
           setAllLoadedMangas(data);
           setPage(1);
         } else {
@@ -54,7 +49,6 @@ export default function MangaGrid() {
             const uniqueNew = data.filter(m => !existingIds.has(m.id));
             return [...prev, ...uniqueNew];
           });
-          setPage(targetPage);
         }
         setHasMore(data.length >= ITEMS_PER_PAGE);
       }
@@ -64,7 +58,7 @@ export default function MangaGrid() {
     } finally {
       setLoading(false);
     }
-  }, [loading, page, contentType, sortBy, status, selectedGenres, contentRating]);
+  }, [loading, contentType, sortBy, status, selectedGenres, contentRating, allLoadedMangas.length]);
 
   // Initial load or filter change
   useEffect(() => {
@@ -83,7 +77,6 @@ export default function MangaGrid() {
   };
 
   const handleLoadMore = () => {
-    setPage(prev => prev + 1);
     loadData(false);
   };
 
@@ -130,9 +123,9 @@ export default function MangaGrid() {
         <div className="py-32 text-center space-y-4 glass rounded-[2.5rem] border-dashed border-white/10 mx-2">
           <Zap className="w-12 h-12 text-accent opacity-20 mx-auto" />
           <div className="space-y-1">
-            <h3 className="text-sm font-black uppercase tracking-tight text-white">No Transmissions</h3>
+            <h3 className="text-sm font-black uppercase tracking-tight text-white">No Results</h3>
             <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest max-w-[180px] mx-auto">
-              No signal detected in this frequency.
+              No titles match the current parameters.
             </p>
           </div>
           <button 
@@ -157,7 +150,7 @@ export default function MangaGrid() {
             </button>
 
             <div className="page-numbers">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, Math.max(1, totalPages)) }, (_, i) => {
                 let pageNum = i + 1;
                 if (totalPages > 5 && page > 3) {
                   pageNum = page - 2 + i;
@@ -178,7 +171,7 @@ export default function MangaGrid() {
 
             <button
               onClick={() => goToPage(page + 1)}
-              disabled={page >= totalPages && !hasMore}
+              disabled={page >= totalPages}
               className="pagination-btn"
             >
               Next <ChevronRight className="w-4 h-4 ml-1 inline" />
@@ -187,7 +180,7 @@ export default function MangaGrid() {
 
           <div className="load-more-section">
             <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest mb-6">
-              Visualizing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, allLoadedMangas.length)} of {allLoadedMangas.length} titles
+              Viewing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, allLoadedMangas.length)} of {allLoadedMangas.length} entries
             </p>
             {hasMore && (
               <button
@@ -195,14 +188,14 @@ export default function MangaGrid() {
                 disabled={loading}
                 className="load-more-btn"
               >
-                {loading ? 'Synchronizing...' : 'Load 20 More Titles'}
+                {loading ? 'Synchronizing...' : 'Fetch 20 More Titles'}
               </button>
             )}
           </div>
 
           <div className="grid-stats">
-            <span className="stat-item">📊 Protocol Page {page} of {Math.max(1, totalPages)}</span>
-            <span className="stat-item">📚 {allLoadedMangas.length} Loaded Nodes</span>
+            <span className="stat-item">📊 Page {page} of {Math.max(1, totalPages)}</span>
+            <span className="stat-item">📚 {allLoadedMangas.length} Titles Loaded</span>
           </div>
         </div>
       )}
