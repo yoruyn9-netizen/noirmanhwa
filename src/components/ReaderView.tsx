@@ -112,7 +112,7 @@ export default function ReaderView({
         
         <div className="text-center flex-1 mx-4">
           <h1 className="text-[10px] font-black uppercase tracking-[0.3em] text-glow text-accent truncate">Chapter {chapterNum}</h1>
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest truncate">{title || 'Active Signal'}</p>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest truncate">{title || 'Reader'}</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -188,8 +188,8 @@ export default function ReaderView({
           <ChevronLeft className="w-6 h-6" />
         </button>
         <div className="flex flex-col items-center">
-          <span className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-1.5"><Zap className="w-3 h-3 fill-accent" /> SYNCHRONIZED</span>
-          <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">{pages.length} Frames</p>
+          <span className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-1.5"><Zap className="w-3 h-3 fill-accent" /> SYNCED</span>
+          <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">{pages.length} Pages</p>
         </div>
         <button 
           disabled={!nextChapterId}

@@ -38,19 +38,19 @@ export default function BottomSheet() {
         
         <div className="p-8 space-y-10 animate-in slide-in-from-bottom-4 duration-500">
           <h2 className="text-3xl font-black tracking-tighter flex items-center gap-3">
-            <Settings className="w-8 h-8 text-accent" /> VISUAL ADAPTATION
+            <Settings className="w-8 h-8 text-accent" /> READER SETTINGS
           </h2>
           
           <div className="space-y-8">
             <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Pulse Direction</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Scroll Direction</label>
               <div className="grid grid-cols-3 gap-3">
                 {(['vertical', 'ltr', 'rtl'] as const).map((dir) => (
                   <button
                     key={dir} onClick={() => updateReaderSettings({ direction: dir })}
                     className={cn(
                       "py-3 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all",
-                      readerSettings.direction === dir ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(153,27,27,0.4)]" : "bg-[#0f0f13] border-white/5 text-muted-foreground"
+                      readerSettings.direction === dir ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "bg-[#0f0f13] border-white/5 text-muted-foreground"
                     )}
                   >
                     {dir}
@@ -60,24 +60,24 @@ export default function BottomSheet() {
             </div>
 
             <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Image Adaptation</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Fit Mode</label>
               <div className="grid grid-cols-3 gap-3">
                 {(['fit', 'original', 'stretch'] as const).map((fit) => (
                   <button
                     key={fit} onClick={() => updateReaderSettings({ fitMode: fit })}
                     className={cn(
                       "py-3 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all",
-                      readerSettings.fitMode === fit ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(153,27,27,0.4)]" : "bg-[#0f0f13] border-white/5 text-muted-foreground"
+                      readerSettings.fitMode === fit ? "bg-accent border-accent text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "bg-[#0f0f13] border-white/5 text-muted-foreground"
                     )}
                   >
-                    {fit === 'fit' ? 'FIT NODE' : fit}
+                    {fit === 'fit' ? 'FIT' : fit}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Atmospheric Matrix</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Theme</label>
               <div className="grid grid-cols-3 gap-3">
                 {(['dark', 'sepia', 'light'] as const).map((t) => (
                   <button
@@ -97,7 +97,7 @@ export default function BottomSheet() {
             <div className="p-6 bg-[#0f0f13] border border-white/5 rounded-2xl space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <label className="text-sm font-black uppercase tracking-widest">Auto Pulse</label>
+                  <label className="text-sm font-black uppercase tracking-widest">Auto Scroll</label>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Automatic page advancement</p>
                 </div>
                 <Switch checked={readerSettings.autoScroll} onCheckedChange={(checked) => updateReaderSettings({ autoScroll: checked })} />
@@ -106,9 +106,8 @@ export default function BottomSheet() {
               {readerSettings.autoScroll && (
                 <div className="space-y-4">
                   <div className="flex justify-between text-[9px] font-black uppercase text-muted-foreground tracking-widest">
-                    <span>Low Intensity</span>
-                    <span>Speed: {readerSettings.autoScrollSpeed}x</span>
-                    <span>High Intensity</span>
+                    <span>Speed</span>
+                    <span>{readerSettings.autoScrollSpeed}x</span>
                   </div>
                   <Slider value={[readerSettings.autoScrollSpeed]} min={0.5} max={5} step={0.5} onValueChange={([val]) => updateReaderSettings({ autoScrollSpeed: val })} />
                 </div>
@@ -118,9 +117,9 @@ export default function BottomSheet() {
           
           <button 
             onClick={closePanel}
-            className="w-full py-5 bg-accent text-white font-black rounded-2xl shadow-[0_10px_30px_rgba(153,27,27,0.4)] transition-all active:scale-95 uppercase tracking-widest text-xs"
+            className="w-full py-5 bg-accent text-white font-black rounded-2xl shadow-[0_10px_30px_rgba(139,92,246,0.4)] transition-all active:scale-95 uppercase tracking-widest text-xs"
           >
-            COMMIT SETTINGS
+            SAVE SETTINGS
           </button>
         </div>
       </div>

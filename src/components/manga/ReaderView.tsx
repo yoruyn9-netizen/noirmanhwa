@@ -58,7 +58,7 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
                 {mangaTitle}
               </h1>
               <p className="text-[8px] font-black text-neutral-500 uppercase tracking-widest">
-                Unit {chapterNum} / {images.length} Nodes
+                Chapter {chapterNum} / {images.length} Pages
               </p>
             </div>
 

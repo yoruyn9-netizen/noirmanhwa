@@ -31,15 +31,15 @@ export default function ReaderSettings({ prefs, onChange }: ReaderSettingsProps)
     <div className="space-y-10">
       <div className="space-y-1">
         <h2 className="text-xl font-black tracking-tighter uppercase text-glow flex items-center gap-3">
-          <Settings className="w-5 h-5 text-accent" /> Neural Adaptation
+          <Settings className="w-5 h-5 text-accent" /> Reader Settings
         </h2>
-        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">Configure sensory input parameters</p>
+        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">Adjust your reading experience</p>
       </div>
 
       <div className="space-y-8">
         {/* Direction */}
         <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Reading Vector</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Scroll Direction</label>
           <div className="grid grid-cols-3 gap-2">
             {(['vertical', 'ltr', 'rtl'] as const).map((dir) => (
               <button
@@ -61,7 +61,7 @@ export default function ReaderSettings({ prefs, onChange }: ReaderSettingsProps)
 
         {/* Fit Mode */}
         <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Frame Adaptation</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Image Fit</label>
           <div className="grid grid-cols-3 gap-2">
             {(['fit', 'original', 'stretch'] as const).map((mode) => (
               <button
@@ -83,7 +83,7 @@ export default function ReaderSettings({ prefs, onChange }: ReaderSettingsProps)
 
         {/* Theme */}
         <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Atmospheric Matrix</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-accent/60">Theme</label>
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: 'dark', icon: Moon, bg: 'bg-black' },
@@ -113,9 +113,9 @@ export default function ReaderSettings({ prefs, onChange }: ReaderSettingsProps)
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <label className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-accent" /> Auto Pulse
+                <Zap className="w-3.5 h-3.5 text-accent" /> Auto Scroll
               </label>
-              <p className="text-[8px] text-muted-foreground uppercase tracking-widest">Spectral page advancement</p>
+              <p className="text-[8px] text-muted-foreground uppercase tracking-widest">Automatically scroll pages</p>
             </div>
             <Switch 
               checked={prefs.autoScroll} 
@@ -126,7 +126,7 @@ export default function ReaderSettings({ prefs, onChange }: ReaderSettingsProps)
           {prefs.autoScroll && (
             <div className="space-y-4 pt-2">
               <div className="flex justify-between items-center text-[9px] font-black uppercase text-muted-foreground tracking-widest">
-                <span>Velocity</span>
+                <span>Speed</span>
                 <span className="text-accent">{prefs.autoScrollSpeed}x</span>
               </div>
               <Slider 

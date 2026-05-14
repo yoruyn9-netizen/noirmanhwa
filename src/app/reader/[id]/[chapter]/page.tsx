@@ -14,7 +14,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
   const [images, setImages] = useState<string[]>([]);
-  const [mangaTitle, setMangaTitle] = useState('Active Node');
+  const [mangaTitle, setMangaTitle] = useState('Chapter');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -29,7 +29,11 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
           mangaId ? mangaApi.fetchMangaDetail(mangaId, source) : Promise.resolve(null)
         ]);
         
-        if (!imgs || imgs.length === 0) throw new Error('Empty Node Signal');
+        if (!imgs || imgs.length === 0) {
+          setError(true);
+          setLoading(false);
+          return;
+        }
         
         setImages(imgs);
         if (detail) setMangaTitle(detail.title);
@@ -51,8 +55,8 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
           <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-sm font-black uppercase tracking-[0.5em] text-white">Syncing Matrix</h2>
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Calibrating sensory input streams</p>
+          <h2 className="text-sm font-black uppercase tracking-[0.5em] text-white">Loading Reader</h2>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Loading chapter pages...</p>
         </div>
       </div>
     );
@@ -65,16 +69,16 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
           <AlertTriangle className="w-10 h-10 text-red-500" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-black uppercase tracking-tighter text-white">Transmission Interrupted</h2>
+          <h2 className="text-xl font-black uppercase tracking-tighter text-white">Failed to Load</h2>
           <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-xs mx-auto">
-            The remote node failed to return a valid visual stream. Check your neural link status.
+            The chapter images could not be loaded. Please check your internet connection and try again.
           </p>
         </div>
         <button 
           onClick={() => window.location.reload()}
           className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:bg-accent hover:text-white transition-all"
         >
-          RE-ESTABLISH LINK
+          RETRY
         </button>
       </div>
     );
