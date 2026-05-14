@@ -14,8 +14,8 @@ import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
 import MangaGrid from '@/components/manga/MangaGrid';
 
 export default function Home() {
-  const [trending, setTrending] = React.useState([]);
-  const [genres, setGenres] = React.useState([]);
+  const [trending, setTrending] = React.useState<any[]>([]);
+  const [genres, setGenres] = React.useState<any[]>([]);
   const [health, setHealth] = React.useState<any>(null);
 
   useEffect(() => {
