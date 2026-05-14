@@ -19,6 +19,10 @@ interface SeriesPageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Series Detail Node
+ * Uses 'id' slug name consistently for the Manga identity.
+ */
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { id } = await params;
 

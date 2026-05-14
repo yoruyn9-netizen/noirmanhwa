@@ -18,7 +18,7 @@ interface ChapterListProps {
 
 /**
  * Chapter Stack component for series details.
- * Links to unified /reader/[id] route.
+ * Correctly links to unified /reader/[id] route using 'id' slug name.
  */
 export default function ChapterList({ chapters, mangaId }: ChapterListProps) {
   const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>('all');

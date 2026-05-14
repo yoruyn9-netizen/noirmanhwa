@@ -8,9 +8,9 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 /**
- * Stable Reader Page Node
- * Consolidated to 'id' slug to prevent Next.js routing collisions.
- * Handles single chapter reading protocol.
+ * Unified Reader Page Node
+ * Consolidated to 'id' slug to prevent Next.js dynamic routing collisions.
+ * This route handles single chapter reading protocol.
  */
 export default function ReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chapterId } = use(params);
