@@ -4,6 +4,7 @@ import { mangaApi } from '@/lib/api';
 import MangaCard from '@/components/MangaCard';
 import GenreSlider from '@/components/GenreSlider';
 import HeroSlider from '@/components/HeroSlider';
+import GlobalChat from '@/components/chat/GlobalChat';
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import { getMangaTitle } from '@/lib/utils';
@@ -36,7 +37,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="space-y-12 pb-20 max-w-4xl mx-auto px-4 relative">
+    <div className="space-y-12 pb-32 max-w-4xl mx-auto px-4 relative">
       {/* Top Right Live Telemetry */}
       <div className="absolute top-0 right-4 flex items-center gap-4 pointer-events-none z-10 select-none">
         <div className="flex flex-col items-end gap-0.5">
@@ -87,6 +88,9 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      {/* Global Real-time Chat Node */}
+      <GlobalChat />
     </div>
   );
 }

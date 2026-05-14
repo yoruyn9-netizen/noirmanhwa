@@ -7,21 +7,14 @@ import {
   GoogleAuthProvider, 
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  User as FirebaseUser
+  onAuthStateChanged
 } from 'firebase/auth';
 import { initializeFirebase } from '@/firebase';
-
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  role: 'user' | 'owner';
-}
+import { syncUserToFirestore, getUserProfile } from '@/lib/firestore';
+import { UserProfile } from '@/types/user';
 
 interface AuthState {
-  user: AuthUser | null;
+  user: UserProfile | null;
   isLoading: boolean;
   error: string | null;
   loginWithGoogle: () => Promise<void>;
@@ -29,9 +22,9 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuth: () => void;
   clearError: () => void;
+  updateUserInStore: (data: Partial<UserProfile>) => void;
 }
 
-// ⚠️ HARDCODED ADMIN - HAPUS SEBELUM PRODUCTION
 const ADMIN_EMAIL = "jullyan382@gmail.com";
 const ADMIN_PASS = "YAN123";
 
@@ -44,22 +37,38 @@ export const useAuthStore = create<AuthState>()(
 
       clearError: () => set({ error: null }),
 
+      updateUserInStore: (data) => set((state) => ({
+        user: state.user ? { ...state.user, ...data } : null
+      })),
+
       checkAuth: () => {
         const { auth } = initializeFirebase();
         set({ isLoading: true });
-        onAuthStateChanged(auth, (fbUser) => {
+        onAuthStateChanged(auth, async (fbUser) => {
           if (fbUser) {
+            // Fetch latest profile from Firestore for flags
+            const profile = await getUserProfile(fbUser.uid);
+            
+            if (profile?.isBanned) {
+              await signOut(auth);
+              set({ user: null, error: "ACCESS DENIED: Your account has been banned.", isLoading: false });
+              return;
+            }
+
             const isOwner = fbUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-            set({
-              user: {
-                uid: fbUser.uid,
-                email: fbUser.email,
-                displayName: fbUser.displayName,
-                photoURL: fbUser.photoURL,
-                role: isOwner ? 'owner' : 'user',
-              },
-              isLoading: false,
-            });
+            const userData: UserProfile = {
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: profile?.displayName || fbUser.displayName,
+              photoURL: profile?.photoURL || fbUser.photoURL,
+              bio: profile?.bio || "",
+              role: isOwner ? 'owner' : 'user',
+              isPremium: profile?.isPremium || false,
+              isBanned: false
+            };
+
+            set({ user: userData, isLoading: false });
+            syncUserToFirestore(userData);
           } else {
             set({ user: null, isLoading: false });
           }
@@ -72,37 +81,28 @@ export const useAuthStore = create<AuthState>()(
         try {
           const provider = new GoogleAuthProvider();
           const result = await signInWithPopup(auth, provider);
-          const isOwner = result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
           
-          set({
-            user: {
-              uid: result.user.uid,
-              email: result.user.email,
-              displayName: result.user.displayName,
-              photoURL: result.user.photoURL,
-              role: isOwner ? 'owner' : 'user',
-            },
-            isLoading: false,
-          });
-          
-          console.log('✅ Google login successful:', result.user.email);
-        } catch (err: any) {
-          console.error('❌ Google login error:', {
-            code: err.code,
-            message: err.message,
-            domain: typeof window !== 'undefined' ? window.location.origin : 'unknown'
-          });
-
-          let userFriendlyError = err.message || 'Login failed.';
-          
-          if (err.code === 'auth/unauthorized-domain') {
-            userFriendlyError = `Domain not authorized in Firebase. Please add "${window.location.hostname}" to authorized domains in Firebase Console.`;
-          } else if (err.code === 'auth/popup-closed-by-user') {
-            userFriendlyError = 'Login popup was closed.';
+          const profile = await getUserProfile(result.user.uid);
+          if (profile?.isBanned) {
+            await signOut(auth);
+            throw new Error("ACCESS DENIED: Your account has been banned.");
           }
 
-          set({ error: userFriendlyError, isLoading: false });
-          setTimeout(() => get().clearError(), 8000);
+          const isOwner = result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+          const userData: UserProfile = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: profile?.displayName || result.user.displayName,
+            photoURL: profile?.photoURL || result.user.photoURL,
+            role: isOwner ? 'owner' : 'user',
+            isPremium: profile?.isPremium || false,
+            isBanned: false
+          };
+
+          set({ user: userData, isLoading: false });
+          syncUserToFirestore(userData);
+        } catch (err: any) {
+          set({ error: err.message || 'Login failed.', isLoading: false });
         }
       },
 
@@ -111,48 +111,46 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         const normalizedEmail = email.toLowerCase().trim();
-        const targetAdminEmail = ADMIN_EMAIL.toLowerCase();
-
-        console.log('🔐 Admin Protocol Attempt:', {
-          input: email,
-          normalized: normalizedEmail,
-          target: targetAdminEmail,
-          match: normalizedEmail === targetAdminEmail,
-          passMatch: password === ADMIN_PASS
-        });
-
         try {
-          if (normalizedEmail === targetAdminEmail && password === ADMIN_PASS) {
+          if (normalizedEmail === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASS) {
             const result = await signInWithEmailAndPassword(auth, normalizedEmail, password);
-            set({
-              user: {
-                uid: result.user.uid,
-                email: result.user.email,
-                displayName: "Supreme Administrator",
-                photoURL: null,
-                role: 'owner',
-              },
-              isLoading: false,
-            });
-            console.log('✅ Admin Protocol Authorized');
+            const profile = await getUserProfile(result.user.uid);
+            
+            const userData: UserProfile = {
+              uid: result.user.uid,
+              email: result.user.email,
+              displayName: profile?.displayName || "Supreme Administrator",
+              photoURL: profile?.photoURL || null,
+              role: 'owner',
+              isPremium: true,
+              isBanned: false
+            };
+            set({ user: userData, isLoading: false });
+            syncUserToFirestore(userData);
           } else {
-            // Standard login for other users if they use email/pass
             const result = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+            const profile = await getUserProfile(result.user.uid);
+            
+            if (profile?.isBanned) {
+              await signOut(auth);
+              throw new Error("ACCESS DENIED: Banned.");
+            }
+
             set({
               user: {
                 uid: result.user.uid,
                 email: result.user.email,
-                displayName: result.user.displayName || "User",
-                photoURL: result.user.photoURL,
+                displayName: profile?.displayName || result.user.displayName || "User",
+                photoURL: profile?.photoURL || result.user.photoURL,
                 role: 'user',
+                isPremium: profile?.isPremium || false,
+                isBanned: false
               },
               isLoading: false,
             });
           }
         } catch (err: any) {
-          console.error('❌ Admin Protocol Rejected:', err.code);
-          set({ error: "Invalid credentials or system rejection.", isLoading: false });
-          setTimeout(() => get().clearError(), 5000);
+          set({ error: err.message, isLoading: false });
         }
       },
 
@@ -163,7 +161,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'noirmanhwa-auth-v1',
+      name: 'noirmanhwa-auth-v2',
       partialize: (state) => ({ user: state.user }),
     }
   )

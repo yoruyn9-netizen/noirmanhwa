@@ -3,28 +3,53 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "User profile information and preferences",
+      "description": "User profile information and status",
       "type": "object",
       "properties": {
-        "displayName": {
-          "type": "string",
-          "description": "The user's chosen display name"
-        },
-        "bio": {
-          "type": "string",
-          "description": "The user's personal biography"
-        },
-        "photoUrl": {
-          "type": "string",
-          "description": "URL to the user's profile picture"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the profile was last updated"
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "owner"] },
+        "isPremium": { "type": "boolean" },
+        "isBanned": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Real-time global chat messages",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderPhoto": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "isOwner": { "type": "boolean" },
+        "replyTo": { "type": "string" },
+        "replyToUser": { "type": "string" },
+        "mangaMention": {
+          "type": "object",
+          "properties": {
+            "mangaId": { "type": "string" },
+            "title": { "type": "string" }
+          }
         }
-      },
-      "required": ["displayName"]
+      }
+    },
+    "Report": {
+      "title": "Report",
+      "description": "User feedback and error reports",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "type": { "type": "string", "enum": ["bug", "chapter"] },
+        "chapterId": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "resolved"] },
+        "timestamp": { "type": "object" }
+      }
     }
   },
   "auth": {
@@ -33,7 +58,15 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "#/backend/entities/UserProfile",
-      "description": "User profile document stored by unique user ID"
+      "description": "User data nodes"
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "#/backend/entities/ChatMessage",
+      "description": "Global chat stream"
+    },
+    "/reports/{reportId}": {
+      "schema": "#/backend/entities/Report",
+      "description": "User report logs"
     }
   }
 }

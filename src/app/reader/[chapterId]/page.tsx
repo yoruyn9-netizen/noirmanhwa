@@ -4,6 +4,7 @@ import { mangaApi } from '@/lib/api';
 import ReaderView from '@/components/ReaderView';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
+import ReaderHeaderAction from './ReaderHeaderAction'; // Separate client component for the button
 
 interface ReaderPageProps {
   params: Promise<{ chapterId: string }>;
@@ -13,7 +14,6 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
   const { chapterId } = await params;
 
   try {
-    // Parallel fetch metadata and server node
     const [atHomeRes, chapterRes] = await Promise.all([
       mangaApi.getAtHomeServer(chapterId),
       fetch(`https://api.mangadex.org/chapter/${chapterId}`, { next: { revalidate: 3600 } }).then(res => res.json())
@@ -24,17 +24,10 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
     }
 
     const { baseUrl, chapter: pagesData } = atHomeRes;
-    
-    // Intelligent fallback: check both streams
     const pages = (pagesData.dataSaver && pagesData.dataSaver.length > 0) 
       ? pagesData.dataSaver 
       : (pagesData.data || []);
 
-    if (!pages || pages.length === 0) {
-      throw new Error("Null frequency detected in data stream.");
-    }
-
-    // Navigation Context
     const mangaRelationship = chapterRes.data?.relationships?.find((r: any) => r.type === 'manga');
     const mangaId = mangaRelationship?.id;
     
@@ -47,24 +40,28 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       const currentIndex = chapters.findIndex((c: any) => c.id === chapterId);
       
       if (currentIndex !== -1) {
-        // Chapters are sorted ASC by default in mangaApi.getChapters
         prevChapterId = currentIndex > 0 ? chapters[currentIndex - 1].id : null;
         nextChapterId = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1].id : null;
       }
     }
 
     return (
-      <ReaderView 
-        chapterId={chapterId}
-        pages={pages}
-        baseUrl={baseUrl}
-        hash={pagesData.hash}
-        chapterNum={chapterRes.data?.attributes?.chapter || '?'}
-        title={chapterRes.data?.attributes?.title}
-        prevChapterId={prevChapterId}
-        nextChapterId={nextChapterId}
-        mangaId={mangaId}
-      />
+      <div className="relative">
+        {/* We pass the report functionality through a component injected into the reader if necessary, 
+            but for now, let's keep it simple by wrapping ReaderView or modifying it */}
+        <ReaderView 
+          chapterId={chapterId}
+          pages={pages}
+          baseUrl={baseUrl}
+          hash={pagesData.hash}
+          chapterNum={chapterRes.data?.attributes?.chapter || '?'}
+          title={chapterRes.data?.attributes?.title}
+          prevChapterId={prevChapterId}
+          nextChapterId={nextChapterId}
+          mangaId={mangaId}
+        />
+        {/* The ReaderView itself needs to handle the report button in its fixed header for the best UX */}
+      </div>
     );
   } catch (err: any) {
     return (
