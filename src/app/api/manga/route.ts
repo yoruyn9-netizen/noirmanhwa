@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
   const id = searchParams.get('id');
+  const offset = searchParams.get('offset') || '0';
+  const limit = searchParams.get('limit') || '20';
+  const title = searchParams.get('title');
   
   let endpoint = '/manga';
   const proxyParams = new URLSearchParams();
@@ -16,34 +19,25 @@ export async function GET(request: NextRequest) {
       endpoint = '/manga?limit=12&includes[]=cover_art&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&originalLanguage[]=ja&originalLanguage[]=ko&originalLanguage[]=zh';
       break;
     case 'latest':
-      searchParams.forEach((val, key) => {
-        if (key !== 'type') proxyParams.append(key, val);
-      });
-      proxyParams.append('limit', '24');
-      proxyParams.append('includes[]', 'cover_art');
-      proxyParams.append('order[latestUploadedChapter]', 'desc');
-      proxyParams.append('contentRating[]', 'safe');
-      proxyParams.append('originalLanguage[]', 'ja');
-      proxyParams.append('originalLanguage[]', 'ko');
-      proxyParams.append('originalLanguage[]', 'zh');
-      endpoint = `/manga?${proxyParams.toString()}`;
+      endpoint = `/manga?limit=${limit}&offset=${offset}&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe&originalLanguage[]=ja&originalLanguage[]=ko&originalLanguage[]=zh`;
       break;
     case 'details':
       endpoint = `/manga/${id}?includes[]=cover_art&includes[]=author`;
       break;
     case 'search':
-      searchParams.forEach((val, key) => {
-        if (key !== 'type') proxyParams.append(key, val);
-      });
+      proxyParams.append('limit', limit);
+      proxyParams.append('offset', offset);
       proxyParams.append('includes[]', 'cover_art');
       proxyParams.append('contentRating[]', 'safe');
       proxyParams.append('contentRating[]', 'suggestive');
-      // If no languages specified in the client request, we default them here
-      if (!searchParams.has('originalLanguage[]')) {
-        proxyParams.append('originalLanguage[]', 'ja');
-        proxyParams.append('originalLanguage[]', 'ko');
-        proxyParams.append('originalLanguage[]', 'zh');
-      }
+      proxyParams.append('order[followedCount]', 'desc');
+      if (title) proxyParams.append('title', title);
+      
+      // Default to Asian languages if none specified
+      proxyParams.append('originalLanguage[]', 'ja');
+      proxyParams.append('originalLanguage[]', 'ko');
+      proxyParams.append('originalLanguage[]', 'zh');
+      
       endpoint = `/manga?${proxyParams.toString()}`;
       break;
     case 'tags':
@@ -58,12 +52,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'MangaDex node error' }, { status: response.status });
+      return NextResponse.json({ error: 'MangaDex node error', status: response.status }, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: 'Connection failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Neural link connection failed' }, { status: 500 });
   }
 }

@@ -108,7 +108,7 @@ export default function MangaGrid() {
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto opacity-40" />
           <div className="space-y-2">
             <h3 className="text-base font-black uppercase tracking-tight">Sync Interrupted</h3>
-            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Neural connection to remote nodes failed.</p>
+            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Neural connection to remote nodes failed (CORS or Network).</p>
           </div>
           <button 
             onClick={() => loadData(true)}

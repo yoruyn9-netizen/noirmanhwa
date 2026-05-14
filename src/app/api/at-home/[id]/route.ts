@@ -5,7 +5,7 @@ const MANGADEX_BASE = 'https://api.mangadex.org';
 
 /**
  * Unified API Proxy for MangaDex At-Home Server
- * Uses 'id' as the standard dynamic slug to avoid routing collisions in Next.js.
+ * Standardized on 'id' slug to resolve filesystem collisions.
  */
 export async function GET(
   request: NextRequest,
@@ -23,7 +23,7 @@ export async function GET(
     const response = await fetch(endpoint, {
       headers: { 
         'Accept': 'application/json',
-        'User-Agent': 'NoirManhwa-Proxy/1.0'
+        'User-Agent': 'NoirManhwa-Neural-Proxy/1.0'
       },
       cache: 'no-store'
     });
