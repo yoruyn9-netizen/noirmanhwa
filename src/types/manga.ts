@@ -1,5 +1,5 @@
 
-export type MangaSource = 'mangadex' | 'mangamint';
+export type MangaSource = 'asura' | 'flame' | 'komiku';
 
 export interface Manga {
   id: string;
@@ -13,6 +13,8 @@ export interface Manga {
   description?: string;
   author?: string;
   year?: string | number;
+  type?: string;
+  updatedAt?: string;
 }
 
 export interface Chapter {
