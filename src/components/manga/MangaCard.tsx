@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Manga } from '@/types/manga';
 import SafeImage from '@/components/SafeImage';
 import { motion } from 'framer-motion';
-import { Star, Clock } from 'lucide-react';
+import { Star, Clock, Zap } from 'lucide-react';
 import { cn, truncateTitle } from '@/lib/utils';
 
 interface MangaCardProps {
@@ -14,18 +14,23 @@ interface MangaCardProps {
   compact?: boolean;
 }
 
+/**
+ * Redesigned Manga Card
+ * Optimized for grid display with proper star ratings and type badges.
+ */
 export default function MangaCard({ manga, isRecommended, compact }: MangaCardProps) {
+  // Logic for 'New' badge (updated within 24 hours)
   const isNew = manga.updatedAt && (Date.now() - new Date(manga.updatedAt).getTime() < 86400000);
   
-  const typeLabels = {
+  const typeConfig = {
     manhwa: { label: 'Manhwa', color: 'bg-indigo-600', flag: '🇰🇷' },
     manga: { label: 'Manga', color: 'bg-red-600', flag: '🇯🇵' },
     manhua: { label: 'Manhua', color: 'bg-amber-600', flag: '🇨🇳' },
   };
 
-  const currentType = typeLabels[manga.type as keyof typeof typeLabels] || typeLabels.manga;
+  const currentType = typeConfig[manga.type as keyof typeof typeConfig] || typeConfig.manga;
   const displayGenres = manga.genres.slice(0, compact ? 1 : 2);
-  const extraGenres = manga.genres.length - displayGenres.length;
+  const extraGenresCount = manga.genres.length - displayGenres.length;
 
   return (
     <motion.div
@@ -34,15 +39,21 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
       className="group relative w-full h-full"
     >
       <Link href={`/manga/${manga.id}?source=${manga.source}`} className="block select-none" draggable={false}>
-        <div className="shinigami-card aspect-[2/3] max-h-[350px] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 transition-all duration-700 group-hover:border-accent/50">
+        {/* Poster Container */}
+        <div className={cn(
+          "shinigami-card aspect-[2/3] max-h-[350px] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border transition-all duration-700",
+          isRecommended ? "border-accent/40 shadow-[0_0_20px_rgba(139,92,246,0.15)]" : "border-white/5 group-hover:border-accent/30"
+        )}>
           <SafeImage 
             src={manga.cover} 
             alt={manga.title} 
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 pointer-events-none"
           />
           
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+          {/* Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
           
+          {/* Type Badge */}
           <div className="absolute top-2.5 right-2.5 z-20">
              <div className={cn(
                 "px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-wider text-white shadow-xl flex items-center gap-1 backdrop-blur-md border border-white/10",
@@ -53,12 +64,14 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
               </div>
           </div>
 
+          {/* New Tag */}
           {isNew && !compact && (
             <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-green-500 text-black text-[7px] font-black uppercase tracking-widest rounded-lg shadow-lg">
               NEW
             </div>
           )}
 
+          {/* Metadata Footer */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-20">
             <span className={cn(
               "text-[6px] font-black uppercase tracking-widest px-2 py-1 bg-black/60 backdrop-blur-xl rounded-lg border border-white/5",
@@ -66,15 +79,18 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
             )}>
               {manga.status}
             </span>
+
+            {/* STAR RATING - Actual Rating Display */}
             {manga.rating && (
-              <div className="flex items-center gap-1 text-yellow-400 bg-black/40 px-1.5 py-0.5 rounded-lg backdrop-blur-md">
-                <Star className="w-2 h-2 fill-current" />
-                <span className="text-[7px] font-black">{manga.rating}</span>
+              <div className="flex items-center gap-1 text-yellow-400 bg-black/80 px-2 py-1 rounded-lg backdrop-blur-md border border-white/5 shadow-xl">
+                <Star className="w-2.5 h-2.5 fill-current" />
+                <span className="text-[8px] font-black">{manga.rating}</span>
               </div>
             )}
           </div>
         </div>
 
+        {/* Text Content */}
         <div className="mt-3 space-y-1.5 px-0.5">
           <h3 className={cn(
             "font-black uppercase tracking-tight text-white leading-tight group-hover:text-accent transition-colors duration-500 line-clamp-2",
@@ -90,8 +106,8 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
                    {g}
                  </span>
                ))}
-               {extraGenres > 0 && (
-                 <span className="text-[7px] font-bold text-neutral-700 uppercase">+{extraGenres}</span>
+               {extraGenresCount > 0 && (
+                 <span className="text-[7px] font-bold text-neutral-700 uppercase">+{extraGenresCount}</span>
                )}
              </div>
              <span className="w-0.5 h-0.5 rounded-full bg-neutral-800 shrink-0" />
@@ -105,6 +121,9 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
   );
 }
 
+/**
+ * Skeleton Loader for Grid Synchronization
+ */
 export function MangaCardSkeleton() {
   return (
     <div className="space-y-3 animate-pulse w-full">

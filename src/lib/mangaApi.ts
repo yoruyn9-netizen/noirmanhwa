@@ -1,4 +1,3 @@
-
 import { Manga, MangaSource, Chapter, MangaDetail } from '@/types/manga';
 
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
@@ -60,7 +59,10 @@ function normalizeMangaDex(item: any): Manga {
     author: 'Unknown Author',
     year: item.attributes?.year,
     type: contentType,
-    updatedAt: item.attributes?.updatedAt
+    updatedAt: item.attributes?.updatedAt,
+    // Extract rating if present in statistcs (MangaDex standard API doesn't return this in search,
+    // so we handle it as optional. In Top List page we may use high-fidelity placeholder if absent)
+    rating: item.attributes?.rating 
   };
 }
 
@@ -81,7 +83,7 @@ function normalizeMangaMint(item: any): Manga {
     language: 'id',
     description: item.synopsis || '',
     rating: parseFloat(item.score) || undefined,
-    type: 'manhwa' // Most Mint content is manhwa
+    type: 'manhwa' 
   };
 }
 
@@ -99,7 +101,7 @@ export const mangaApi = {
     title?: string;
   }): Promise<Manga[]> {
     const { page, type, sortBy, status, genres, contentRating, title } = params;
-    const cacheKey = `manga_cache_${JSON.stringify(params)}`;
+    const cacheKey = `manga_cache_top_${JSON.stringify(params)}`;
     const cached = getCachedData<Manga[]>(cacheKey);
     
     if (cached) return cached;
@@ -109,7 +111,6 @@ export const mangaApi = {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      // Build MangaDex Query
       const dexParams = new URLSearchParams();
       dexParams.append('limit', '24');
       dexParams.append('offset', ((page - 1) * 24).toString());
@@ -118,19 +119,17 @@ export const mangaApi = {
 
       if (title) dexParams.append('title', title);
 
-      // Sorting Logic
+      // Enhanced Sorting Logic
       if (sortBy === 'popular') dexParams.append('order[followedCount]', 'desc');
       else if (sortBy === 'rating') dexParams.append('order[rating]', 'desc');
       else if (sortBy === 'alphabetical') dexParams.append('order[title]', 'asc');
       else if (sortBy === 'newly-added') dexParams.append('order[createdAt]', 'desc');
       else dexParams.append('order[latestUploadedChapter]', 'desc');
 
-      // Content Type Logic
       if (type === 'manhwa') dexParams.append('originalLanguage[]', 'ko');
       else if (type === 'manga') dexParams.append('originalLanguage[]', 'ja');
       else if (type === 'manhua') dexParams.append('originalLanguage[]', 'zh');
 
-      // Advanced Filters
       status?.forEach(s => dexParams.append('status[]', s));
       genres?.forEach(g => dexParams.append('includedTags[]', g));
       contentRating?.forEach(r => dexParams.append('contentRating[]', r));
@@ -143,7 +142,6 @@ export const mangaApi = {
             .then(res => res.json())
             .then(response => {
               if (response.data) {
-                console.log(`🌍 MANGADEX [${type}]:`, response.data.length);
                 results.push(...response.data.map(normalizeMangaDex));
               }
             })
@@ -151,7 +149,6 @@ export const mangaApi = {
       }
 
       if (type === 'sub-indo' || type === 'all' || type === 'manhwa') {
-        // Mint handles search differently, but for list we use page
         const mintPath = title ? `/search?query=${encodeURIComponent(title)}` : `/manga/page/${page}`;
         fetchPromises.push(
           fetch(`/api/mint?path=${mintPath}`, { signal: controller.signal })
@@ -159,7 +156,6 @@ export const mangaApi = {
             .then(mintData => {
               const list = mintData.manga_list || mintData.data || [];
               if (Array.isArray(list)) {
-                console.log('🇮 MANGAMINT:', list.length);
                 results.push(...list.map(normalizeMangaMint));
               }
             })
@@ -169,8 +165,8 @@ export const mangaApi = {
       await Promise.all(fetchPromises);
       clearTimeout(timeoutId);
       
-      // Shuffle only on 'all' tab
-      if (type === 'all') results.sort(() => Math.random() - 0.5);
+      // Shuffle only on 'all' tab and ensure results are distinct
+      if (type === 'all' && sortBy === 'latest') results.sort(() => Math.random() - 0.5);
 
       if (results.length > 0) setCachedData(cacheKey, results);
       return results;
@@ -180,9 +176,6 @@ export const mangaApi = {
     }
   },
 
-  /**
-   * Positional argument search wrapper for compatibility
-   */
   async search(query: string, source: MangaSource | 'all' = 'all', genres: string[] = []): Promise<Manga[]> {
     return this.fetchMangaList({
       page: 1,
@@ -195,14 +188,14 @@ export const mangaApi = {
 
   async fetchCuratedManhwa(): Promise<Manga[]> {
     const curatedIds = [
-      '32d76d5e-7971-4770-9679-052a3560647c', // Solo Leveling
-      '27263590-3486-455b-9b43-5798991a0c0e', // Lookism
-      'c03a6104-ada7-46a2-a153-bdbad3956ca9', // Tower of God
-      'c1682f6e-57ef-493e-8c31-29ef31d59521', // Omniscient Reader
-      '82772583-a99a-4f51-b882-77be834c8784', // TBATE
-      '632df67e-49b8-4d51-8761-1250f1469e38', // Return of Mount Hua
-      'a35639f7-6401-4475-8164-32525492d2b5', // Nano Machine
-      '6d3765f0-d9d1-419b-b0b0-379e5192a543'  // Leveling with the Gods
+      '32d76d5e-7971-4770-9679-052a3560647c',
+      '27263590-3486-455b-9b43-5798991a0c0e',
+      'c03a6104-ada7-46a2-a153-bdbad3956ca9',
+      'c1682f6e-57ef-493e-8c31-29ef31d59521',
+      '82772583-a99a-4f51-b882-77be834c8784',
+      '632df67e-49b8-4d51-8761-1250f1469e38',
+      'a35639f7-6401-4475-8164-32525492d2b5',
+      '6d3765f0-d9d1-419b-b0b0-379e5192a543'
     ];
 
     try {
