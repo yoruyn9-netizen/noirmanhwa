@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Flame Scans Proxy Node
- * Standardized on WordPress JSON API protocols.
+ * Flame Comics Proxy Node
+ * Relayed to the latest active domain with standard WordPress API headers.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,13 +13,15 @@ export async function GET(request: NextRequest) {
   upstreamParams.delete('path');
   
   const queryString = upstreamParams.toString();
-  const endpoint = `https://flamescans.org/wp-json/wp/v2${path}${queryString ? `?${queryString}` : ''}`;
+  // Flame Scans moved to flamecomics.com
+  const endpoint = `https://flamecomics.com/wp-json/wp/v2${path}${queryString ? `?${queryString}` : ''}`;
 
   try {
     const response = await fetch(endpoint, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'application/json'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://flamecomics.com/',
       },
       next: { revalidate: 120 }
     });

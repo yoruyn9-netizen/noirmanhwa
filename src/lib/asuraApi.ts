@@ -1,22 +1,29 @@
 
 /**
  * @fileOverview Asura Scans Driver
- * High-fidelity interface for the Asura Scans API via internal proxy.
+ * Features dual-path discovery to maximize signal retention.
  */
 
 const ASURA_PROXY = '/api/asura';
 
 export async function fetchAsuraLatest() {
   try {
-    // Attempt standard series list
-    const res = await fetch(`${ASURA_PROXY}?path=/series&limit=30`);
+    // Strategy 1: Attempt standard series discovery
+    let res = await fetch(`${ASURA_PROXY}?path=/series&limit=30`);
+    
+    // Strategy 2: If primary path fails, attempt latest-update relay
     if (!res.ok) {
-      console.warn(`[Asura Node]: Primary signal blocked (Status ${res.status})`);
+      console.warn(`[Asura Node]: Primary path restricted (Status ${res.status}). Relaying to secondary...`);
+      res = await fetch(`${ASURA_PROXY}?path=/series/latest&limit=30`);
+    }
+
+    if (!res.ok) {
+      console.error(`[Asura Node]: Total path failure (Status ${res.status})`);
       return [];
     }
     
     const data = await res.json();
-    const list = Array.isArray(data) ? data : (data.series || []);
+    const list = Array.isArray(data) ? data : (data.series || data.data || []);
     
     if (list.length === 0) {
       console.warn('[Asura Node]: Received empty data packet.');

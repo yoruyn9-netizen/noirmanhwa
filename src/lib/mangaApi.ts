@@ -1,7 +1,7 @@
 
 /**
- * @fileOverview Unified API Layer - PURIFIED VERSION
- * Strictly Asura, Flame, and Komiku only. No dummy data.
+ * @fileOverview Unified API Layer - HARDENED VERSION
+ * Orchestrates Asura, Flame, and Komiku with strict validation.
  */
 
 import { fetchAsuraLatest, fetchAsuraChapters } from './asuraApi';
@@ -11,7 +11,7 @@ import { Manga, Chapter, MangaDetail, MangaSource } from '@/types/manga';
 
 export const mangaApi = {
   /**
-   * Universal List Fetcher with cascading fallback
+   * Universal List Fetcher with high-performance failover
    */
   async fetchMangaList(params: {
     page: number;
@@ -19,9 +19,9 @@ export const mangaApi = {
     sortBy?: string;
     title?: string;
   }): Promise<Manga[]> {
-    console.log('🔍 Initializing Multi-Source Discovery Protocol...');
+    console.log('🔍 Initiating Neural Discovery Protocol...');
 
-    // 1. ASURA NODE (Primary)
+    // 1. ASURA NODE (Primary Uplink)
     try {
       const asuraData = await fetchAsuraLatest();
       if (asuraData && asuraData.length > 0) {
@@ -33,10 +33,10 @@ export const mangaApi = {
         return asuraData;
       }
     } catch (e) {
-      console.warn('⚠️ Asura Node offline. Relaying to fallback...');
+      console.warn('⚠️ Asura Node offline.');
     }
 
-    // 2. FLAME NODE (Secondary)
+    // 2. FLAME NODE (Failover Node 1)
     try {
       const flameData = await fetchFlameLatest();
       if (flameData && flameData.length > 0) {
@@ -48,10 +48,10 @@ export const mangaApi = {
         return flameData;
       }
     } catch (e) {
-      console.warn('⚠️ Flame Node offline. Relaying to fallback...');
+      console.warn('⚠️ Flame Node offline.');
     }
 
-    // 3. KOMIKU NODE (Tertiary)
+    // 3. KOMIKU NODE (Failover Node 2)
     try {
       const komikuData = await fetchKomikuLatest();
       if (komikuData && komikuData.length > 0) {
@@ -62,26 +62,32 @@ export const mangaApi = {
       console.warn('⚠️ Komiku Node offline.');
     }
 
-    // CRITICAL FAILURE: All sources unreachable
+    // CRITICAL FAILURE: No nodes returned data
     console.error('❌ [CRITICAL]: Total Signal Loss. All primary discovery nodes offline.');
     return [];
   },
 
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
-    const list = await this.fetchMangaList({ page: 1 });
-    const manga = list.find(m => m.id === id);
-    
-    if (!manga) {
-      console.warn(`[System]: Node ${id} not found in discovery feed.`);
+    try {
+      // Re-fetch list to find base item metadata
+      const list = await this.fetchMangaList({ page: 1 });
+      const manga = list.find(m => m.id === id);
+      
+      if (!manga) {
+        console.warn(`[System]: Node ${id} not localized in primary discovery.`);
+        return null;
+      }
+
+      const chapters = await this.fetchChapters(id, source);
+
+      return {
+        ...manga,
+        chapters
+      };
+    } catch (err) {
+      console.error('[Detail Protocol Failed]:', err);
       return null;
     }
-
-    const chapters = await this.fetchChapters(id, source);
-
-    return {
-      ...manga,
-      chapters
-    };
   },
 
   async fetchChapters(mangaId: string, source: MangaSource): Promise<Chapter[]> {
@@ -89,15 +95,14 @@ export const mangaApi = {
       if (source === 'asura') {
         return await fetchAsuraChapters(mangaId);
       }
-      // Future expansion for other source chapter lists
+      // Expandable for Flame/Komiku chapter logic
     } catch (e) {
-      console.error(`❌ Chapter Sync Failed for source: ${source}`, e);
+      console.error(`❌ Chapter Sync Failed: SOURCE_${source.toUpperCase()}`, e);
     }
     return [];
   },
 
   async getTags() {
-    // Sources handle genres via internal attributes; returning empty list for discovery component
     return { data: [] }; 
   },
 
