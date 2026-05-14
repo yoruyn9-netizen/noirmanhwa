@@ -8,6 +8,7 @@ import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { AlertTriangle, RefreshCw, Zap, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Pagination from './Pagination';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -70,9 +71,9 @@ export default function MangaGrid() {
   const currentItems = allLoadedMangas.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goToPage = (p: number) => {
-    if (p >= 1 && p <= totalPages) {
+    if (p >= 1 && (p <= totalPages || totalPages === 0)) {
       setPage(p);
-      window.scrollTo({ top: 300, behavior: 'smooth' });
+      window.scrollTo({ top: 400, behavior: 'smooth' });
     }
   };
 
@@ -104,18 +105,20 @@ export default function MangaGrid() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="manga-grid"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-3"
         >
-          {currentItems.map((m, idx) => (
-            <MangaCard 
-              key={`${m.id}-${m.source}-${idx}`} 
-              manga={m} 
-            />
-          ))}
-          
-          {loading && currentItems.length === 0 && Array.from({ length: 12 }).map((_, i) => (
-            <MangaCardSkeleton key={i} />
-          ))}
+          {loading && currentItems.length === 0 ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <MangaCardSkeleton key={i} />
+            ))
+          ) : (
+            currentItems.map((m, idx) => (
+              <MangaCard 
+                key={`${m.id}-${m.source}-${idx}`} 
+                manga={m} 
+              />
+            ))
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -139,71 +142,22 @@ export default function MangaGrid() {
 
       {/* Pagination Controls */}
       {allLoadedMangas.length > 0 && (
-        <div className="space-y-10">
-          <div className="pagination-controls">
-            <button
-              onClick={() => goToPage(page - 1)}
-              disabled={page === 1}
-              className="pagination-btn"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1 inline" /> Prev
-            </button>
-
-            <div className="page-numbers">
-              {Array.from({ length: Math.min(5, Math.max(1, totalPages)) }, (_, i) => {
-                let pageNum = i + 1;
-                if (totalPages > 5 && page > 3) {
-                  pageNum = page - 2 + i;
-                }
-                if (pageNum > totalPages) return null;
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    className={cn("page-number", page === pageNum && "active")}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={() => goToPage(page + 1)}
-              disabled={page >= totalPages}
-              className="pagination-btn"
-            >
-              Next <ChevronRight className="w-4 h-4 ml-1 inline" />
-            </button>
-          </div>
-
-          <div className="load-more-section">
-            <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest mb-6">
-              Viewing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, allLoadedMangas.length)} of {allLoadedMangas.length} entries
-            </p>
-            {hasMore && (
-              <button
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="load-more-btn"
-              >
-                {loading ? 'Synchronizing...' : 'Fetch 20 More Titles'}
-              </button>
-            )}
-          </div>
-
-          <div className="grid-stats">
-            <span className="stat-item">📊 Page {page} of {Math.max(1, totalPages)}</span>
-            <span className="stat-item">📚 {allLoadedMangas.length} Titles Loaded</span>
-          </div>
-        </div>
+        <Pagination 
+          currentPage={page}
+          totalPages={Math.max(1, totalPages)}
+          onPageChange={goToPage}
+          totalItems={allLoadedMangas.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          isLoading={loading}
+        />
       )}
 
       {error && (
         <div className="py-20 text-center space-y-4">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto opacity-30" />
-          <h3 className="text-sm font-black uppercase tracking-tight">Sync Failure</h3>
+          <h3 className="text-sm font-black uppercase tracking-tight text-white">Sync Failure</h3>
           <button 
             onClick={() => loadData(true)}
             className="inline-flex items-center gap-2 px-8 py-3 bg-red-600 text-white font-black text-[8px] uppercase tracking-widest hover:bg-red-700 transition-all rounded-xl"

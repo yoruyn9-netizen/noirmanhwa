@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Manga } from '@/types/manga';
 import SafeImage from '@/components/SafeImage';
 import { motion } from 'framer-motion';
-import { Star, Clock, Zap } from 'lucide-react';
+import { Star, Clock } from 'lucide-react';
 import { cn, truncateTitle } from '@/lib/utils';
 
 interface MangaCardProps {
@@ -31,14 +31,14 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group relative w-full"
+      className="group relative w-full h-full"
     >
       <Link href={`/manga/${manga.id}?source=${manga.source}`} className="block select-none" draggable={false}>
-        <div className="shinigami-card aspect-[2/3] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 transition-all duration-700 group-hover:border-accent/50">
+        <div className="shinigami-card aspect-[2/3] max-h-[350px] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 transition-all duration-700 group-hover:border-accent/50">
           <SafeImage 
             src={manga.cover} 
             alt={manga.title} 
-            className="group-hover:scale-110 transition-transform duration-1000 pointer-events-none"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 pointer-events-none"
           />
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
@@ -77,7 +77,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
 
         <div className="mt-3 space-y-1.5 px-0.5">
           <h3 className={cn(
-            "font-black uppercase tracking-tight text-white leading-tight group-hover:text-accent transition-colors duration-500 manga-title-truncate",
+            "font-black uppercase tracking-tight text-white leading-tight group-hover:text-accent transition-colors duration-500 line-clamp-2",
             compact ? "text-[10px]" : "text-[11px]"
           )}>
             {truncateTitle(manga.title, 45)}
@@ -108,7 +108,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
 export function MangaCardSkeleton() {
   return (
     <div className="space-y-3 animate-pulse w-full">
-      <div className="aspect-[2/3] bg-neutral-900/50 rounded-2xl border border-white/5" />
+      <div className="aspect-[2/3] max-h-[350px] bg-neutral-900/50 rounded-2xl border border-white/5" />
       <div className="space-y-2 px-1">
         <div className="h-2.5 bg-neutral-900 rounded-full w-full" />
         <div className="h-2 bg-neutral-900 rounded-full w-2/3" />
