@@ -4,18 +4,19 @@
 import React, { useEffect, useState, use } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import { MangaSource } from '@/types/manga';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ReaderView from '@/components/manga/ReaderView';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 /**
- * Unified Reader Page (Single Segment)
+ * Unified Reader Page (Single Segment Protocol)
  * Handles /reader/[id] links by synchronizing with the Noir Reader protocol.
  * Consolidates 'chapterId' and 'id' slugs to resolve routing conflicts.
  */
 export default function SingleChapterReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chapterId } = use(params);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
   const [images, setImages] = useState<string[]>([]);
@@ -28,12 +29,13 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
       setLoading(true);
       setError(false);
       try {
+        // Attempt to fetch chapter images
         const imgs = await mangaApi.fetchChapterImages(chapterId, source);
-        if (imgs.length === 0) throw new Error('Empty node signal');
+        if (!imgs || imgs.length === 0) throw new Error('Empty node signal');
         setImages(imgs);
         
-        // Attempt to fetch manga title for better UX if possible
-        // Note: For direct chapter links, we might not have manga context immediately
+        // UX: We don't have the mangaId here directly for some sources, 
+        // so we use a placeholder or attempt title fetch if source allows.
       } catch (err) {
         console.error('[Reader Node Failure]:', err);
         setError(true);
@@ -68,14 +70,14 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
         <div className="space-y-2">
           <h2 className="text-xl font-black uppercase tracking-tighter text-white">Transmission Interrupted</h2>
           <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-xs mx-auto">
-            The remote node failed to return a valid visual stream. Re-establish your neural link.
+            The remote node failed to return a valid visual stream. Check your neural link status.
           </p>
         </div>
         <button 
-          onClick={() => window.location.reload()}
+          onClick={() => router.back()}
           className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:bg-accent hover:text-white transition-all"
         >
-          RE-ESTABLISH LINK
+          RETURN TO GRID
         </button>
       </div>
     );
