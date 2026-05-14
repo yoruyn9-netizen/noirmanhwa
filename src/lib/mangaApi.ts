@@ -22,30 +22,46 @@ export const mangaApi = {
     console.log('🔍 Initializing Multi-Source Discovery...');
 
     // 1. ASURA NODE (Primary)
-    const asuraData = await fetchAsuraLatest();
-    if (asuraData && asuraData.length > 0) {
-      console.log('✅ Signal established: ASURA_NODE');
-      if (params.title) {
-        const query = params.title.toLowerCase();
-        return asuraData.filter(m => m.title.toLowerCase().includes(query));
+    try {
+      const asuraData = await fetchAsuraLatest();
+      if (asuraData && asuraData.length > 0) {
+        console.log('✅ Signal established: ASURA_NODE');
+        if (params.title) {
+          const query = params.title.toLowerCase();
+          return asuraData.filter(m => m.title.toLowerCase().includes(query));
+        }
+        return asuraData;
       }
-      return asuraData;
+    } catch (e) {
+      console.warn('⚠️ Asura Node failure. Recalibrating cascade...');
     }
 
     // 2. FLAME NODE (Secondary)
-    console.warn('⚠️ Asura Node bypassed. Cascading to FLAME_NODE...');
-    const flameData = await fetchFlameLatest();
-    if (flameData && flameData.length > 0) {
-      console.log('✅ Signal established: FLAME_NODE');
-      return flameData;
+    try {
+      console.warn('⚠️ Asura Node bypassed. Cascading to FLAME_NODE...');
+      const flameData = await fetchFlameLatest();
+      if (flameData && flameData.length > 0) {
+        console.log('✅ Signal established: FLAME_NODE');
+        if (params.title) {
+          const query = params.title.toLowerCase();
+          return flameData.filter(m => m.title.toLowerCase().includes(query));
+        }
+        return flameData;
+      }
+    } catch (e) {
+      console.warn('⚠️ Flame Node failure. Recalibrating cascade...');
     }
 
     // 3. KOMIKU NODE (Tertiary)
-    console.warn('⚠️ Flame Node bypassed. Cascading to KOMIKU_NODE...');
-    const komikuData = await fetchKomikuLatest();
-    if (komikuData && komikuData.length > 0) {
-      console.log('✅ Signal established: KOMIKU_NODE');
-      return komikuData;
+    try {
+      console.warn('⚠️ Flame Node bypassed. Cascading to KOMIKU_NODE...');
+      const komikuData = await fetchKomikuLatest();
+      if (komikuData && komikuData.length > 0) {
+        console.log('✅ Signal established: KOMIKU_NODE');
+        return komikuData;
+      }
+    } catch (e) {
+      console.warn('⚠️ Komiku Node failure.');
     }
 
     // CRITICAL FAILURE: All sources unreachable
@@ -68,14 +84,18 @@ export const mangaApi = {
   },
 
   async fetchChapters(mangaId: string, source: MangaSource): Promise<Chapter[]> {
-    if (source === 'asura') {
-      return fetchAsuraChapters(mangaId);
+    try {
+      if (source === 'asura') {
+        return await fetchAsuraChapters(mangaId);
+      }
+    } catch (e) {
+      console.error(`❌ Chapter Sync Failed for ${source}:`, e);
     }
-    // Chapter fetching for other nodes can be implemented here
     return [];
   },
 
   async getTags() {
+    // Current sources handle genres differently, returning empty for tag discovery UI
     return { data: [] }; 
   },
 
@@ -91,7 +111,6 @@ export const mangaApi = {
 
   async fetchRecommendations(currentId: string, genres: string[]): Promise<Manga[]> {
     const all = await this.fetchMangaList({ page: 1 });
-    // Filter out current and try to find some overlap if possible, otherwise slice
     return all.filter(m => m.id !== currentId).slice(0, 8);
   }
 };

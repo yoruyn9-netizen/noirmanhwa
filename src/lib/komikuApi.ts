@@ -8,11 +8,14 @@ const KOMIKU_PROXY = '/api/komiku';
 export async function fetchKomikuLatest() {
   try {
     const res = await fetch(`${KOMIKU_PROXY}?path=/manga/page/1`);
-    if (!res.ok) throw new Error(`Komiku Node status: ${res.status}`);
+    
+    if (!res.ok) {
+      console.warn(`[Komiku Node]: Signal Restricted (Status ${res.status})`);
+      return [];
+    }
+
     const data = await res.json();
     
-    // Note: Komiku proxy currently returns connectivity status
-    // Proper scraping logic would live in the API route.
     if (data.live) {
       console.log('✅ KOMIKU LIVE: Connection Verified');
     }

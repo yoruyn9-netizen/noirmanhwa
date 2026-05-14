@@ -8,13 +8,18 @@ const FLAME_PROXY = '/api/flame';
 export async function fetchFlameLatest() {
   try {
     const res = await fetch(`${FLAME_PROXY}?path=/posts&per_page=20`);
-    if (!res.ok) throw new Error(`Flame Node status: ${res.status}`);
+    
+    if (!res.ok) {
+      console.warn(`[Flame Node]: Signal Restricted (Status ${res.status})`);
+      return [];
+    }
+
     const data = await res.json();
     
     console.log('✅ FLAME LIVE:', data.length, 'items retrieved');
     
     return data.map((item: any) => ({
-      id: item.slug,
+      id: item.slug || `flame-${item.id}`,
       title: item.title?.rendered || 'Flame Signal',
       cover: item.featured_media_url || '',
       status: 'ongoing',
