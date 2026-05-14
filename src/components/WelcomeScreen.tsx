@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -11,14 +10,12 @@ export default function WelcomeScreen() {
   const { setGlobalUIVisible } = useUIStore();
 
   useEffect(() => {
-    // Hide global UI immediately when welcome screen starts
     setGlobalUIVisible(false);
 
     const timer = setTimeout(() => {
       setFading(true);
       setTimeout(() => {
         setVisible(false);
-        // Restore global UI visibility once welcome screen is completely gone
         setGlobalUIVisible(true);
       }, 800);
     }, 2500);
@@ -44,7 +41,7 @@ export default function WelcomeScreen() {
             Noir Manhwa
           </h1>
           <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em] opacity-80">
-            Welcome to the Node
+            Welcome Back
           </p>
         </div>
         
@@ -56,7 +53,7 @@ export default function WelcomeScreen() {
       </div>
       
       <div className="absolute bottom-10 text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">
-        Establishing neural transmission...
+        Loading your library...
       </div>
     </div>
   );

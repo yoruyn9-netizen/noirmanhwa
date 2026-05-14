@@ -1,21 +1,21 @@
-
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
-import { mangaApi } from '@/lib/api';
-import MangaCard from '@/components/MangaCard';
+import { mangaApi } from '@/lib/mangaApi';
+import MangaCard from '@/components/manga/MangaCard';
 import { 
   Search as SearchIcon, 
   SlidersHorizontal, 
   Loader2, 
-  Sparkles, 
+  SearchIcon as SearchIconLucide, 
   AlertCircle,
   Check,
   RotateCcw,
   Globe,
-  Filter
+  Filter,
+  Languages
 } from 'lucide-react';
-import { Manga } from '@/lib/types';
+import { Manga } from '@/types/manga';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
@@ -35,13 +35,17 @@ const STATUS_OPTIONS = [
   { label: 'Ongoing', value: 'ongoing' },
   { label: 'Completed', value: 'completed' },
   { label: 'Hiatus', value: 'hiatus' },
-  { label: 'Cancelled', value: 'cancelled' },
 ];
 
-const TYPE_OPTIONS = [
-  { label: 'Manga', value: 'ja' },
-  { label: 'Manhwa', value: 'ko' },
-  { label: 'Manhua', value: 'zh' },
+const LANGUAGE_OPTIONS = [
+  { label: 'English Sub', value: 'en' },
+  { label: 'Indonesian Sub', value: 'id' },
+];
+
+const ORIGIN_OPTIONS = [
+  { label: 'Japanese', value: 'ja' },
+  { label: 'Korean', value: 'ko' },
+  { label: 'Chinese', value: 'zh' },
 ];
 
 export default function SearchPage({ searchParams }: SearchPageProps) {
@@ -56,6 +60,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>(params.genre ? [params.genre] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedOrigins, setSelectedOrigins] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -67,23 +72,30 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   }, [query]);
 
   useEffect(() => {
-    mangaApi.getTags().then(res => {
-      if (res.data) setAvailableTags(res.data);
-    }).catch(console.error);
+    fetch('/api/manga?type=tags')
+      .then(res => res.json())
+      .then(res => {
+        if (res.data) setAvailableTags(res.data);
+      }).catch(console.error);
   }, []);
 
   useEffect(() => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const resultsRes = await mangaApi.search({ 
-          title: debouncedQuery, 
-          includedTags: selectedTags,
-          status: selectedStatus,
-          languages: selectedLanguages,
-          limit: 24 
-        });
-        setResults(resultsRes.data || []);
+        // Simple search via proxy
+        const res = await mangaApi.search(debouncedQuery);
+        let filtered = res;
+
+        // Apply local filtering for MVP if API filters are complex
+        if (selectedStatus.length > 0) {
+          filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
+        }
+        if (selectedLanguages.length > 0) {
+          filtered = filtered.filter(m => selectedLanguages.includes(m.language.toLowerCase()));
+        }
+
+        setResults(filtered);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -97,17 +109,8 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
     if (debouncedQuery) url.searchParams.set('q', debouncedQuery);
     else url.searchParams.delete('q');
     
-    if (selectedTags.length === 1) url.searchParams.set('genre', selectedTags[0]);
-    else url.searchParams.delete('genre');
-    
     router.replace(url.pathname + url.search);
-  }, [debouncedQuery, selectedTags, selectedStatus, selectedLanguages, router]);
-
-  const toggleTag = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
-    );
-  };
+  }, [debouncedQuery, selectedStatus, selectedLanguages, router]);
 
   const toggleStatus = (status: string) => {
     setSelectedStatus(prev => 
@@ -122,22 +125,22 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   };
 
   const resetFilters = () => {
-    setSelectedTags([]);
     setSelectedStatus([]);
     setSelectedLanguages([]);
+    setSelectedOrigins([]);
     setQuery('');
   };
 
-  const activeFilterCount = selectedTags.length + selectedStatus.length + selectedLanguages.length;
+  const activeFilterCount = selectedStatus.length + selectedLanguages.length + selectedOrigins.length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
       <div className="space-y-1 ml-1">
         <h1 className="text-xl font-black tracking-tighter flex items-center gap-3 uppercase text-glow">
-          <Sparkles className="w-5 h-5 text-accent" /> Network Scan
+          <SearchIconLucide className="w-5 h-5 text-accent" /> Search Manga
         </h1>
         <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-40 ml-1">
-          Filtering multi-verse frequencies...
+          Explore thousands of titles
         </p>
       </div>
 
@@ -151,7 +154,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
             type="text" 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search titles, authors, or IDs..." 
+            placeholder="Search by title..." 
             className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl pl-12 pr-5 py-3.5 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-black placeholder:text-muted-foreground/30 relative z-10 transition-all shadow-2xl"
           />
         </div>
@@ -173,12 +176,12 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
               )}
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0">
+          <SheetContent side="bottom" className="h-[70vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0">
             <div className="h-full flex flex-col p-10 space-y-10">
               <SheetHeader className="flex flex-row items-center justify-between">
                 <div className="space-y-1">
-                  <SheetTitle className="text-xl font-black tracking-tight uppercase text-glow">Calibration</SheetTitle>
-                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">Adjusting receiver parameters</p>
+                  <SheetTitle className="text-xl font-black tracking-tight uppercase text-glow">Filters</SheetTitle>
+                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">Refine your search results</p>
                 </div>
                 <button 
                   onClick={resetFilters}
@@ -192,10 +195,10 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                 <div className="space-y-10 pb-12">
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5" /> Signal Origin (Type)
+                      <Languages className="w-3.5 h-3.5" /> Translation
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {TYPE_OPTIONS.map((opt) => (
+                      {LANGUAGE_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => toggleLanguage(opt.value)}
@@ -214,7 +217,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Filter className="w-3.5 h-3.5" /> Node Status
+                      <Filter className="w-3.5 h-3.5" /> Manga Status
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {STATUS_OPTIONS.map((opt) => (
@@ -233,30 +236,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                       ))}
                     </div>
                   </section>
-
-                  <section className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60">Signal Genres</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {availableTags.map((tag) => {
-                        const isSelected = selectedTags.includes(tag.id);
-                        return (
-                          <button
-                            key={tag.id}
-                            onClick={() => toggleTag(tag.id)}
-                            className={cn(
-                              "flex items-center justify-between px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-500",
-                              isSelected 
-                                ? "bg-accent border-accent text-white shadow-xl shadow-accent/20" 
-                                : "bg-[#0a0a0f] border-white/5 text-muted-foreground"
-                            )}
-                          >
-                            <span className="truncate">{tag.attributes.name.en}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
                 </div>
               </ScrollArea>
 
@@ -264,7 +243,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                 onClick={() => setIsFilterOpen(false)}
                 className="w-full py-5 bg-white text-black font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl"
               >
-                Apply Node Filters
+                Apply Filters
               </button>
             </div>
           </SheetContent>
@@ -274,21 +253,21 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       {loading && results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <Loader2 className="w-8 h-8 text-accent animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Syncing frequencies...</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Searching...</p>
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed">
            <AlertCircle className="w-12 h-12 text-accent opacity-20" />
            <div className="space-y-2">
-             <h3 className="text-base font-black uppercase tracking-tight">Signal Interrupted</h3>
-             <p className="text-muted-foreground font-medium text-[11px] opacity-50 max-w-[240px] mx-auto">No matching data streams detected in this sector.</p>
+             <h3 className="text-base font-black uppercase tracking-tight">No Results Found</h3>
+             <p className="text-muted-foreground font-medium text-[11px] opacity-50 max-w-[240px] mx-auto">Try adjusting your filters or search terms.</p>
            </div>
-           <button onClick={resetFilters} className="px-8 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-accent font-black text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all">Re-calibrate Network</button>
+           <button onClick={resetFilters} className="px-8 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-accent font-black text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all">Clear All Filters</button>
         </div>
       ) : (
         <div className="manga-grid">
           {results.map((manga) => (
-            <MangaCard key={manga.id} manga={manga} />
+            <MangaCard key={`${manga.id}-${manga.source}`} manga={manga} />
           ))}
         </div>
       )}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -20,9 +19,9 @@ export default function BottomNav() {
 
   const navItems = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
-    { id: 'search', icon: Search, label: 'SCAN', path: '/search' },
-    { id: 'bookmark', icon: Bookmark, label: 'ARCHIVE', path: '/bookmarks' },
-    { id: 'genre', icon: Grid, label: 'GENRE', path: '/genre' },
+    { id: 'search', icon: Search, label: 'SEARCH', path: '/search' },
+    { id: 'bookmark', icon: Bookmark, label: 'LIBRARY', path: '/bookmarks' },
+    { id: 'genre', icon: Grid, label: 'GENRES', path: '/genre' },
     { id: 'profile', icon: user ? User : Fingerprint, label: user ? 'PROFILE' : 'LOGIN', path: user ? '/profile' : '/login' },
   ];
 

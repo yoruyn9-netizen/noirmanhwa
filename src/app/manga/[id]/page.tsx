@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -32,7 +31,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
         setData(detail);
         addToHistory(id);
         
-        // Fetch recommendations: overlap genres or random fallback
+        // Fetch recommendations
         const list = await mangaApi.fetchMangaList(1, source);
         const filtered = list
           .filter(m => m.id !== id && m.genres.some(g => detail.genres.includes(g)))
@@ -51,7 +50,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
           <Loader2 className="w-10 h-10 text-accent animate-spin" />
           <div className="absolute inset-0 blur-2xl bg-accent/20 animate-pulse" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Synchronizing Node Data</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Loading Details</p>
       </div>
     );
   }
@@ -60,8 +59,8 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center space-y-8">
         <AlertTriangle className="w-16 h-16 text-red-500 opacity-20" />
-        <h2 className="text-xl font-black uppercase tracking-tighter text-white">Target Node Not Found</h2>
-        <button onClick={() => router.back()} className="px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">Return to Grid</button>
+        <h2 className="text-xl font-black uppercase tracking-tighter text-white">Manga Not Found</h2>
+        <button onClick={() => router.back()} className="px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">Return Home</button>
       </div>
     );
   }
@@ -72,8 +71,8 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
         <button onClick={() => router.back()} className="p-3 bg-white/5 rounded-2xl hover:bg-neutral-900 transition-all">
           <ArrowLeft className="w-5 h-5 text-neutral-500" />
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-[8px] font-black uppercase tracking-[0.3em] text-accent">Protocol: {id.substring(0, 8)}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[8px] font-black uppercase tracking-[0.3em] text-accent">ID: {id.substring(0, 8)}</span>
           <FlagBadge source={source} size="sm" />
         </div>
         <div className="w-11" />
@@ -111,20 +110,20 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
                   href={`/reader/${id}/${data.chapters[0].id}?source=${source}`}
                   className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
                 >
-                  <Play className="w-4 h-4 fill-current" /> READ START
+                  <Play className="w-4 h-4 fill-current" /> START READING
                 </Link>
               )}
               <button className="flex items-center justify-center gap-3 py-5 bg-accent/10 border border-accent/20 text-accent rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
-                ARCHIVE NODE
+                ADD TO LIBRARY
               </button>
             </div>
 
             <div className="space-y-4 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
               <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-accent">
-                <Info className="w-4 h-4" /> Summary Log
+                <Info className="w-4 h-4" /> Synopsis
               </h3>
-              <p className="text-[12px] text-neutral-400 leading-relaxed font-medium opacity-80 italic">
-                {data.description || 'No synchronized summary detected for this node.'}
+              <p className="text-[12px] text-neutral-400 leading-relaxed font-medium opacity-80">
+                {data.description || 'No description available.'}
               </p>
             </div>
           </div>
@@ -133,9 +132,9 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
         <section className="space-y-8 pt-10">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-[12px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
-              <List className="w-5 h-5 text-accent" /> Signal Chapters
+              <List className="w-5 h-5 text-accent" /> Chapter List
             </h2>
-            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{data.chapters.length} Units</span>
+            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{data.chapters.length} Chapters</span>
           </div>
 
           <div className="grid gap-3">
@@ -154,11 +153,11 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
                       {chapter.title}
                     </h4>
                     <p className="text-[7px] font-black text-neutral-600 uppercase tracking-widest">
-                      {chapter.publishAt ? formatTimeAgo(chapter.publishAt) : 'Recently Synced'}
+                      {chapter.publishAt ? formatTimeAgo(chapter.publishAt) : 'Recently Added'}
                     </p>
                   </div>
                 </div>
-                <Zap className="w-4 h-4 text-neutral-800 group-hover:text-accent" />
+                <Play className="w-3 h-3 text-neutral-800 group-hover:text-accent fill-current" />
               </Link>
             ))}
           </div>

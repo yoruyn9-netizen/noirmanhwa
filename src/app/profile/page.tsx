@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -8,20 +7,17 @@ import OwnerBadge from '@/components/auth/OwnerBadge';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 import { 
   LogOut, 
-  Settings, 
   User, 
   Zap, 
   Globe, 
-  Database,
+  ShieldCheck, 
   ArrowRight,
-  Terminal,
-  ShieldCheck,
   AlertTriangle,
   Edit3,
   Users
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from 'next/link';
 
 function ProfilePage() {
@@ -31,18 +27,16 @@ function ProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    toast({ title: "Signal Terminated", description: "Identity offline." });
+    toast({ title: "Logged Out", description: "Your session has ended." });
   };
 
   if (!user) return null;
 
-  // Safe access for role and status
   const userRole = user.role || 'user';
   const isOwner = userRole === 'owner';
 
   return (
     <div className="max-w-2xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
-      {/* Identity Node */}
       <div className="relative p-10 bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[3rem] overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-40" />
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-accent/5 rounded-full blur-[80px]" />
@@ -67,25 +61,25 @@ function ProfilePage() {
             <div className="space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-4">
                 <h1 className="text-3xl font-black tracking-tighter uppercase text-glow leading-none">
-                  {user.displayName || 'Anonymous Node'}
+                  {user.displayName || 'Guest User'}
                 </h1>
                 {user.isPremium && (
                   <div className="px-3 py-1 bg-yellow-500 text-black text-[8px] font-black rounded-full shadow-lg shadow-yellow-500/20">PREMIUM</div>
                 )}
               </div>
               <div className="flex items-center justify-center sm:justify-start gap-4">
-                <span className="text-[9px] font-black text-accent uppercase tracking-[0.4em]">Signal: Verified</span>
-                <span className="text-[7px] text-neutral-600 font-bold uppercase tracking-widest">{user.email || 'Private Uplink'}</span>
+                <span className="text-[9px] font-black text-accent uppercase tracking-[0.4em]">Account Verified</span>
+                <span className="text-[7px] text-neutral-600 font-bold uppercase tracking-widest">{user.email}</span>
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed opacity-60 italic">
-              {user.bio || "No identity sub-routine bio detected. Initializing default personality matrix."}
+              {user.bio || "No bio available. Tell us something about yourself!"}
             </p>
             <button 
               onClick={() => setIsEditorOpen(true)}
               className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[8px] font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center gap-2 mx-auto sm:mx-0"
             >
-              <Edit3 className="w-3 h-3" /> Edit Sub-Routine
+              <Edit3 className="w-3 h-3" /> Edit Profile
             </button>
           </div>
         </div>
@@ -97,12 +91,11 @@ function ProfilePage() {
         </SheetContent>
       </Sheet>
 
-      {/* Stats Matrix */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { icon: Zap, label: 'Energy', val: user.isPremium ? 'MAX' : '99%' },
-          { icon: Globe, label: 'Nodes', val: 'Global' },
-          { icon: ShieldCheck, label: 'Access', val: userRole.toUpperCase() },
+          { icon: Globe, label: 'Region', val: 'Global' },
+          { icon: ShieldCheck, label: 'Role', val: userRole.toUpperCase() },
         ].map((stat, i) => (
           <div key={i} className="p-6 bg-[#0a0a0f]/60 backdrop-blur-xl border border-white/5 rounded-3xl text-center space-y-1 group hover:border-accent/30 transition-all shadow-xl">
             <stat.icon className="w-4 h-4 text-accent mx-auto mb-1 opacity-40 group-hover:opacity-100 transition-opacity" />
@@ -112,9 +105,8 @@ function ProfilePage() {
         ))}
       </div>
 
-      {/* Actions */}
       <section className="space-y-4">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] px-4 text-neutral-600">Administrative Protocols</h3>
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] px-4 text-neutral-600">Settings & Admin</h3>
         <div className="grid gap-3">
           {isOwner && (
             <>
@@ -124,8 +116,8 @@ function ProfilePage() {
                     <Users className="w-5 h-5 text-accent" />
                   </div>
                   <div className="text-left">
-                    <p className="text-[11px] font-black uppercase tracking-widest text-accent">Node Grid Controller</p>
-                    <p className="text-[8px] text-accent/60 font-black uppercase tracking-widest">Manage User Permissions & Premium</p>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-accent">User Management</p>
+                    <p className="text-[8px] text-accent/60 font-black uppercase tracking-widest">Manage Permissions & Premium</p>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-accent group-hover:translate-x-1 transition-all" />
@@ -137,8 +129,8 @@ function ProfilePage() {
                     <AlertTriangle className="w-5 h-5 text-red-500" />
                   </div>
                   <div className="text-left">
-                    <p className="text-[11px] font-black uppercase tracking-widest text-red-500">Anomaly Dashboard</p>
-                    <p className="text-[8px] text-red-900 font-black uppercase tracking-widest">Review Bug & Data Reports</p>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-red-500">Bug Reports</p>
+                    <p className="text-[8px] text-red-900 font-black uppercase tracking-widest">Review User Feedback</p>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-red-900 group-hover:translate-x-1 transition-all" />
@@ -155,8 +147,8 @@ function ProfilePage() {
                 <LogOut className="w-5 h-5 text-red-500 group-hover:text-white" />
               </div>
               <div className="text-left">
-                <p className="text-[11px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Terminate Session</p>
-                <p className="text-[8px] text-red-900 group-hover:text-white/60 font-black uppercase tracking-widest">Identity purge</p>
+                <p className="text-[11px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Sign Out</p>
+                <p className="text-[8px] text-red-900 group-hover:text-white/60 font-black uppercase tracking-widest">Securely end session</p>
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-red-900 group-hover:text-white group-hover:translate-x-1 transition-all" />
