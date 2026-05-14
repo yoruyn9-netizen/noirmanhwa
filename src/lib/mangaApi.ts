@@ -1,80 +1,57 @@
-
 /**
- * @fileOverview Unified API Layer - HARDENED VERSION
- * Orchestrates Asura, Flame, and Komiku with strict validation.
+ * @fileOverview Unified API Layer - PROXY VERSION
+ * Routes all traffic through local Next.js API routes to bypass CORS.
  */
 
-import { fetchAsuraLatest, fetchAsuraChapters } from './asuraApi';
-import { fetchFlameLatest } from './flameApi';
-import { fetchKomikuLatest } from './komikuApi';
 import { Manga, Chapter, MangaDetail, MangaSource } from '@/types/manga';
 
 export const mangaApi = {
   /**
-   * Universal List Fetcher with high-performance failover
+   * Universal List Fetcher via Unified Proxy Matrix
    */
-  async fetchMangaList(params: {
-    page: number;
-    type?: string;
-    sortBy?: string;
-    title?: string;
-  }): Promise<Manga[]> {
-    console.log('🔍 Initiating Neural Discovery Protocol...');
-
-    // 1. ASURA NODE (Primary Uplink)
+  async fetchMangaList(params: { page: number; title?: string }): Promise<Manga[]> {
+    console.log('🔍 Initiating Proxy Discovery Protocol...');
+    
     try {
-      const asuraData = await fetchAsuraLatest();
-      if (asuraData && asuraData.length > 0) {
-        console.log('📡 Signal Established: ASURA_NODE');
-        if (params.title) {
-          const query = params.title.toLowerCase();
-          return asuraData.filter(m => m.title.toLowerCase().includes(query));
-        }
-        return asuraData;
-      }
-    } catch (e) {
-      console.warn('⚠️ Asura Node offline.');
-    }
+      const response = await fetch('/api/manga/combined', {
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-    // 2. FLAME NODE (Failover Node 1)
-    try {
-      const flameData = await fetchFlameLatest();
-      if (flameData && flameData.length > 0) {
-        console.log('📡 Signal Established: FLAME_NODE');
-        if (params.title) {
-          const query = params.title.toLowerCase();
-          return flameData.filter(m => m.title.toLowerCase().includes(query));
-        }
-        return flameData;
+      if (!response.ok) {
+        throw new Error(`Neural Link Error: ${response.status}`);
       }
-    } catch (e) {
-      console.warn('⚠️ Flame Node offline.');
-    }
 
-    // 3. KOMIKU NODE (Failover Node 2)
-    try {
-      const komikuData = await fetchKomikuLatest();
-      if (komikuData && komikuData.length > 0) {
-        console.log('📡 Signal Established: KOMIKU_NODE');
-        return komikuData;
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to sync Discovery Matrix');
       }
-    } catch (e) {
-      console.warn('⚠️ Komiku Node offline.');
-    }
 
-    // CRITICAL FAILURE: No nodes returned data
-    console.error('❌ [CRITICAL]: Total Signal Loss. All primary discovery nodes offline.');
-    return [];
+      console.log('✅ MATRIX SYNC SUCCESS:', result.total, 'items loaded');
+      console.log('📊 Node Health:', result.sources);
+
+      let data = result.data || [];
+
+      if (params.title) {
+        const query = params.title.toLowerCase();
+        data = data.filter((m: any) => m.title.toLowerCase().includes(query));
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ UPLINK CRITICAL FAILURE:', error);
+      throw error;
+    }
   },
 
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
     try {
-      // Re-fetch list to find base item metadata
       const list = await this.fetchMangaList({ page: 1 });
       const manga = list.find(m => m.id === id);
       
       if (!manga) {
-        console.warn(`[System]: Node ${id} not localized in primary discovery.`);
+        console.warn(`[System]: Node ${id} not localized.`);
         return null;
       }
 
@@ -91,14 +68,7 @@ export const mangaApi = {
   },
 
   async fetchChapters(mangaId: string, source: MangaSource): Promise<Chapter[]> {
-    try {
-      if (source === 'asura') {
-        return await fetchAsuraChapters(mangaId);
-      }
-      // Expandable for Flame/Komiku chapter logic
-    } catch (e) {
-      console.error(`❌ Chapter Sync Failed: SOURCE_${source.toUpperCase()}`, e);
-    }
+    // To be implemented via proxy routes in /api/manga/[source]/chapters
     return [];
   },
 
@@ -106,7 +76,7 @@ export const mangaApi = {
     return { data: [] }; 
   },
 
-  async search(query: string, source: string = 'asura', genres: string[] = []) {
+  async search(query: string) {
     return this.fetchMangaList({ page: 1, title: query });
   },
 

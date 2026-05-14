@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,24 +7,24 @@ import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { AlertTriangle, RefreshCw, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/**
+ * Noir Discovery Grid
+ * Preserves existing "Noir" style while using the new Proxy matrix logic.
+ */
 export default function MangaGrid() {
   const [mangas, setMangas] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       const data = await mangaApi.fetchMangaList({ page: 1 });
-      if (data && data.length > 0) {
-        setMangas(data);
-      } else {
-        setError(true);
-      }
+      setMangas(data);
     } catch (err) {
-      console.error('[Grid Sync Error]:', err);
-      setError(true);
+      console.error('[Grid Matrix Error]:', err);
+      setError(err instanceof Error ? err.message : 'Unknown neural link interruption');
     } finally {
       setLoading(false);
     }
@@ -41,17 +40,17 @@ export default function MangaGrid() {
         <div className="w-20 h-20 bg-red-600/10 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
           <AlertTriangle className="w-10 h-10 text-red-500" />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-xl font-black uppercase tracking-tight text-white">All Sources Offline</h3>
+        <div className="space-y-2 px-6">
+          <h3 className="text-xl font-black uppercase tracking-tight text-white">ALL SOURCES OFFLINE</h3>
           <p className="text-neutral-500 text-[10px] uppercase tracking-widest max-w-[280px] mx-auto leading-relaxed">
-            Asura, Flame, and Komiku nodes are currently unreachable. Retrying neural link...
+            Asura, Flame, and Komiku nodes are currently unreachable via the Discovery Matrix.
           </p>
         </div>
         <button 
           onClick={loadData}
-          className="px-12 py-4 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95"
+          className="px-12 py-4 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95 flex items-center gap-2 mx-auto"
         >
-          <RefreshCw className="w-4 h-4 mr-2 inline" /> Retry Uplink
+          <RefreshCw className="w-4 h-4 animate-spin-slow" /> RETRY UPLINK
         </button>
       </div>
     );
@@ -72,12 +71,12 @@ export default function MangaGrid() {
           ) : mangas.length === 0 ? (
             <div className="col-span-full py-32 text-center space-y-4">
               <Zap className="w-12 h-12 text-accent opacity-20 mx-auto" />
-              <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">No Signals Detected</p>
+              <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">No Signals Detected in Sector</p>
             </div>
           ) : (
             mangas.map((m, idx) => (
               <MangaCard 
-                key={`${m.id}-${idx}`} 
+                key={`${m.source}-${m.id}-${idx}`} 
                 manga={m} 
               />
             ))
