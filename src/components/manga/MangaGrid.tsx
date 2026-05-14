@@ -7,7 +7,7 @@ import { Manga } from '@/types/manga';
 import { useMangaStore } from '@/store/mangaStore';
 import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { useInView } from 'react-intersection-observer';
-import { Loader2, AlertTriangle, RefreshCw, SearchX } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MangaGrid() {
@@ -30,7 +30,6 @@ export default function MangaGrid() {
       const nextPage = reset ? 1 : page;
       const source = preferredSource === 'all' ? undefined : preferredSource;
       
-      console.log(`🌀 Initializing sequence scan... Page: ${nextPage}, Source: ${preferredSource}`);
       const data = await mangaApi.fetchMangaList(nextPage, source);
       
       if (!data || data.length === 0) {
@@ -88,7 +87,7 @@ export default function MangaGrid() {
       {/* Empty State */}
       {!loading && !error && mangas.length === 0 && (
         <div className="py-32 text-center space-y-6">
-          <h3 className="text-sm font-black uppercase tracking-tight text-neutral-400">No Signal Detected</h3>
+          <h3 className="text-sm font-black uppercase tracking-tight text-neutral-400">No signals detected</h3>
           <button 
             onClick={() => loadData(true)}
             className="inline-flex items-center gap-2 px-10 py-3 bg-accent text-white font-black rounded-xl text-[8px] uppercase tracking-widest hover:bg-accent/80 transition-all shadow-xl active:scale-95"
@@ -103,14 +102,14 @@ export default function MangaGrid() {
         <div className="py-20 text-center space-y-6">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto opacity-40" />
           <div className="space-y-2">
-            <h3 className="text-base font-black uppercase tracking-tight">Sync Interrupted</h3>
-            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Neural connection to remote nodes failed.</p>
+            <h3 className="text-base font-black uppercase tracking-tight">Failed to load</h3>
+            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Please check your connection and try again.</p>
           </div>
           <button 
             onClick={() => loadData(true)}
             className="inline-flex items-center gap-3 px-8 py-3 bg-red-500 text-white font-black text-[9px] uppercase tracking-widest hover:bg-red-600 transition-all rounded-xl shadow-xl"
           >
-            <RefreshCw className="w-3 h-3" /> Re-establish Link
+            <RefreshCw className="w-3 h-3" /> Retry
           </button>
         </div>
       )}
@@ -123,7 +122,7 @@ export default function MangaGrid() {
 
       {!hasMore && mangas.length > 0 && (
         <p className="text-center text-[8px] font-black text-neutral-700 uppercase tracking-[0.5em] py-10">
-          End of Stream • Matrix Fully Scanned
+          End of List
         </p>
       )}
     </div>
