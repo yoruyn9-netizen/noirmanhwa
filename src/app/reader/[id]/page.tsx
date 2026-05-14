@@ -4,13 +4,14 @@
 import React, { useEffect, useState, use } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import { MangaSource } from '@/types/manga';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import ReaderView from '@/components/manga/ReaderView';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 /**
  * Unified Reader Page (Single Segment)
  * Handles /reader/[id] links by synchronizing with the Noir Reader protocol.
+ * Consolidates 'chapterId' and 'id' slugs to resolve routing conflicts.
  */
 export default function SingleChapterReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chapterId } = use(params);
@@ -31,9 +32,8 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
         if (imgs.length === 0) throw new Error('Empty node signal');
         setImages(imgs);
         
-        // Attempt to fetch manga title for better UX
-        // In a single-segment route, we might not have the mangaId immediately,
-        // but the ReaderView handles missing titles gracefully.
+        // Attempt to fetch manga title for better UX if possible
+        // Note: For direct chapter links, we might not have manga context immediately
       } catch (err) {
         console.error('[Reader Node Failure]:', err);
         setError(true);

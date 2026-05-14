@@ -92,7 +92,10 @@ export default function ChapterList({ chapters, mangaId, source = 'mangadex' }: 
         ) : (
           filteredChapters.map((chapter: any) => {
             const isIndo = chapter.attributes?.translatedLanguage === 'id';
-            // Use unified routing structure: /reader/[mangaId]/[chapterId]
+            
+            // Unified Routing logic:
+            // Use /reader/[mangaId]/[chapterId] if mangaId is available, 
+            // else fallback to /reader/[chapterId] which is now handled by the unified [id] slug.
             const readerHref = mangaId 
               ? `/reader/${mangaId}/${chapter.id}?source=${source}`
               : `/reader/${chapter.id}?source=${source}`;

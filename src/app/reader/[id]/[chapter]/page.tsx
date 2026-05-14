@@ -11,6 +11,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 /**
  * High-Fidelity Reader Page (Nested Segments)
  * Handles /reader/[id]/[chapter] where id is MangaID and chapter is ChapterID.
+ * Consistently uses 'id' for the first dynamic segment to match unified reader protocol.
  */
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
   const { id: mangaId, chapter: chapterId } = use(params);
@@ -87,7 +88,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
     <ReaderView 
       images={images}
       mangaTitle={mangaTitle}
-      chapterNum={chapterId.substring(0, 4)} // Approximation for UI
+      chapterNum={chapterId.substring(0, 4)}
       source={source}
     />
   );
