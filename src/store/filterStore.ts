@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -44,7 +43,7 @@ export const useFilterStore = create<FilterState>()(
 
       toggleGenre: (genreId) => set((state) => ({
         selectedGenres: state.selectedGenres.includes(genreId)
-          ? state.selectedGenres.filter((g) => s !== genreId)
+          ? state.selectedGenres.filter((g) => g !== genreId)
           : [...state.selectedGenres, genreId]
       })),
 

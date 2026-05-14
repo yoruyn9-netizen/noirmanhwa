@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Data Validation Protocol
  * Ensures all incoming API signals meet the NoirManhwa system specifications.
@@ -24,8 +23,11 @@ export function validateChapterData(data: any): data is Chapter[] {
 }
 
 export function sanitizeManga(item: any, source: string): Manga {
+  // Generate a reliable ID fallback to prevent duplicate keys in UI
+  const generatedId = item.id || item.slug || (item.ID ? String(item.ID) : `manga-${Math.random().toString(36).substr(2, 9)}`);
+
   return {
-    id: item.id || item.slug || String(item.ID),
+    id: generatedId,
     title: item.title || item.post_title || 'Unknown Title',
     cover: item.cover || item.thumbnail || item.featured_image || 'https://picsum.photos/seed/manga/400/600',
     status: item.status || 'Ongoing',

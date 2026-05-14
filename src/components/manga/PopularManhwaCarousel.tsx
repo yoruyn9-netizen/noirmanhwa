@@ -6,7 +6,7 @@ import { Manga } from '@/types/manga';
 import MangaCard from './MangaCard';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
-import { Flame, Sparkles, LayoutGrid } from 'lucide-react';
+import { Flame, Sparkles } from 'lucide-react';
 import { chunkArray } from '@/lib/utils';
 
 import 'swiper/css';
@@ -18,16 +18,21 @@ export default function PopularManhwaCarousel() {
 
   useEffect(() => {
     const loadCurated = async () => {
-      const data = await mangaApi.fetchCuratedManhwa();
-      setMangas(data);
-      setLoading(false);
+      try {
+        const data = await mangaApi.fetchCuratedManhwa();
+        setMangas(data);
+      } catch (err) {
+        console.error('[Carousel Load Error]:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     loadCurated();
   }, []);
 
   if (loading || mangas.length === 0) return null;
 
-  // Split into slides of 10 for paginated layout (2 rows x 5 cols on desktop, 2x2 on mobile)
+  // Split into slides of 10 for paginated layout
   const itemsPerSlide = 10;
   const chunkedMangas = chunkArray(mangas, itemsPerSlide);
 
@@ -56,10 +61,15 @@ export default function PopularManhwaCarousel() {
         className="!pb-12"
       >
         {chunkedMangas.map((slide, slideIdx) => (
-          <SwiperSlide key={slideIdx}>
+          <SwiperSlide key={`slide-${slideIdx}`}>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 px-2">
-              {slide.map((m) => (
-                <MangaCard key={m.id} manga={m} isRecommended={true} compact />
+              {slide.map((m, idx) => (
+                <MangaCard 
+                  key={`${m.id || 'curated'}-${slideIdx}-${idx}`} 
+                  manga={m} 
+                  isRecommended={true} 
+                  compact 
+                />
               ))}
             </div>
           </SwiperSlide>
