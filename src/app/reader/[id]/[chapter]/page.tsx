@@ -2,94 +2,98 @@
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
-import { mangaApi } from '@/lib/mangaApi';
+import { getChapterServer, fetchAllChapters } from '@/lib/mangaDexChapter';
 import { MangaSource } from '@/types/manga';
-import { useSearchParams } from 'next/navigation';
-import ReaderView from '@/components/manga/ReaderView';
-import { AlertTriangle } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import ImagePage from '@/components/reader/ImagePage';
+import { AlertTriangle, ArrowLeft, Settings, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { updateReadingHistory } from '@/lib/library';
+import { cn } from '@/lib/utils';
 
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
   const { id: mangaId, chapter: chapterId } = use(params);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
   const [images, setImages] = useState<string[]>([]);
-  const [mangaTitle, setMangaTitle] = useState('Chapter');
+  const [chapterNum, setChapterNum] = useState('?');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showUI, setShowUI] = useState(true);
 
   useEffect(() => {
-    const loadReader = async () => {
-      if (!chapterId) return;
+    const load = async () => {
       setLoading(true);
       setError(false);
       try {
-        const [imgs, detail] = await Promise.all([
-          mangaApi.fetchChapterImages(chapterId, source),
-          mangaId ? mangaApi.fetchMangaDetail(mangaId, source) : Promise.resolve(null)
-        ]);
-        
-        if (!imgs || imgs.length === 0) {
-          setError(true);
-          setLoading(false);
-          return;
-        }
+        const serverData = await getChapterServer(chapterId);
+        if (!serverData) throw new Error("Server Unreachable");
+
+        const { baseUrl, chapter } = serverData;
+        const imgs = (chapter.dataSaver || []).map((f: string) => `${baseUrl}/data-saver/${chapter.hash}/${f}`);
         
         setImages(imgs);
-        if (detail) setMangaTitle(detail.title);
+        
+        // Track History
+        if (user) {
+          updateReadingHistory(user.uid, mangaId, chapterId, "X");
+        }
       } catch (err) {
-        console.error('[Reader Error]:', err);
         setError(true);
       } finally {
         setLoading(false);
       }
     };
-    loadReader();
-  }, [mangaId, chapterId, source]);
+    load();
+  }, [chapterId, mangaId, user]);
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center space-y-6 z-[200]">
-        <div className="relative">
-          <div className="w-12 h-12 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
-          <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
-        </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-sm font-black uppercase tracking-[0.5em] text-white">Loading Reader</h2>
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Loading chapter pages...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center space-y-6">
+      <div className="w-12 h-12 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
+      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-accent animate-pulse">Syncing Chapter</p>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center p-10 text-center space-y-8 z-[200]">
-        <div className="w-20 h-20 bg-red-500/10 rounded-[2.5rem] border border-red-500/20 flex items-center justify-center">
-          <AlertTriangle className="w-10 h-10 text-red-500" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-black uppercase tracking-tighter text-white">Failed to Load</h2>
-          <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-xs mx-auto">
-            The chapter images could not be loaded. Please check your internet connection and try again.
-          </p>
-        </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:bg-accent hover:text-white transition-all"
-        >
-          RETRY
-        </button>
-      </div>
-    );
-  }
+  if (error) return (
+    <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center p-10 text-center">
+      <AlertTriangle className="w-20 h-20 text-red-500/20 mb-6" />
+      <h2 className="text-xl font-black uppercase tracking-tighter text-white">Neural Link Failure</h2>
+      <button onClick={() => window.location.reload()} className="mt-8 px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl">RETRY UPLINK</button>
+    </div>
+  );
 
   return (
-    <ReaderView 
-      images={images}
-      mangaTitle={mangaTitle}
-      chapterNum={chapterId.substring(0, 4)}
-      source={source}
-    />
+    <div className="min-h-screen bg-black relative">
+      <header className={cn(
+        "fixed top-0 inset-x-0 h-16 bg-black/80 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-6 transition-transform",
+        !showUI && "-translate-y-full"
+      )}>
+        <button onClick={() => router.back()} className="p-2 hover:bg-white/5 rounded-xl"><ArrowLeft className="w-5 h-5 text-white" /></button>
+        <div className="text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Chapter Node</p>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">MangaDex Node Stream</p>
+        </div>
+        <button className="p-2 hover:bg-white/5 rounded-xl"><Settings className="w-5 h-5 text-neutral-400" /></button>
+      </header>
+
+      <main className="pt-16 pb-32 flex flex-col items-center" onClick={() => setShowUI(!showUI)}>
+        {images.map((url, i) => <ImagePage key={i} url={url} index={i} />)}
+      </main>
+
+      <footer className={cn(
+        "fixed bottom-0 inset-x-0 h-20 bg-black/80 backdrop-blur-xl border-t border-white/5 z-50 flex items-center justify-center gap-10 px-6 transition-transform",
+        !showUI && "translate-y-full"
+      )}>
+        <button className="p-4 text-white hover:bg-white/5 rounded-2xl"><ChevronLeft className="w-6 h-6" /></button>
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-black uppercase text-accent flex items-center gap-1.5"><Zap className="w-3 h-3 fill-accent" /> SYNCED</span>
+          <p className="text-[9px] font-black text-neutral-500 uppercase">{images.length} Pages</p>
+        </div>
+        <button className="p-4 text-white hover:bg-white/5 rounded-2xl"><ChevronRight className="w-6 h-6" /></button>
+      </footer>
+    </div>
   );
 }

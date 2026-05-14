@@ -4,15 +4,17 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AvatarBorderOverlay from './AvatarBorderOverlay';
 
 interface AvatarDisplayProps {
   src?: string | null;
   name?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
   className?: string;
+  borderId?: string;
 }
 
-export default function AvatarDisplay({ src, name, size = 'md', className }: AvatarDisplayProps) {
+export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
     sm: 'w-8 h-8 rounded-lg',
     md: 'w-10 h-10 rounded-xl',
@@ -33,22 +35,30 @@ export default function AvatarDisplay({ src, name, size = 'md', className }: Ava
 
   return (
     <div className={cn(
-      "relative flex items-center justify-center overflow-hidden border border-white/10 bg-[#0a0a0f] shadow-2xl",
+      "relative flex items-center justify-center overflow-visible shadow-2xl",
       sizeMap[size],
       className
     )}>
-      {src ? (
-        <img 
-          src={src} 
-          alt={name || "Avatar"} 
-          className="w-full h-full object-cover transition-opacity duration-500" 
-          onError={(e) => (e.currentTarget.style.display = 'none')}
-        />
-      ) : name ? (
-        <span className="text-[10px] font-black text-accent">{initials}</span>
-      ) : (
-        <User className={cn("text-neutral-800", iconSizeMap[size])} />
-      )}
+      {/* Border Overlay */}
+      <AvatarBorderOverlay borderId={borderId} size={size} />
+
+      <div className={cn(
+        "w-full h-full rounded-[inherit] overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/10",
+        sizeMap[size]
+      )}>
+        {src ? (
+          <img 
+            src={src} 
+            alt={name || "Avatar"} 
+            className="w-full h-full object-cover transition-opacity duration-500" 
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+        ) : name ? (
+          <span className="text-[10px] font-black text-accent">{initials}</span>
+        ) : (
+          <User className={cn("text-neutral-800", iconSizeMap[size])} />
+        )}
+      </div>
     </div>
   );
 }
