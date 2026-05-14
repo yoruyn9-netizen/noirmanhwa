@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -26,19 +27,30 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchDetail = async () => {
       setLoading(true);
-      const detail = await mangaApi.fetchMangaDetail(id, source);
-      if (detail) {
-        setData(detail);
-        addToHistory(id);
-        
-        // Fetch recommendations
-        const list = await mangaApi.fetchMangaList(1, source);
-        const filtered = list
-          .filter(m => m.id !== id && m.genres.some(g => detail.genres.includes(g)))
-          .slice(0, 8);
-        setRecommendations(filtered.length > 0 ? filtered : list.slice(0, 8));
+      try {
+        const detail = await mangaApi.fetchMangaDetail(id, source);
+        if (detail) {
+          setData(detail);
+          addToHistory(id);
+          
+          // Fetch recommendations based on current genres
+          const recs = await mangaApi.fetchMangaList({
+            page: 1,
+            type: source === 'mangamint' ? 'sub-indo' : 'all'
+          });
+          
+          // Filter logic: Find mangas with at least one matching genre, excluding current
+          const filtered = recs
+            .filter(m => m.id !== id && m.genres.some(g => detail.genres.includes(g)))
+            .slice(0, 10);
+            
+          setRecommendations(filtered.length > 0 ? filtered : recs.filter(m => m.id !== id).slice(0, 10));
+        }
+      } catch (err) {
+        console.error('[Detail Fetch Error]:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchDetail();
   }, [id, source, addToHistory]);
@@ -120,10 +132,10 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
 
             <div className="space-y-4 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
               <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-accent">
-                <Info className="w-4 h-4" /> Synopsis
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /> Synopsis
               </h3>
               <p className="text-[12px] text-neutral-400 leading-relaxed font-medium opacity-80">
-                {data.description || 'No description available.'}
+                {data.description || 'No description available for this signal.'}
               </p>
             </div>
           </div>
@@ -134,10 +146,10 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             <h2 className="text-[12px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
               <List className="w-5 h-5 text-accent" /> Chapter List
             </h2>
-            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{data.chapters.length} Chapters</span>
+            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{data.chapters.length} Units</span>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 max-h-[600px] overflow-y-auto pr-2 hide-scrollbar">
             {data.chapters.map((chapter) => (
               <Link 
                 key={chapter.id} 
@@ -157,12 +169,13 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
                     </p>
                   </div>
                 </div>
-                <Play className="w-3 h-3 text-neutral-800 group-hover:text-accent fill-current" />
+                <Play className="w-3 h-3 text-neutral-800 group-hover:text-accent fill-current transition-colors" />
               </Link>
             ))}
           </div>
         </section>
 
+        {/* Recommendations Section */}
         <RecommendationCarousel mangas={recommendations} />
       </div>
     </div>
