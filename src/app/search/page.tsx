@@ -65,12 +65,10 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        // Fix: If Indonesian Sub is selected, prioritize mangamint source
         const source = selectedLanguages.includes('id') ? 'mangamint' : 'mangadex';
         const res = await mangaApi.search(debouncedQuery, source);
         let filtered = res;
 
-        // Apply local status filtering if needed
         if (selectedStatus.length > 0) {
           filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
         }
@@ -155,7 +153,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
               )}
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[70vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0">
+          <SheetContent side="bottom" className="h-[70vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0 overflow-hidden">
             <div className="h-full flex flex-col p-10 space-y-10">
               <SheetHeader className="flex flex-row items-center justify-between">
                 <div className="space-y-1">
@@ -220,7 +218,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
               <button 
                 onClick={() => setIsFilterOpen(false)}
-                className="w-full py-5 bg-white text-black font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl"
+                className="w-full py-5 bg-white text-black font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl mb-6"
               >
                 Apply Filters
               </button>
