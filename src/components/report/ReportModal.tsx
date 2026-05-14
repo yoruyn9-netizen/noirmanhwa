@@ -151,7 +151,7 @@ export default function ReportModal({ isOpen, onClose, chapterId }: ReportModalP
 </button>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </AnimatePresence>
   );
