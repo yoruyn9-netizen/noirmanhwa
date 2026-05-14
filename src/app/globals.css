@@ -58,6 +58,14 @@
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .shinigami-card {
     @apply relative overflow-hidden rounded-2xl bg-[#0a0a0f]/60 border border-white/5 transition-all duration-500 hover:border-accent/40 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.8)];
     touch-action: pan-y pinch-zoom;

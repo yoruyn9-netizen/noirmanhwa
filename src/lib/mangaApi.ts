@@ -60,8 +60,6 @@ function normalizeMangaDex(item: any): Manga {
     year: item.attributes?.year,
     type: contentType,
     updatedAt: item.attributes?.updatedAt,
-    // Extract rating if present in statistcs (MangaDex standard API doesn't return this in search,
-    // so we handle it as optional. In Top List page we may use high-fidelity placeholder if absent)
     rating: item.attributes?.rating 
   };
 }
@@ -88,9 +86,6 @@ function normalizeMangaMint(item: any): Manga {
 }
 
 export const mangaApi = {
-  /**
-   * Fetches unified signal list from dual sources via local proxy with advanced filtering
-   */
   async fetchMangaList(params: {
     page: number;
     type?: 'all' | 'manhwa' | 'manga' | 'manhua' | 'sub-indo';
@@ -119,7 +114,6 @@ export const mangaApi = {
 
       if (title) dexParams.append('title', title);
 
-      // Enhanced Sorting Logic
       if (sortBy === 'popular') dexParams.append('order[followedCount]', 'desc');
       else if (sortBy === 'rating') dexParams.append('order[rating]', 'desc');
       else if (sortBy === 'alphabetical') dexParams.append('order[title]', 'asc');
@@ -165,7 +159,6 @@ export const mangaApi = {
       await Promise.all(fetchPromises);
       clearTimeout(timeoutId);
       
-      // Shuffle only on 'all' tab and ensure results are distinct
       if (type === 'all' && sortBy === 'latest') results.sort(() => Math.random() - 0.5);
 
       if (results.length > 0) setCachedData(cacheKey, results);
@@ -174,6 +167,15 @@ export const mangaApi = {
       console.error('[API Sync Error]:', error);
       return [];
     }
+  },
+
+  async fetchRecommendations(currentId: string, genres: string[]): Promise<Manga[]> {
+    const all = await this.fetchMangaList({
+      page: 1,
+      genres: genres.slice(0, 3), 
+      contentRating: ['safe', 'suggestive']
+    });
+    return all.filter(m => m.id !== currentId).slice(0, 10);
   },
 
   async search(query: string, source: MangaSource | 'all' = 'all', genres: string[] = []): Promise<Manga[]> {

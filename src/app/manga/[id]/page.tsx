@@ -1,15 +1,14 @@
-
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
-import { MangaDetail, Manga, MangaSource } from '@/types/manga';
+import { MangaDetail, MangaSource } from '@/types/manga';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Play, Info, Calendar, Clock, List, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Calendar, Clock, List, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 import FlagBadge from '@/components/ui/FlagBadge';
-import RecommendationCarousel from '@/components/manga/RecommendationCarousel';
+import RecommendationRow from '@/components/manga/RecommendationRow';
 import { formatTimeAgo } from '@/lib/utils';
 import { useMangaStore } from '@/store/mangaStore';
 
@@ -20,7 +19,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
   const [data, setData] = useState<MangaDetail | null>(null);
-  const [recommendations, setRecommendations] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToHistory } = useMangaStore();
 
@@ -32,19 +30,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
         if (detail) {
           setData(detail);
           addToHistory(id);
-          
-          // Fetch recommendations based on current genres
-          const recs = await mangaApi.fetchMangaList({
-            page: 1,
-            type: source === 'mangamint' ? 'sub-indo' : 'all'
-          });
-          
-          // Filter logic: Find mangas with at least one matching genre, excluding current
-          const filtered = recs
-            .filter(m => m.id !== id && m.genres.some(g => detail.genres.includes(g)))
-            .slice(0, 10);
-            
-          setRecommendations(filtered.length > 0 ? filtered : recs.filter(m => m.id !== id).slice(0, 10));
         }
       } catch (err) {
         console.error('[Detail Fetch Error]:', err);
@@ -175,8 +160,8 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </section>
 
-        {/* Recommendations Section */}
-        <RecommendationCarousel mangas={recommendations} />
+        {/* Recommendations Section - Strict Horizontal Scroll */}
+        <RecommendationRow currentId={id} genres={data.genres} />
       </div>
     </div>
   );
