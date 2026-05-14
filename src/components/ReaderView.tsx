@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MangaImage from '@/components/MangaImage';
 import { ReaderPrefs, loadReaderPrefs, saveReaderPrefs, smoothScroll, DEFAULT_READER_PREFS } from '@/lib/reader-utils';
@@ -17,7 +17,6 @@ import {
   ArrowUp, 
   ArrowDown, 
   Zap,
-  Eye,
   AlertTriangle
 } from 'lucide-react';
 import {
@@ -165,7 +164,6 @@ export default function ReaderView({
         ))}
       </main>
 
-      {/* Navigation Buttons and Footer omitted for brevity - maintained as in original */}
       <div className={cn(
         "fixed right-6 bottom-32 flex flex-col gap-3 transition-opacity duration-500 z-50",
         (!showScrollButtons || !showUI) && "opacity-0 pointer-events-none"

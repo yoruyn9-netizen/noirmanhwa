@@ -21,7 +21,6 @@ interface SeriesPageProps {
 
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { id } = await params;
-  console.log(`[Series] Loading Node: ${id}`);
 
   try {
     const [mangaRes, chaptersRes] = await Promise.all([
@@ -37,7 +36,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
     const coverUrl = getCoverUrl(manga, 'original');
     const description = getMangaDescription(manga);
 
-    // Identify if Indonesian content exists
     const hasIndonesian = chapters.some((c: any) => c.attributes.translatedLanguage === 'id');
 
     return (
@@ -82,7 +80,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           <div className="grid grid-cols-2 gap-4 px-4">
              <BookmarkButton manga={manga} />
              <Link 
-              href={chapters.length > 0 ? `/reader/${id}/${chapters[0].id}` : '#'} 
+              href={chapters.length > 0 ? `/reader/${chapters[0].id}` : '#'} 
               className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
             >
                <Play className="w-4 h-4 fill-current" /> READ NOW
@@ -91,7 +89,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
           <div className="mx-4 p-8 bg-[#0a0a0f] border border-white/5 rounded-[2.5rem] space-y-4 shadow-2xl">
             <h3 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-3 text-accent">
-              <Info className="w-3.5 h-3.5" /> SYNOPSIS LOG {hasIndonesian && "(ID)"}
+              <Info className="w-3.5 h-3.5" /> SYNOPSIS LOG
             </h3>
             <p className="text-[11px] text-neutral-400 leading-relaxed font-medium opacity-80">
               {description}
@@ -99,15 +97,13 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           </div>
         </div>
 
-        <ChapterList chapters={chapters} mangaId={id} source="mangadex" />
+        <ChapterList chapters={chapters} mangaId={id} />
       </div>
     );
   } catch (err: any) {
-    console.error('[Series Page Error]', err);
     return (
       <div className="max-w-2xl mx-auto py-32 text-center space-y-6">
         <h1 className="text-xl font-black uppercase tracking-tighter text-white">Signal Lost</h1>
-        <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest">The node database is currently unreachable.</p>
         <Link href="/" className="inline-block px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">Return Home</Link>
       </div>
     );
