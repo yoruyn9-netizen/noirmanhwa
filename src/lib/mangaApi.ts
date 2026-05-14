@@ -40,6 +40,14 @@ function normalizeMangaDex(item: any): Manga {
 
   const title = item.attributes?.title?.en || item.attributes?.title?.id || (item.attributes?.title ? Object.values(item.attributes.title)[0] : 'Unknown Title');
 
+  // Detect content type based on tags and language
+  let contentType: 'manga' | 'manhwa' | 'manhua' = 'manga';
+  const tags = (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en.toLowerCase());
+  const origin = item.attributes?.originalLanguage;
+
+  if (origin === 'ko' || tags.includes('manhwa')) contentType = 'manhwa';
+  else if (origin === 'zh' || tags.includes('manhua')) contentType = 'manhua';
+
   return {
     id: item.id,
     title,
@@ -47,19 +55,19 @@ function normalizeMangaDex(item: any): Manga {
     status: item.attributes?.status || 'Ongoing',
     genres: (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en).filter(Boolean),
     source: 'mangadex',
-    language: item.attributes?.originalLanguage || 'en',
+    language: origin || 'en',
     description: item.attributes?.description?.en || item.attributes?.description?.id || '',
     author: 'Unknown Author',
-    year: item.attributes?.year
+    year: item.attributes?.year,
+    type: contentType,
+    updatedAt: item.attributes?.updatedAt
   };
 }
 
 /**
  * MangaMint Signal Normalization (Sub-Indo)
- * Fixed: Correctly extract slug ID from endpoint
  */
 function normalizeMangaMint(item: any): Manga {
-  // Extract slug from endpoint like "/manga/detail/solo-leveling/"
   const endpoint = item.endpoint || '';
   const slug = endpoint.split('/').filter(Boolean).pop() || item.id || 'unknown';
 
@@ -72,80 +80,122 @@ function normalizeMangaMint(item: any): Manga {
     source: 'mangamint',
     language: 'id',
     description: item.synopsis || '',
-    rating: parseFloat(item.score) || undefined
+    rating: parseFloat(item.score) || undefined,
+    type: 'manhwa' // Most Mint content is manhwa
   };
 }
 
 export const mangaApi = {
   /**
-   * Fetches unified signal list from dual sources via local proxy
+   * Fetches unified signal list from dual sources via local proxy with advanced filtering
    */
-  async fetchMangaList(page: number, source?: MangaSource): Promise<Manga[]> {
-    const cacheKey = `manga_cache_${source || 'all'}_${page}`;
+  async fetchMangaList(params: {
+    page: number;
+    type?: 'all' | 'manhwa' | 'manga' | 'manhua' | 'sub-indo';
+    sortBy?: string;
+    status?: string[];
+    genres?: string[];
+    contentRating?: string[];
+  }): Promise<Manga[]> {
+    const { page, type, sortBy, status, genres, contentRating } = params;
+    const cacheKey = `manga_cache_${JSON.stringify(params)}`;
     const cached = getCachedData<Manga[]>(cacheKey);
-    if (cached) {
-      console.log(`📦 Using cached data for: ${source || 'all'} (Page ${page})`);
-      return cached;
-    }
+    
+    if (cached) return cached;
 
     const results: Manga[] = [];
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      // Build MangaDex Query
+      const dexParams = new URLSearchParams();
+      dexParams.append('limit', '24');
+      dexParams.append('offset', ((page - 1) * 24).toString());
+      dexParams.append('includes[]', 'cover_art');
+      dexParams.append('includes[]', 'author');
+
+      // Sorting Logic
+      if (sortBy === 'popular') dexParams.append('order[followedCount]', 'desc');
+      else if (sortBy === 'rating') dexParams.append('order[rating]', 'desc');
+      else if (sortBy === 'alphabetical') dexParams.append('order[title]', 'asc');
+      else if (sortBy === 'newly-added') dexParams.append('order[createdAt]', 'desc');
+      else dexParams.append('order[latestUploadedChapter]', 'desc');
+
+      // Content Type Logic
+      if (type === 'manhwa') dexParams.append('originalLanguage[]', 'ko');
+      else if (type === 'manga') dexParams.append('originalLanguage[]', 'ja');
+      else if (type === 'manhua') dexParams.append('originalLanguage[]', 'zh');
+
+      // Advanced Filters
+      status?.forEach(s => dexParams.append('status[]', s));
+      genres?.forEach(g => dexParams.append('includedTags[]', g));
+      contentRating?.forEach(r => dexParams.append('contentRating[]', r));
+
       const fetchPromises = [];
 
-      if (!source || source === 'mangadex') {
+      if (type !== 'sub-indo') {
         fetchPromises.push(
-          fetch(`/api/manga?type=search&limit=20&offset=${(page - 1) * 20}`, { signal: controller.signal })
+          fetch(`/api/manga?type=search&${dexParams.toString()}`, { signal: controller.signal })
             .then(res => res.json())
             .then(response => {
-              if (response.data && Array.isArray(response.data)) {
-                console.log('🌍 MANGADEX LOADED:', response.data.length);
+              if (response.data) {
+                console.log(`🌍 MANGADEX [${type}]:`, response.data.length);
                 results.push(...response.data.map(normalizeMangaDex));
               }
             })
-            .catch(err => console.error('❌ MangaDex Node Failed:', err))
         );
       }
 
-      if (!source || source === 'mangamint') {
+      if (type === 'sub-indo' || type === 'all' || type === 'manhwa') {
         fetchPromises.push(
           fetch(`/api/mint?path=/manga/page/${page}`, { signal: controller.signal })
             .then(res => res.json())
             .then(mintData => {
-              // MangaMint returns data in different structures depending on endpoint
               const list = mintData.manga_list || mintData.data || [];
               if (Array.isArray(list)) {
-                console.log('🇮 MANGAMINT LOADED:', list.length);
+                console.log('🇮 MANGAMINT:', list.length);
                 results.push(...list.map(normalizeMangaMint));
               }
             })
-            .catch(err => console.error('❌ MangaMint Node Failed:', err))
         );
       }
 
       await Promise.all(fetchPromises);
       clearTimeout(timeoutId);
       
-      if (!source) {
-        results.sort(() => Math.random() - 0.5);
-      }
+      // Shuffle only on 'all' tab
+      if (type === 'all') results.sort(() => Math.random() - 0.5);
 
-      if (results.length > 0) {
-        setCachedData(cacheKey, results);
-      }
-      
+      if (results.length > 0) setCachedData(cacheKey, results);
       return results;
     } catch (error) {
-      console.error('[CRITICAL]: Synchronization failed:', error);
+      console.error('[API Sync Error]:', error);
       return [];
     }
   },
 
-  /**
-   * Extracts detailed node data via proxy
-   */
+  async fetchCuratedManhwa(): Promise<Manga[]> {
+    const curatedIds = [
+      '32d76d5e-7971-4770-9679-052a3560647c', // Solo Leveling
+      '27263590-3486-455b-9b43-5798991a0c0e', // Lookism
+      'c03a6104-ada7-46a2-a153-bdbad3956ca9', // Tower of God
+      'c1682f6e-57ef-493e-8c31-29ef31d59521', // Omniscient Reader
+      '82772583-a99a-4f51-b882-77be834c8784', // TBATE
+      '632df67e-49b8-4d51-8761-1250f1469e38', // Return of Mount Hua
+      'a35639f7-6401-4475-8164-32525492d2b5', // Nano Machine
+      '6d3765f0-d9d1-419b-b0b0-379e5192a543'  // Leveling with the Gods
+    ];
+
+    try {
+      const res = await fetch(`/api/manga?type=search&ids[]=${curatedIds.join('&ids[]=')}&includes[]=cover_art`);
+      const data = await res.json();
+      return (data.data || []).map(normalizeMangaDex);
+    } catch {
+      return [];
+    }
+  },
+
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
     try {
       if (source === 'mangadex') {
@@ -154,7 +204,6 @@ export const mangaApi = {
         if (!data.data) return null;
         
         const manga = normalizeMangaDex(data.data);
-        
         const feedRes = await fetch(`/api/manga/${id}/feed`);
         const feedData = await feedRes.json();
         
@@ -171,14 +220,12 @@ export const mangaApi = {
       } else {
         const res = await fetch(`/api/mint?path=/manga/detail/${id}`);
         const data = await res.json();
-        // Handle nested detail structure from MangaMint
         const detail = data.manga_detail || data;
         const manga = normalizeMangaMint(detail);
         
         const chapters: Chapter[] = (data.chapter || []).map((c: any) => {
           const endpoint = c.chapter_endpoint || '';
-          const chapterId = endpoint.split('/').filter(Boolean).join('-'); // Convert path to URL-safe ID
-          
+          const chapterId = endpoint.split('/').filter(Boolean).join('-');
           return {
             id: chapterId,
             mangaId: id,
@@ -191,14 +238,10 @@ export const mangaApi = {
         return { ...manga, chapters };
       }
     } catch (err) {
-      console.error('[Node Detail Error]:', err);
       return null;
     }
   },
 
-  /**
-   * Retrieves visual stream frames for a chapter
-   */
   async fetchChapterImages(chapterId: string, source: MangaSource): Promise<string[]> {
     try {
       if (source === 'mangadex') {
@@ -214,28 +257,6 @@ export const mangaApi = {
         return data.chapter_image || [];
       }
     } catch (err) {
-      console.error('[Frame Error]:', err);
-      return [];
-    }
-  },
-
-  async search(query: string, source: MangaSource = 'mangadex', tags: string[] = []): Promise<Manga[]> {
-    try {
-      if (source === 'mangadex') {
-        let url = `/api/manga?type=search&limit=20&title=${encodeURIComponent(query)}`;
-        if (tags.length > 0) {
-          tags.forEach(t => url += `&includedTags[]=${t}`);
-        }
-        const res = await fetch(url);
-        const data = await res.json();
-        return (data.data || []).map(normalizeMangaDex);
-      } else {
-        const res = await fetch(`/api/mint?path=/search/${encodeURIComponent(query)}`);
-        const data = await res.json();
-        const list = data.manga_list || [];
-        return list.map(normalizeMangaMint);
-      }
-    } catch {
       return [];
     }
   },
