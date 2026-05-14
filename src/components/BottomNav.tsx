@@ -47,12 +47,12 @@ export default function BottomNav() {
         {navItems.map(({ href, icon: Icon, label }) => {
           // Identity Logic for Profile vs Login
           let targetHref = href;
-          let targetIcon = Icon;
+          let TargetIcon = Icon;
           let targetLabel = label;
           
           if (label === 'LOGIN' && user) {
             targetHref = '/profile';
-            targetIcon = User;
+            TargetIcon = User;
             targetLabel = 'PROFILE';
           }
 
@@ -69,7 +69,7 @@ export default function BottomNav() {
                   : "text-neutral-600 hover:text-neutral-400"
               )}
             >
-              <targetIcon 
+              <TargetIcon 
                 size={18} 
                 strokeWidth={isActive ? 2.5 : 2} 
                 className={cn("transition-transform duration-500", isActive && "scale-110")} 
