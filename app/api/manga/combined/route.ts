@@ -1,43 +1,31 @@
+
 import { NextResponse } from 'next/server';
+import { getAsuraData } from '../asura/route';
+import { getFlameData } from '../flame/route';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Combined API Route - Direct Logic execution
+ * Bypasses internal fetch calls to prevent 503 network errors.
+ */
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
-    
-    // Internal fetch calls to individual source proxies
-    const [asuraRes, flameRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/api/manga/asura`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/manga/flame`, { cache: 'no-store' })
+    const [asura, flame] = await Promise.all([
+      getAsuraData(),
+      getFlameData()
     ]);
 
-    const allManga: any[] = [];
-    const sources: Record<string, number> = { asura: 0, flame: 0 };
-
-    if (asuraRes.status === 'fulfilled' && asuraRes.value.ok) {
-      const data = await asuraRes.value.json();
-      if (data.success && Array.isArray(data.data)) {
-        allManga.push(...data.data);
-        sources.asura = data.data.length;
-      }
-    }
-
-    if (flameRes.status === 'fulfilled' && flameRes.value.ok) {
-      const data = await flameRes.value.json();
-      if (data.success && Array.isArray(data.data)) {
-        allManga.push(...data.data);
-        sources.flame = data.data.length;
-      }
-    }
-
-    console.log('📊 COMBINED SOURCES PULSE:', sources);
+    const allManga = [...asura.data, ...flame.data];
+    const sources = {
+      asura: asura.data.length,
+      flame: flame.data.length
+    };
 
     if (allManga.length === 0) {
       return NextResponse.json({
         success: false,
-        error: 'Total Signal Loss: All primary discovery nodes unreachable',
-        sources,
+        error: 'Total Signal Loss: Primary nodes unreachable',
         data: []
       }, { status: 503 });
     }
@@ -50,10 +38,9 @@ export async function GET() {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('❌ COMBINED MATRIX CRASH:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown matrix error',
+      error: 'Neural Link Crash',
       data: []
     }, { status: 500 });
   }
