@@ -96,8 +96,9 @@ export const mangaApi = {
     status?: string[];
     genres?: string[];
     contentRating?: string[];
+    title?: string;
   }): Promise<Manga[]> {
-    const { page, type, sortBy, status, genres, contentRating } = params;
+    const { page, type, sortBy, status, genres, contentRating, title } = params;
     const cacheKey = `manga_cache_${JSON.stringify(params)}`;
     const cached = getCachedData<Manga[]>(cacheKey);
     
@@ -114,6 +115,8 @@ export const mangaApi = {
       dexParams.append('offset', ((page - 1) * 24).toString());
       dexParams.append('includes[]', 'cover_art');
       dexParams.append('includes[]', 'author');
+
+      if (title) dexParams.append('title', title);
 
       // Sorting Logic
       if (sortBy === 'popular') dexParams.append('order[followedCount]', 'desc');
@@ -148,8 +151,10 @@ export const mangaApi = {
       }
 
       if (type === 'sub-indo' || type === 'all' || type === 'manhwa') {
+        // Mint handles search differently, but for list we use page
+        const mintPath = title ? `/search?query=${encodeURIComponent(title)}` : `/manga/page/${page}`;
         fetchPromises.push(
-          fetch(`/api/mint?path=/manga/page/${page}`, { signal: controller.signal })
+          fetch(`/api/mint?path=${mintPath}`, { signal: controller.signal })
             .then(res => res.json())
             .then(mintData => {
               const list = mintData.manga_list || mintData.data || [];
@@ -173,6 +178,19 @@ export const mangaApi = {
       console.error('[API Sync Error]:', error);
       return [];
     }
+  },
+
+  /**
+   * Positional argument search wrapper for compatibility
+   */
+  async search(query: string, source: MangaSource | 'all' = 'all', genres: string[] = []): Promise<Manga[]> {
+    return this.fetchMangaList({
+      page: 1,
+      title: query,
+      type: source === 'mangamint' ? 'sub-indo' : 'all',
+      genres: genres,
+      contentRating: ['safe', 'suggestive']
+    });
   },
 
   async fetchCuratedManhwa(): Promise<Manga[]> {

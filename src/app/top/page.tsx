@@ -5,9 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import { Manga } from '@/types/manga';
 import MangaCard from '@/components/manga/MangaCard';
-import { Trophy, Loader2, Sparkles, Flame, Star } from 'lucide-react';
+import { Trophy, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from '@/lib/utils';
 
 export default function TopListPage() {
   const [mangas, setMangas] = useState<Manga[]>([]);
@@ -18,9 +17,18 @@ export default function TopListPage() {
     const fetchTop = async () => {
       setLoading(true);
       try {
-        // Using fetchMangaList as a base for top lists
-        const data = await mangaApi.fetchMangaList(1);
-        // Sort by rating or title for mock "Top" logic if API doesn't have a specific Top endpoint
+        // Map UI tabs to API content types
+        const typeMap: Record<string, any> = {
+          'trending': 'all',
+          'popular': 'manhwa', // Manhwa prioritized as popular
+          'rated': 'manga'
+        };
+
+        const data = await mangaApi.fetchMangaList({
+          page: 1,
+          type: typeMap[activeTab] || 'all',
+          sortBy: activeTab === 'rated' ? 'rating' : 'popular'
+        });
         setMangas(data);
       } catch (err) {
         console.error(err);
@@ -50,10 +58,10 @@ export default function TopListPage() {
               Trending
             </TabsTrigger>
             <TabsTrigger value="popular" className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
-              Most Popular
+              Popular Manhwa
             </TabsTrigger>
             <TabsTrigger value="rated" className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
-              Top Rated
+              Top Rated Manga
             </TabsTrigger>
           </TabsList>
         </div>
