@@ -26,6 +26,7 @@ const { db } = initializeFirebase();
  * USERS MANAGEMENT
  */
 export const syncUserToFirestore = async (user: any) => {
+  if (!user?.uid) return;
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
   
@@ -44,14 +45,16 @@ export const syncUserToFirestore = async (user: any) => {
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  if (!uid) return null;
   const userRef = doc(db, 'users', uid);
   const snap = await getDoc(userRef);
   return snap.exists() ? (snap.data() as UserProfile) : null;
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>) => {
+  if (!uid) return;
   const userRef = doc(db, 'users', uid);
-  updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
+  await updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
@@ -65,17 +68,22 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
  */
 export const sendChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
   const chatRef = collection(db, 'chat_messages');
-  addDoc(chatRef, {
+  // Avoid sending undefined/null fields that Firestore might reject or that cause UI bugs
+  const payload = {
     ...msg,
+    replyTo: msg.replyTo || null,
+    replyToUser: msg.replyToUser || null,
+    mangaMention: msg.mangaMention || null,
     timestamp: serverTimestamp()
-  });
+  };
+  await addDoc(chatRef, payload);
 };
 
 export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => {
   const q = query(
     collection(db, 'chat_messages'),
     orderBy('timestamp', 'asc'),
-    limit(50)
+    limit(100)
   );
   
   return onSnapshot(q, (snap) => {
@@ -92,7 +100,7 @@ export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => 
  */
 export const submitReport = async (report: Omit<Report, 'id' | 'timestamp' | 'status'>) => {
   const reportRef = collection(db, 'reports');
-  addDoc(reportRef, {
+  await addDoc(reportRef, {
     ...report,
     status: 'pending',
     timestamp: serverTimestamp()
@@ -112,5 +120,5 @@ export const subscribeToReports = (callback: (reports: Report[]) => void) => {
 
 export const resolveReport = async (reportId: string) => {
   const reportRef = doc(db, 'reports', reportId);
-  updateDoc(reportRef, { status: 'resolved' });
+  await updateDoc(reportRef, { status: 'resolved' });
 };

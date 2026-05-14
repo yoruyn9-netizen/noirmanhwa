@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import Link from 'next/link';
 
 function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -34,6 +35,10 @@ function ProfilePage() {
   };
 
   if (!user) return null;
+
+  // Safe access for role and status
+  const userRole = user.role || 'user';
+  const isOwner = userRole === 'owner';
 
   return (
     <div className="max-w-2xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
@@ -51,7 +56,7 @@ function ProfilePage() {
                 <User className="w-10 h-10 text-accent" />
               )}
             </div>
-            {user.role === 'owner' && (
+            {isOwner && (
               <div className="absolute -bottom-4 -right-4">
                 <OwnerBadge />
               </div>
@@ -70,7 +75,7 @@ function ProfilePage() {
               </div>
               <div className="flex items-center justify-center sm:justify-start gap-4">
                 <span className="text-[9px] font-black text-accent uppercase tracking-[0.4em]">Signal: Verified</span>
-                <span className="text-[7px] text-neutral-600 font-bold uppercase tracking-widest">{user.email}</span>
+                <span className="text-[7px] text-neutral-600 font-bold uppercase tracking-widest">{user.email || 'Private Uplink'}</span>
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed opacity-60 italic">
@@ -97,7 +102,7 @@ function ProfilePage() {
         {[
           { icon: Zap, label: 'Energy', val: user.isPremium ? 'MAX' : '99%' },
           { icon: Globe, label: 'Nodes', val: 'Global' },
-          { icon: ShieldCheck, label: 'Access', val: user.role.toUpperCase() },
+          { icon: ShieldCheck, label: 'Access', val: userRole.toUpperCase() },
         ].map((stat, i) => (
           <div key={i} className="p-6 bg-[#0a0a0f]/60 backdrop-blur-xl border border-white/5 rounded-3xl text-center space-y-1 group hover:border-accent/30 transition-all shadow-xl">
             <stat.icon className="w-4 h-4 text-accent mx-auto mb-1 opacity-40 group-hover:opacity-100 transition-opacity" />
@@ -111,7 +116,7 @@ function ProfilePage() {
       <section className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.4em] px-4 text-neutral-600">Administrative Protocols</h3>
         <div className="grid gap-3">
-          {user.role === 'owner' && (
+          {isOwner && (
             <>
               <Link href="/admin/users" className="flex items-center justify-between p-6 bg-accent/5 border border-accent/20 rounded-3xl group hover:bg-accent/10 transition-all">
                 <div className="flex items-center gap-5">

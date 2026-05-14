@@ -6,7 +6,6 @@ import GenreSlider from '@/components/GenreSlider';
 import HeroSlider from '@/components/HeroSlider';
 import GlobalChat from '@/components/chat/GlobalChat';
 import Link from 'next/link';
-import { Clock } from 'lucide-react';
 import { getMangaTitle } from '@/lib/utils';
 
 export default async function Home() {
@@ -89,8 +88,8 @@ export default async function Home() {
         )}
       </section>
 
-      {/* Global Real-time Chat Node */}
-      <GlobalChat />
+      {/* Global Real-time Chat Node (Preview Mode) */}
+      <GlobalChat previewMode={true} />
     </div>
   );
 }
