@@ -19,13 +19,13 @@ export const mangaApi = {
     sortBy?: string;
     title?: string;
   }): Promise<Manga[]> {
-    console.log('🔍 Initializing Multi-Source Discovery...');
+    console.log('🔍 Initializing Multi-Source Discovery Protocol...');
 
     // 1. ASURA NODE (Primary)
     try {
       const asuraData = await fetchAsuraLatest();
       if (asuraData && asuraData.length > 0) {
-        console.log('✅ Signal established: ASURA_NODE');
+        console.log('📡 Signal Established: ASURA_NODE');
         if (params.title) {
           const query = params.title.toLowerCase();
           return asuraData.filter(m => m.title.toLowerCase().includes(query));
@@ -33,15 +33,14 @@ export const mangaApi = {
         return asuraData;
       }
     } catch (e) {
-      console.warn('⚠️ Asura Node failure. Recalibrating cascade...');
+      console.warn('⚠️ Asura Node offline. Relaying to fallback...');
     }
 
     // 2. FLAME NODE (Secondary)
     try {
-      console.warn('⚠️ Asura Node bypassed. Cascading to FLAME_NODE...');
       const flameData = await fetchFlameLatest();
       if (flameData && flameData.length > 0) {
-        console.log('✅ Signal established: FLAME_NODE');
+        console.log('📡 Signal Established: FLAME_NODE');
         if (params.title) {
           const query = params.title.toLowerCase();
           return flameData.filter(m => m.title.toLowerCase().includes(query));
@@ -49,23 +48,22 @@ export const mangaApi = {
         return flameData;
       }
     } catch (e) {
-      console.warn('⚠️ Flame Node failure. Recalibrating cascade...');
+      console.warn('⚠️ Flame Node offline. Relaying to fallback...');
     }
 
     // 3. KOMIKU NODE (Tertiary)
     try {
-      console.warn('⚠️ Flame Node bypassed. Cascading to KOMIKU_NODE...');
       const komikuData = await fetchKomikuLatest();
       if (komikuData && komikuData.length > 0) {
-        console.log('✅ Signal established: KOMIKU_NODE');
+        console.log('📡 Signal Established: KOMIKU_NODE');
         return komikuData;
       }
     } catch (e) {
-      console.warn('⚠️ Komiku Node failure.');
+      console.warn('⚠️ Komiku Node offline.');
     }
 
     // CRITICAL FAILURE: All sources unreachable
-    console.error('❌ [CRITICAL]: Total Signal Loss. All sources offline.');
+    console.error('❌ [CRITICAL]: Total Signal Loss. All primary discovery nodes offline.');
     return [];
   },
 
@@ -73,7 +71,10 @@ export const mangaApi = {
     const list = await this.fetchMangaList({ page: 1 });
     const manga = list.find(m => m.id === id);
     
-    if (!manga) return null;
+    if (!manga) {
+      console.warn(`[System]: Node ${id} not found in discovery feed.`);
+      return null;
+    }
 
     const chapters = await this.fetchChapters(id, source);
 
@@ -88,20 +89,20 @@ export const mangaApi = {
       if (source === 'asura') {
         return await fetchAsuraChapters(mangaId);
       }
+      // Future expansion for other source chapter lists
     } catch (e) {
-      console.error(`❌ Chapter Sync Failed for ${source}:`, e);
+      console.error(`❌ Chapter Sync Failed for source: ${source}`, e);
     }
     return [];
   },
 
   async getTags() {
-    // Current sources handle genres differently, returning empty for tag discovery UI
+    // Sources handle genres via internal attributes; returning empty list for discovery component
     return { data: [] }; 
   },
 
   async search(query: string, source: string = 'asura', genres: string[] = []) {
-    const all = await this.fetchMangaList({ page: 1, title: query });
-    return all;
+    return this.fetchMangaList({ page: 1, title: query });
   },
 
   async fetchCuratedManhwa(): Promise<Manga[]> {

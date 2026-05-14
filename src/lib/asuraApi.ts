@@ -8,15 +8,23 @@ const ASURA_PROXY = '/api/asura';
 
 export async function fetchAsuraLatest() {
   try {
-    const res = await fetch(`${ASURA_PROXY}?path=/series&cursor=0&limit=50`);
+    // Attempt standard series list
+    const res = await fetch(`${ASURA_PROXY}?path=/series&limit=30`);
     if (!res.ok) {
-      console.warn(`[Asura Node]: Connection restricted (Status ${res.status})`);
+      console.warn(`[Asura Node]: Primary signal blocked (Status ${res.status})`);
       return [];
     }
-    const data = await res.json();
     
+    const data = await res.json();
     const list = Array.isArray(data) ? data : (data.series || []);
     
+    if (list.length === 0) {
+      console.warn('[Asura Node]: Received empty data packet.');
+      return [];
+    }
+
+    console.log(`✅ ASURA LIVE: ${list.length} items retrieved.`);
+
     return list.map((item: any) => ({
       id: item.slug || item.id,
       title: item.title || 'Unknown Signal',

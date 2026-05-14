@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Flame Scans Proxy Node
- * Enhanced to forward all query parameters.
+ * Standardized on WordPress JSON API protocols.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -18,24 +18,17 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch(endpoint, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'application/json'
       },
-      next: { revalidate: 600 }
+      next: { revalidate: 120 }
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: `Source error: ${response.status}` }, { status: response.status });
+      return NextResponse.json({ error: `Node Restricted: ${response.status}` }, { status: response.status });
     }
     
     const data = await response.json();
-
-    console.log('🔗 FLAME LIVE SYNC:', {
-      endpoint,
-      status: response.status,
-      count: Array.isArray(data) ? data.length : 1
-    });
-
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: 'Uplink failed' }, { status: 500 });
