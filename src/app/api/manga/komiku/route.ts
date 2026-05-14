@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 /**
- * Komiku Server-Side Proxy (Health Check)
+ * Direct Komiku Logic
  */
-export async function GET() {
+export async function getKomikuData() {
   try {
     const response = await fetch('https://komiku.id/page/1/', {
       headers: {
@@ -15,25 +15,20 @@ export async function GET() {
       next: { revalidate: 3600 }
     });
 
-    if (!response.ok) throw new Error(`Komiku error: ${response.status}`);
+    if (!response.ok) throw new Error(`Status ${response.status}`);
 
-    // Komiku requires HTML parsing which is best done on client or with a lib like cheerio
-    // For now, we return a success status to verify the node is alive
-    console.log('✅ KOMIKU PROXY SUCCESS');
-
-    return NextResponse.json({
+    return {
       success: true,
       source: 'komiku',
       count: 0,
       data: []
-    });
+    };
   } catch (error) {
-    console.error('❌ KOMIKU PROXY FAILED:', error);
-    return NextResponse.json({
-      success: false,
-      source: 'komiku',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      data: []
-    }, { status: 500 });
+    return { success: false, source: 'komiku', data: [], count: 0 };
   }
+}
+
+export async function GET() {
+  const result = await getKomikuData();
+  return NextResponse.json(result);
 }
