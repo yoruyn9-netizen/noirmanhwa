@@ -1,65 +1,67 @@
+
 import { NextResponse } from 'next/server';
-import { getAsuraData } from '../asura/route';
-import { getFlameData } from '../flame/route';
-import { getKomikuData } from '../komiku/route';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Optimized Unified Discovery Matrix
- * Bypasses internal fetch origin issues by executing discovery logic directly.
+ * Robust Combined API Route for Production
+ * Aggregates Asura and Flame scans signals.
  */
 export async function GET() {
-  const startTime = Date.now();
-  console.log('🔄 [MATRIX] Initializing direct discovery protocol...');
-  
   try {
-    // Execute all discovery logic in parallel directly
-    const [asuraResult, flameResult, komikuResult] = await Promise.all([
-      getAsuraData(),
-      getFlameData(),
-      getKomikuData()
+    // Dynamically determine base URL for internal API hits
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'localhost:9002';
+    const baseUrl = `${protocol}://${host}`;
+    
+    console.log('🔄 [COMBINED] Fetching from base:', baseUrl);
+
+    // Internal fetch calls to individual source proxies
+    const [asuraRes, flameRes] = await Promise.allSettled([
+      fetch(`${baseUrl}/api/manga/asura`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/api/manga/flame`, { cache: 'no-store' })
     ]);
 
     const allManga: any[] = [];
-    const sourcesHealth: Record<string, string> = {
-      asura: asuraResult.success ? `${asuraResult.count} items` : 'OFFLINE',
-      flame: flameResult.success ? `${flameResult.count} items` : 'OFFLINE',
-      komiku: komikuResult.success ? 'Verified' : 'OFFLINE'
-    };
+    const sources: Record<string, number> = { asura: 0, flame: 0 };
 
-    if (asuraResult.success) allManga.push(...asuraResult.data);
-    if (flameResult.success) allManga.push(...flameResult.data);
-    if (komikuResult.success) allManga.push(...komikuResult.data);
-
-    console.log(`📊 [MATRIX] Node Pulse Check:`, sourcesHealth);
-
-    // If we have AT LEAST ONE source working, return success.
-    // This prevents a 503 if one node is down but others have data.
-    if (allManga.length === 0) {
-      console.error(`❌ [MATRIX] Total Signal Loss in all sectors.`);
-      return NextResponse.json({
-        success: false,
-        error: 'Total Signal Loss: All discovery nodes unreachable',
-        data: [],
-        sources: sourcesHealth
-      }, { status: 503 });
+    if (asuraRes.status === 'fulfilled' && asuraRes.value.ok) {
+      const data = await asuraRes.value.json();
+      if (data.success && Array.isArray(data.data)) {
+        allManga.push(...data.data);
+        sources.asura = data.data.length;
+      }
     }
 
-    console.log(`✅ [MATRIX] Composite stream ready: ${allManga.length} items in ${Date.now() - startTime}ms`);
+    if (flameRes.status === 'fulfilled' && flameRes.value.ok) {
+      const data = await flameRes.value.json();
+      if (data.success && Array.isArray(data.data)) {
+        allManga.push(...data.data);
+        sources.flame = data.data.length;
+      }
+    }
+
+    if (allManga.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Total Signal Loss: All primary discovery nodes unreachable',
+        sources,
+        data: []
+      }, { status: 503 });
+    }
 
     return NextResponse.json({
       success: true,
       data: allManga,
-      sources: sourcesHealth,
+      sources,
       total: allManga.length,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('❌ [MATRIX] Critical orchestrator failure:', error);
+    console.error('❌ [COMBINED] Matrix Crash:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown orchestrator error',
+      error: error instanceof Error ? error.message : 'Unknown matrix error',
       data: []
     }, { status: 500 });
   }
