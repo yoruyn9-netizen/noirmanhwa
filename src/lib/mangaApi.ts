@@ -13,16 +13,20 @@ function getCachedData<T>(key: string): T | null {
   const cached = localStorage.getItem(key);
   if (!cached) return null;
   
-  const { data, timestamp } = JSON.parse(cached);
-  if (Date.now() - timestamp > CACHE_DURATION) {
-    localStorage.removeItem(key);
+  try {
+    const { data, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp > CACHE_DURATION) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return data;
+  } catch {
     return null;
   }
-  return data;
 }
 
 function setCachedData(key: string, data: any) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !data || (Array.isArray(data) && data.length === 0)) return;
   localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
@@ -36,19 +40,19 @@ function normalizeMangaDex(item: any): Manga {
     ? `https://uploads.mangadex.org/covers/${item.id}/${fileName}.512.jpg`
     : 'https://picsum.photos/seed/manga/400/600';
 
-  const title = item.attributes.title.en || item.attributes.title.id || Object.values(item.attributes.title)[0] as string;
+  const title = item.attributes?.title?.en || item.attributes?.title?.id || (item.attributes?.title ? Object.values(item.attributes.title)[0] : 'Unknown Node') as string;
 
   return {
     id: item.id,
     title,
     cover: coverUrl,
-    status: item.attributes.status,
-    genres: item.attributes.tags.map((t: any) => t.attributes.name.en),
+    status: item.attributes?.status || 'Unknown',
+    genres: (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en).filter(Boolean),
     source: 'mangadex',
-    language: item.attributes.originalLanguage,
-    description: item.attributes.description.en || item.attributes.description.id || '',
+    language: item.attributes?.originalLanguage || 'en',
+    description: item.attributes?.description?.en || item.attributes?.description?.id || '',
     author: 'Unknown Signal',
-    year: item.attributes.year
+    year: item.attributes?.year
   };
 }
 
@@ -58,7 +62,7 @@ function normalizeMangaDex(item: any): Manga {
 function normalizeMangaMint(item: any): Manga {
   return {
     id: item.endpoint || item.id,
-    title: item.title,
+    title: item.title || 'Unknown Mint Node',
     cover: item.thumb || item.image || 'https://picsum.photos/seed/mint/400/600',
     status: item.status || 'Ongoing',
     genres: item.genres || [],
@@ -75,28 +79,61 @@ export const mangaApi = {
   async fetchMangaList(page: number, source?: MangaSource): Promise<Manga[]> {
     const cacheKey = `manga_cache_${source || 'all'}_${page}`;
     const cached = getCachedData<Manga[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`📦 Using cached matrix data for: ${source || 'all'} (Page ${page})`);
+      return cached;
+    }
 
     const results: Manga[] = [];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s neural timeout
 
     try {
+      // Parallel transmission attempts
+      const fetchPromises = [];
+
       if (!source || source === 'mangadex') {
-        const res = await fetch(`${MANGADEX_BASE}/manga?limit=20&offset=${(page - 1) * 20}&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&order[followedCount]=desc`);
-        const data = await res.json();
-        if (data.data) results.push(...data.data.map(normalizeMangaDex));
+        fetchPromises.push(
+          fetch(`${MANGADEX_BASE}/manga?limit=20&offset=${(page - 1) * 20}&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&order[followedCount]=desc`, { signal: controller.signal })
+            .then(res => res.json())
+            .then(response => {
+              console.log('📡 Fetching from MangaDex...', response.data);
+              if (response.data && Array.isArray(response.data)) {
+                results.push(...response.data.map(normalizeMangaDex));
+              }
+            })
+            .catch(err => console.error('❌ MangaDex Node Failure:', err))
+        );
       }
 
       if (!source || source === 'mangamint') {
-        const res = await fetch(`${MANGAMINT_BASE}/manga/page/${page}`);
-        const data = await res.json();
-        if (data.manga_list) results.push(...data.manga_list.map(normalizeMangaMint));
+        fetchPromises.push(
+          fetch(`${MANGAMINT_BASE}/manga/page/${page}`, { signal: controller.signal })
+            .then(res => res.json())
+            .then(mintData => {
+              console.log('📡 Fetching from MangaMint...', mintData.manga_list);
+              if (mintData.manga_list && Array.isArray(mintData.manga_list)) {
+                results.push(...mintData.manga_list.map(normalizeMangaMint));
+              }
+            })
+            .catch(err => console.error('❌ MangaMint Node Failure:', err))
+        );
       }
-    } catch (error) {
-      console.error('[Signal Error]:', error);
-    }
 
-    setCachedData(cacheKey, results);
-    return results;
+      await Promise.all(fetchPromises);
+      clearTimeout(timeoutId);
+      
+      console.log('✅ Total manga signals synchronized:', results.length);
+      
+      if (results.length > 0) {
+        setCachedData(cacheKey, results);
+      }
+      
+      return results;
+    } catch (error) {
+      console.error('[CRITICAL]: Neural synchronization failed:', error);
+      return [];
+    }
   },
 
   /**
@@ -117,10 +154,10 @@ export const mangaApi = {
         const chapters: Chapter[] = (feedData.data || []).map((c: any) => ({
           id: c.id,
           mangaId: id,
-          number: c.attributes.chapter,
-          title: c.attributes.title || `Chapter ${c.attributes.chapter}`,
+          number: c.attributes?.chapter || '?',
+          title: c.attributes?.title || `Chapter ${c.attributes?.chapter || '?'}`,
           source: 'mangadex',
-          publishAt: c.attributes.publishAt
+          publishAt: c.attributes?.publishAt
         }));
 
         return { ...manga, chapters };
@@ -132,8 +169,8 @@ export const mangaApi = {
         const chapters: Chapter[] = (data.chapter || []).map((c: any) => ({
           id: c.chapter_endpoint,
           mangaId: id,
-          number: c.chapter_title.replace(/[^0-9.]/g, ''),
-          title: c.chapter_title,
+          number: c.chapter_title?.replace(/[^0-9.]/g, '') || '?',
+          title: c.chapter_title || 'Untitled Unit',
           source: 'mangamint'
         }));
 
@@ -154,7 +191,8 @@ export const mangaApi = {
         const res = await fetch(`${MANGADEX_BASE}/at-home/server/${chapterId}`);
         const data = await res.json();
         const { baseUrl, chapter } = data;
-        return chapter.dataSaver.map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
+        if (!chapter || !baseUrl) return [];
+        return (chapter.dataSaver || []).map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
       } else {
         const res = await fetch(`${MANGAMINT_BASE}/chapter/${chapterId}`);
         const data = await res.json();
