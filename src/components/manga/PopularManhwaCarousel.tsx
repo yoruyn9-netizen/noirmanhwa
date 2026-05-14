@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -20,7 +21,7 @@ export default function PopularManhwaCarousel() {
     const loadCurated = async () => {
       try {
         const data = await mangaApi.fetchCuratedManhwa();
-        setMangas(data);
+        setMangas(data || []);
       } catch (err) {
         console.error('[Carousel Load Error]:', err);
       } finally {

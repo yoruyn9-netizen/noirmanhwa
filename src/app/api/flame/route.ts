@@ -3,12 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Flame Scans Proxy Node
+ * Enhanced to forward all query parameters.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get('path') || '/posts';
   
-  const endpoint = `https://flamescans.org/wp-json/wp/v2${path}`;
+  const upstreamParams = new URLSearchParams(searchParams);
+  upstreamParams.delete('path');
+  
+  const queryString = upstreamParams.toString();
+  const endpoint = `https://flamescans.org/wp-json/wp/v2${path}${queryString ? `?${queryString}` : ''}`;
 
   try {
     const response = await fetch(endpoint, {
@@ -19,7 +24,10 @@ export async function GET(request: NextRequest) {
       next: { revalidate: 600 }
     });
 
-    if (!response.ok) throw new Error(`Node Response: ${response.status}`);
+    if (!response.ok) {
+      return NextResponse.json({ error: `Source error: ${response.status}` }, { status: response.status });
+    }
+    
     const data = await response.json();
 
     console.log('🔗 FLAME LIVE SYNC:', {

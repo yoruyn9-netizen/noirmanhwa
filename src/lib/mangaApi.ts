@@ -22,33 +22,30 @@ export const mangaApi = {
     console.log('🔍 Initializing Multi-Source Discovery...');
 
     // 1. ASURA NODE (Primary)
-    try {
-      const asuraData = await fetchAsuraLatest();
-      if (asuraData.length > 0) {
-        if (params.title) {
-          const query = params.title.toLowerCase();
-          return asuraData.filter(m => m.title.toLowerCase().includes(query));
-        }
-        return asuraData;
+    const asuraData = await fetchAsuraLatest();
+    if (asuraData && asuraData.length > 0) {
+      console.log('✅ Signal established: ASURA_NODE');
+      if (params.title) {
+        const query = params.title.toLowerCase();
+        return asuraData.filter(m => m.title.toLowerCase().includes(query));
       }
-    } catch (e) {
-      console.warn('⚠️ Asura Node bypassed.');
+      return asuraData;
     }
 
     // 2. FLAME NODE (Secondary)
-    try {
-      const flameData = await fetchFlameLatest();
-      if (flameData.length > 0) return flameData;
-    } catch (e) {
-      console.warn('⚠️ Flame Node bypassed.');
+    console.warn('⚠️ Asura Node bypassed. Cascading to FLAME_NODE...');
+    const flameData = await fetchFlameLatest();
+    if (flameData && flameData.length > 0) {
+      console.log('✅ Signal established: FLAME_NODE');
+      return flameData;
     }
 
     // 3. KOMIKU NODE (Tertiary)
-    try {
-      const komikuData = await fetchKomikuLatest();
-      if (komikuData.length > 0) return komikuData;
-    } catch (e) {
-      console.warn('⚠️ Komiku Node bypassed.');
+    console.warn('⚠️ Flame Node bypassed. Cascading to KOMIKU_NODE...');
+    const komikuData = await fetchKomikuLatest();
+    if (komikuData && komikuData.length > 0) {
+      console.log('✅ Signal established: KOMIKU_NODE');
+      return komikuData;
     }
 
     // CRITICAL FAILURE: All sources unreachable
@@ -57,7 +54,6 @@ export const mangaApi = {
   },
 
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
-    // Current implementation uses list data for details for performance
     const list = await this.fetchMangaList({ page: 1 });
     const manga = list.find(m => m.id === id);
     
@@ -75,21 +71,27 @@ export const mangaApi = {
     if (source === 'asura') {
       return fetchAsuraChapters(mangaId);
     }
-    // Add other source chapter fetchers here
+    // Chapter fetching for other nodes can be implemented here
     return [];
   },
 
   async getTags() {
-    return { data: [] }; // Categories currently being mapped from live series
+    return { data: [] }; 
+  },
+
+  async search(query: string, source: string = 'asura', genres: string[] = []) {
+    const all = await this.fetchMangaList({ page: 1, title: query });
+    return all;
   },
 
   async fetchCuratedManhwa(): Promise<Manga[]> {
     const all = await this.fetchMangaList({ page: 1 });
-    return all.slice(0, 10);
+    return all.slice(0, 15);
   },
 
   async fetchRecommendations(currentId: string, genres: string[]): Promise<Manga[]> {
     const all = await this.fetchMangaList({ page: 1 });
+    // Filter out current and try to find some overlap if possible, otherwise slice
     return all.filter(m => m.id !== currentId).slice(0, 8);
   }
 };

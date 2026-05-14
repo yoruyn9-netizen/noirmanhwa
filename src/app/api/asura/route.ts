@@ -3,14 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Asura Scans Proxy Node
+ * Enhanced to forward all query parameters to the upstream API.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get('path') || '/series';
-  const query = searchParams.get('query');
   
-  let endpoint = `https://asuracomic.net/api${path}`;
-  if (query) endpoint += `?query=${encodeURIComponent(query)}`;
+  // Clone parameters and remove our internal 'path' parameter
+  const upstreamParams = new URLSearchParams(searchParams);
+  upstreamParams.delete('path');
+  
+  const queryString = upstreamParams.toString();
+  const endpoint = `https://asuracomic.net/api${path}${queryString ? `?${queryString}` : ''}`;
 
   try {
     const response = await fetch(endpoint, {
@@ -22,13 +26,17 @@ export async function GET(request: NextRequest) {
       next: { revalidate: 300 }
     });
 
-    if (!response.ok) throw new Error(`Node Response: ${response.status}`);
+    if (!response.ok) {
+      console.warn(`[Asura Proxy]: Source returned status ${response.status} for ${endpoint}`);
+      return NextResponse.json({ error: `Source error: ${response.status}` }, { status: response.status });
+    }
+    
     const data = await response.json();
 
     console.log('🔗 ASURA LIVE SYNC:', {
       endpoint,
       status: response.status,
-      count: Array.isArray(data) ? data.length : 'Object'
+      count: Array.isArray(data) ? data.length : (data.series ? data.series.length : 'Object')
     });
 
     return NextResponse.json(data);

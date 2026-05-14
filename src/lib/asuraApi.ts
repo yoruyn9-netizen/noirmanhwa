@@ -8,13 +8,14 @@ const ASURA_PROXY = '/api/asura';
 
 export async function fetchAsuraLatest() {
   try {
-    const res = await fetch(`${ASURA_PROXY}?path=/series&limit=50`);
-    if (!res.ok) throw new Error(`Asura Node status: ${res.status}`);
+    const res = await fetch(`${ASURA_PROXY}?path=/series&cursor=0&limit=50`);
+    if (!res.ok) {
+      console.warn(`[Asura Node]: Connection restricted (Status ${res.status})`);
+      return [];
+    }
     const data = await res.json();
     
     const list = Array.isArray(data) ? data : (data.series || []);
-    
-    console.log('✅ ASURA LIVE:', list.length, 'items retrieved');
     
     return list.map((item: any) => ({
       id: item.slug || item.id,
@@ -24,7 +25,7 @@ export async function fetchAsuraLatest() {
       genres: item.genres?.map((g: any) => g.name || g) || [],
       source: 'asura' as const,
       language: 'en',
-      type: 'MANHWA'
+      type: 'manhwa'
     }));
   } catch (error) {
     console.error('❌ Asura Node unreachable:', error);
@@ -34,12 +35,11 @@ export async function fetchAsuraLatest() {
 
 export async function fetchAsuraChapters(slug: string) {
   try {
-    const res = await fetch(`${ASURA_PROXY}?path=/series/${slug}`);
-    if (!res.ok) throw new Error(`Asura Chapter Node status: ${res.status}`);
+    const res = await fetch(`${ASURA_PROXY}?path=/series/${slug}/chapters`);
+    if (!res.ok) return [];
     const data = await res.json();
     
-    const chapters = data.chapters || [];
-    console.log(`✅ ASURA CHAPTERS [${slug}]:`, chapters.length);
+    const chapters = data.chapters || (Array.isArray(data) ? data : []);
     
     return chapters.map((ch: any) => ({
       id: ch.id || ch.slug,
