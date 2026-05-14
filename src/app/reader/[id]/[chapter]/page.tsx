@@ -6,13 +6,8 @@ import { mangaApi } from '@/lib/mangaApi';
 import { MangaSource } from '@/types/manga';
 import { useSearchParams } from 'next/navigation';
 import ReaderView from '@/components/manga/ReaderView';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
-/**
- * High-Fidelity Reader Page (Nested Segments)
- * Handles /reader/[id]/[chapter] where id is MangaID and chapter is ChapterID.
- * Consistently uses 'id' for the first dynamic segment to match unified reader protocol.
- */
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
   const { id: mangaId, chapter: chapterId } = use(params);
   const searchParams = useSearchParams();
@@ -34,12 +29,12 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
           mangaId ? mangaApi.fetchMangaDetail(mangaId, source) : Promise.resolve(null)
         ]);
         
-        if (!imgs || imgs.length === 0) throw new Error('Empty node signal');
+        if (!imgs || imgs.length === 0) throw new Error('Empty Node Signal');
         
         setImages(imgs);
         if (detail) setMangaTitle(detail.title);
       } catch (err) {
-        console.error('[Reader Detail Failure]:', err);
+        console.error('[Reader Error]:', err);
         setError(true);
       } finally {
         setLoading(false);

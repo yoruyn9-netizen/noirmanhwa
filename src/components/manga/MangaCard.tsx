@@ -66,8 +66,8 @@ export default function MangaCard({ manga, isRecommended }: MangaCardProps) {
             {manga.title}
           </h3>
           <div className="flex items-center gap-2 opacity-40">
-            <Clock className="w-2.5 h-2.5" />
-            <span className="text-[7px] font-bold uppercase tracking-widest">Modified Signal</span>
+            <Clock className="w-2.5 h-2.5 text-neutral-500" />
+            <span className="text-[7px] font-bold uppercase tracking-widest text-neutral-500">Modified Signal</span>
           </div>
         </div>
       </Link>

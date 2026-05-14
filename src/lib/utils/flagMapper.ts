@@ -19,17 +19,14 @@ export const FLAG_MAP: Record<string, string> = {
 };
 
 /**
- * Returns the flag emoji based on source or language string.
+ * Returns localized signal origin flag
  */
 export function getFlag(source: MangaSource, language?: string): string {
-  // Prioritize specific language string if provided
   if (language) {
     const lang = language.toLowerCase();
     if (FLAG_MAP[lang]) return FLAG_MAP[lang];
-    // Check for common full names
     if (lang.includes('indo')) return FLAG_MAP['Indonesian'];
     if (lang.includes('eng')) return FLAG_MAP['English'];
   }
-  
   return FLAG_MAP[source] || '🌍';
 }

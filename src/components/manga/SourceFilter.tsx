@@ -31,6 +31,7 @@ export default function SourceFilter() {
                 ? "bg-accent text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]" 
                 : "text-neutral-500 hover:text-neutral-300 hover:bg-white/5"
             )}
+            aria-label={`Switch to ${s.label}`}
           >
             <Icon className={cn("w-3 h-3", isActive ? "animate-pulse" : "")} />
             {s.label}

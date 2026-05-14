@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Maximize, ZoomIn, ZoomOut, Zap } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import FlagBadge from '../ui/FlagBadge';
@@ -26,7 +26,6 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
   
   useEffect(() => {
     setMounted(true);
-    // Hide default header/footer if necessary or handle in layout
   }, []);
 
   const toggleZoom = () => {
@@ -49,6 +48,7 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
             <button 
               onClick={() => router.back()}
               className="p-3 bg-white/5 rounded-2xl hover:bg-accent/20 transition-all text-white"
+              aria-label="Back to Series"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -109,6 +109,7 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
                 onClick={(e) => { e.stopPropagation(); onPrev?.(); }}
                 disabled={!onPrev}
                 className="p-4 rounded-2xl hover:bg-white/10 disabled:opacity-20 text-white transition-all"
+                aria-label="Previous Chapter"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -118,6 +119,7 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
               <button 
                 onClick={(e) => { e.stopPropagation(); toggleZoom(); }}
                 className="p-4 rounded-2xl bg-accent text-white shadow-lg shadow-accent/20 flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
+                aria-label="Toggle Zoom"
               >
                 <Zap className="w-4 h-4" /> {zoom}X
               </button>
@@ -128,6 +130,7 @@ export default function ReaderView({ images, mangaTitle, chapterNum, source, onP
                 onClick={(e) => { e.stopPropagation(); onNext?.(); }}
                 disabled={!onNext}
                 className="p-4 rounded-2xl hover:bg-white/10 disabled:opacity-20 text-white transition-all"
+                aria-label="Next Chapter"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

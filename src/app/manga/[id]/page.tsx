@@ -5,7 +5,7 @@ import React, { useEffect, useState, use } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import { MangaDetail, Manga, MangaSource } from '@/types/manga';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Play, Info, Calendar, Clock, Globe, List, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Info, Calendar, Clock, List, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 import FlagBadge from '@/components/ui/FlagBadge';
@@ -32,7 +32,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
         setData(detail);
         addToHistory(id);
         
-        // Fetch recommendations logic: overlap genres or random fallback
+        // Fetch recommendations: overlap genres or random fallback
         const list = await mangaApi.fetchMangaList(1, source);
         const filtered = list
           .filter(m => m.id !== id && m.genres.some(g => detail.genres.includes(g)))
@@ -42,7 +42,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
       setLoading(false);
     };
     fetchDetail();
-  }, [id, source]);
+  }, [id, source, addToHistory]);
 
   if (loading) {
     return (
@@ -67,20 +67,20 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-32 animate-in fade-in duration-1000">
-      <header className="fixed top-0 inset-x-0 h-16 bg-[#020205]/80 backdrop-blur-2xl border-b border-white/5 z-50 flex items-center justify-between px-6">
-        <button onClick={() => router.back()} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
-          <ArrowLeft className="w-5 h-5 text-white" />
+    <div className="max-w-4xl mx-auto pb-32 animate-in fade-in duration-1000 px-4">
+      <header className="h-16 flex items-center justify-between mb-8">
+        <button onClick={() => router.back()} className="p-3 bg-white/5 rounded-2xl hover:bg-neutral-900 transition-all">
+          <ArrowLeft className="w-5 h-5 text-neutral-500" />
         </button>
         <div className="flex items-center gap-2">
           <span className="text-[8px] font-black uppercase tracking-[0.3em] text-accent">Protocol: {id.substring(0, 8)}</span>
           <FlagBadge source={source} size="sm" />
         </div>
-        <div className="w-10" />
+        <div className="w-11" />
       </header>
 
-      <div className="pt-24 space-y-12">
-        <div className="flex flex-col md:flex-row gap-12 px-4">
+      <div className="space-y-12">
+        <div className="flex flex-col md:flex-row gap-12">
           <div className="relative w-full md:w-80 flex-shrink-0 group">
             <div className="aspect-[2/3] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl bg-[#0a0a0f]">
               <SafeImage src={data.cover} alt={data.title} className="group-hover:scale-105 transition-transform duration-1000" />
@@ -108,7 +108,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             <div className="grid grid-cols-2 gap-4">
               {data.chapters.length > 0 && (
                 <Link 
-                  href={`/reader/${id}/${data.chapters[data.chapters.length - 1].id}?source=${source}`}
+                  href={`/reader/${id}/${data.chapters[0].id}?source=${source}`}
                   className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
                 >
                   <Play className="w-4 h-4 fill-current" /> READ START
@@ -119,7 +119,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
               </button>
             </div>
 
-            <div className="space-y-4 bg-white/5 p-8 rounded-[2.5rem] border border-white/5">
+            <div className="space-y-4 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
               <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-accent">
                 <Info className="w-4 h-4" /> Summary Log
               </h3>
@@ -130,7 +130,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        <section className="space-y-8 px-4 pt-10">
+        <section className="space-y-8 pt-10">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-[12px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
               <List className="w-5 h-5 text-accent" /> Signal Chapters
@@ -146,7 +146,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
                 className="flex items-center justify-between p-5 bg-[#0a0a0f] rounded-2xl border border-white/5 hover:border-accent/40 hover:bg-accent/5 transition-all group shadow-xl"
               >
                 <div className="flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-xl bg-neutral-900 text-accent flex items-center justify-center font-black text-[11px] group-hover:bg-accent group-hover:text-white transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-neutral-900 text-accent flex items-center justify-center font-black text-[10px] group-hover:bg-accent group-hover:text-white transition-all">
                     {chapter.number}
                   </div>
                   <div className="space-y-1">
@@ -154,11 +154,11 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
                       {chapter.title}
                     </h4>
                     <p className="text-[7px] font-black text-neutral-600 uppercase tracking-widest">
-                      {chapter.publishAt ? formatTimeAgo(chapter.publishAt) : 'Synchronized'}
+                      {chapter.publishAt ? formatTimeAgo(chapter.publishAt) : 'Recently Synced'}
                     </p>
                   </div>
                 </div>
-                <Globe className="w-4 h-4 text-neutral-800 group-hover:text-accent" />
+                <Zap className="w-4 h-4 text-neutral-800 group-hover:text-accent" />
               </Link>
             ))}
           </div>

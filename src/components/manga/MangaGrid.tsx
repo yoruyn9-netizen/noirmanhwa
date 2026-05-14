@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
-import { Manga, MangaSource } from '@/types/manga';
+import { Manga } from '@/types/manga';
 import { useMangaStore } from '@/store/mangaStore';
 import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { useInView } from 'react-intersection-observer';

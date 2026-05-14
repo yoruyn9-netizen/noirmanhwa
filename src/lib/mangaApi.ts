@@ -1,13 +1,12 @@
 
-import { Manga, MangaSource, Chapter, MangaDetail, MangaListResponse } from '@/types/manga';
+import { Manga, MangaSource, Chapter, MangaDetail } from '@/types/manga';
 
 const MANGADEX_BASE = 'https://api.mangadex.org';
 const MANGAMINT_BASE = 'https://mangamint.kaedenoki.net/api';
-
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Internal cache handler for localStorage
+ * Cache Handler for localized frequency storage
  */
 function getCachedData<T>(key: string): T | null {
   if (typeof window === 'undefined') return null;
@@ -28,7 +27,7 @@ function setCachedData(key: string, data: any) {
 }
 
 /**
- * MANGADEX NORMALIZER
+ * MangaDex Signal Normalization
  */
 function normalizeMangaDex(item: any): Manga {
   const coverRel = item.relationships?.find((r: any) => r.type === 'cover_art');
@@ -48,13 +47,13 @@ function normalizeMangaDex(item: any): Manga {
     source: 'mangadex',
     language: item.attributes.originalLanguage,
     description: item.attributes.description.en || item.attributes.description.id || '',
-    author: 'Unknown',
+    author: 'Unknown Signal',
     year: item.attributes.year
   };
 }
 
 /**
- * MANGAMINT NORMALIZER
+ * MangaMint Signal Normalization (Sub-Indo)
  */
 function normalizeMangaMint(item: any): Manga {
   return {
@@ -71,7 +70,7 @@ function normalizeMangaMint(item: any): Manga {
 
 export const mangaApi = {
   /**
-   * Fetches lists from both sources in parallel with normalization and caching.
+   * Fetches unified signal list from dual sources
    */
   async fetchMangaList(page: number, source?: MangaSource): Promise<Manga[]> {
     const cacheKey = `manga_cache_${source || 'all'}_${page}`;
@@ -93,25 +92,29 @@ export const mangaApi = {
         if (data.manga_list) results.push(...data.manga_list.map(normalizeMangaMint));
       }
     } catch (error) {
-      console.error('[API Failure]:', error);
-      // If one fails, we still return what we have (fallback)
+      console.error('[Signal Error]:', error);
     }
 
     setCachedData(cacheKey, results);
     return results;
   },
 
+  /**
+   * Extracts detailed node data
+   */
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
     try {
       if (source === 'mangadex') {
         const res = await fetch(`${MANGADEX_BASE}/manga/${id}?includes[]=cover_art&includes[]=author`);
         const data = await res.json();
+        if (!data.data) return null;
+        
         const manga = normalizeMangaDex(data.data);
         
         const feedRes = await fetch(`${MANGADEX_BASE}/manga/${id}/feed?translatedLanguage[]=id&translatedLanguage[]=en&order[chapter]=desc&limit=500`);
         const feedData = await feedRes.json();
         
-        const chapters: Chapter[] = feedData.data.map((c: any) => ({
+        const chapters: Chapter[] = (feedData.data || []).map((c: any) => ({
           id: c.id,
           mangaId: id,
           number: c.attributes.chapter,
@@ -137,11 +140,14 @@ export const mangaApi = {
         return { ...manga, chapters };
       }
     } catch (err) {
-      console.error('[Detail Failure]:', err);
+      console.error('[Node Detail Error]:', err);
       return null;
     }
   },
 
+  /**
+   * Retrieves visual stream frames for a chapter
+   */
   async fetchChapterImages(chapterId: string, source: MangaSource): Promise<string[]> {
     try {
       if (source === 'mangadex') {
@@ -155,17 +161,20 @@ export const mangaApi = {
         return data.chapter_image || [];
       }
     } catch (err) {
-      console.error('[Reader Failure]:', err);
+      console.error('[Frame Error]:', err);
       return [];
     }
   },
 
+  /**
+   * Neural search through available nodes
+   */
   async search(query: string, source: MangaSource = 'mangadex'): Promise<Manga[]> {
     try {
       if (source === 'mangadex') {
         const res = await fetch(`${MANGADEX_BASE}/manga?title=${encodeURIComponent(query)}&limit=20&includes[]=cover_art`);
         const data = await res.json();
-        return data.data.map(normalizeMangaDex);
+        return (data.data || []).map(normalizeMangaDex);
       } else {
         const res = await fetch(`${MANGAMINT_BASE}/search/${encodeURIComponent(query)}`);
         const data = await res.json();
