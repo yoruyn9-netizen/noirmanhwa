@@ -41,7 +41,6 @@ export default function ChapterList({ chapters, mangaId, source = 'mangadex' }: 
           </span>
         </div>
 
-        {/* Language Filter Bar */}
         <div className="flex items-center gap-2 p-1.5 bg-[#0a0a0f]/60 backdrop-blur-md border border-white/5 rounded-2xl w-fit">
           <button
             onClick={() => setLangFilter('all')}
@@ -94,11 +93,9 @@ export default function ChapterList({ chapters, mangaId, source = 'mangadex' }: 
             const isIndo = chapter.attributes?.translatedLanguage === 'id';
             
             // Unified Routing logic:
-            // Use /reader/[mangaId]/[chapterId] if mangaId is available, 
-            // else fallback to /reader/[chapterId] which is now handled by the unified [id] slug.
-            const readerHref = mangaId 
-              ? `/reader/${mangaId}/${chapter.id}?source=${source}`
-              : `/reader/${chapter.id}?source=${source}`;
+            // Use /reader/[id] which is the unified slug for all reader entries.
+            // If mangaId is known, the reader page can handle nested segments or we use the query param.
+            const readerHref = `/reader/${chapter.id}?source=${source}`;
 
             return (
               <Link 

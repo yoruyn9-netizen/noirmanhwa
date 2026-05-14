@@ -26,6 +26,7 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
 
   useEffect(() => {
     const loadReader = async () => {
+      if (!chapterId) return;
       setLoading(true);
       setError(false);
       try {
@@ -34,8 +35,8 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
         if (!imgs || imgs.length === 0) throw new Error('Empty node signal');
         setImages(imgs);
         
-        // UX: We don't have the mangaId here directly for some sources, 
-        // so we use a placeholder or attempt title fetch if source allows.
+        // In a single-chapter context, we use a placeholder or attempt title fetch if source allows.
+        // For MangaDex, we could optionally fetch manga ID from the chapter object if needed.
       } catch (err) {
         console.error('[Reader Node Failure]:', err);
         setError(true);
@@ -50,7 +51,7 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
     return (
       <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center space-y-6 z-[200]">
         <div className="relative">
-          <Loader2 className="w-12 h-12 text-accent animate-spin" />
+          <div className="w-12 h-12 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
           <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
         </div>
         <div className="text-center space-y-2">

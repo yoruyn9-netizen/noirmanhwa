@@ -25,15 +25,16 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     const loadReader = async () => {
+      if (!chapterId) return;
       setLoading(true);
       setError(false);
       try {
         const [imgs, detail] = await Promise.all([
           mangaApi.fetchChapterImages(chapterId, source),
-          mangaApi.fetchMangaDetail(mangaId, source)
+          mangaId ? mangaApi.fetchMangaDetail(mangaId, source) : Promise.resolve(null)
         ]);
         
-        if (imgs.length === 0) throw new Error('Empty node signal');
+        if (!imgs || imgs.length === 0) throw new Error('Empty node signal');
         
         setImages(imgs);
         if (detail) setMangaTitle(detail.title);
@@ -51,7 +52,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
     return (
       <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center space-y-6 z-[200]">
         <div className="relative">
-          <Loader2 className="w-12 h-12 text-accent animate-spin" />
+          <div className="w-12 h-12 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
           <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
         </div>
         <div className="text-center space-y-2">
