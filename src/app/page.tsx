@@ -1,5 +1,9 @@
-import React from 'react';
-import { mangaApi } from '@/lib/api';
+
+"use client";
+
+import React, { useEffect } from 'react';
+import { mangaApi } from '@/lib/mangaApi';
+import { verifyApiConnections } from '@/lib/verifyApis';
 import GenreSlider from '@/components/GenreSlider';
 import HeroSlider from '@/components/HeroSlider';
 import GlobalChat from '@/components/chat/GlobalChat';
@@ -9,24 +13,39 @@ import AdvancedFilters from '@/components/manga/AdvancedFilters';
 import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
 import MangaGrid from '@/components/manga/MangaGrid';
 
-export default async function Home() {
-  let trending: any[] = [];
-  let genres: any[] = [];
+export default function Home() {
+  const [trending, setTrending] = React.useState([]);
+  const [genres, setGenres] = React.useState([]);
+  const [health, setHealth] = React.useState<any>(null);
 
-  try {
-    const [trendingRes, genresRes] = await Promise.all([
-      mangaApi.getTrending(),
-      mangaApi.getTags()
-    ]);
+  useEffect(() => {
+    async function init() {
+      const h = await verifyApiConnections();
+      setHealth(h);
 
-    trending = trendingRes.data || [];
-    genres = genresRes.data || [];
-  } catch (err) {
-    console.error('[Page Error]:', err);
-  }
+      try {
+        const [tRes, gRes] = await Promise.all([
+          mangaApi.fetchMangaList({ page: 1, type: 'all' }),
+          mangaApi.getTags()
+        ]);
+        setTrending(tRes || []);
+        setGenres(gRes.data || []);
+      } catch (err) {
+        console.error('[Page Sync Error]:', err);
+      }
+    }
+    init();
+  }, []);
 
   return (
     <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden">
+      {/* API Health Monitor - Dev Only Overlay */}
+      {health && Object.values(health).some(v => !v) && (
+        <div className="fixed top-4 right-4 z-[200] bg-red-600 text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase animate-pulse border border-white/20 shadow-2xl">
+          ⚠️ Critical: Some Data Nodes Offline
+        </div>
+      )}
+
       <section className="w-full pt-4">
         <HeroSlider trending={trending} />
       </section>

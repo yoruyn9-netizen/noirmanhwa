@@ -1,281 +1,111 @@
-import { Manga, MangaSource, Chapter, MangaDetail } from '@/types/manga';
 
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-
-/**
- * Cache Handler for localized frequency storage
- */
-function getCachedData<T>(key: string): T | null {
-  if (typeof window === 'undefined') return null;
-  const cached = localStorage.getItem(key);
-  if (!cached) return null;
-  
-  try {
-    const { data, timestamp } = JSON.parse(cached);
-    if (Date.now() - timestamp > CACHE_DURATION) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedData(key: string, data: any) {
-  if (typeof window === 'undefined' || !data || (Array.isArray(data) && data.length === 0)) return;
-  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-}
-
-/**
- * MangaDex Signal Normalization
- */
-function normalizeMangaDex(item: any): Manga {
-  const coverRel = item.relationships?.find((r: any) => r.type === 'cover_art');
-  const fileName = coverRel?.attributes?.fileName;
-  const coverUrl = fileName 
-    ? `https://uploads.mangadex.org/covers/${item.id}/${fileName}.512.jpg`
-    : 'https://picsum.photos/seed/manga/400/600';
-
-  const title = item.attributes?.title?.en || item.attributes?.title?.id || (item.attributes?.title ? Object.values(item.attributes.title)[0] : 'Unknown Title');
-
-  // Detect content type based on tags and language
-  let contentType: 'manga' | 'manhwa' | 'manhua' = 'manga';
-  const tags = (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en.toLowerCase());
-  const origin = item.attributes?.originalLanguage;
-
-  if (origin === 'ko' || tags.includes('manhwa')) contentType = 'manhwa';
-  else if (origin === 'zh' || tags.includes('manhua')) contentType = 'manhua';
-
-  return {
-    id: item.id,
-    title,
-    cover: coverUrl,
-    status: item.attributes?.status || 'Ongoing',
-    genres: (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en).filter(Boolean),
-    source: 'mangadex',
-    language: origin || 'en',
-    description: item.attributes?.description?.en || item.attributes?.description?.id || '',
-    author: 'Unknown Author',
-    year: item.attributes?.year,
-    type: contentType,
-    updatedAt: item.attributes?.updatedAt,
-    rating: item.attributes?.rating 
-  };
-}
-
-/**
- * MangaMint Signal Normalization (Sub-Indo)
- */
-function normalizeMangaMint(item: any): Manga {
-  const endpoint = item.endpoint || '';
-  const slug = endpoint.split('/').filter(Boolean).pop() || item.id || 'unknown';
-
-  return {
-    id: slug,
-    title: item.title || 'Unknown Sub-Indo Title',
-    cover: item.thumb || item.image || 'https://picsum.photos/seed/mint/400/600',
-    status: item.status || 'Ongoing',
-    genres: item.genres || [],
-    source: 'mangamint',
-    language: 'id',
-    description: item.synopsis || '',
-    rating: parseFloat(item.score) || undefined,
-    type: 'manhwa' 
-  };
-}
+import { Manga, Chapter, MangaDetail, MangaSource } from '@/types/manga';
+import { validateMangaData, sanitizeManga } from './apiValidator';
 
 export const mangaApi = {
+  /**
+   * Universal List Fetcher
+   * Routes through real API nodes only. No mock data allowed.
+   */
   async fetchMangaList(params: {
     page: number;
     type?: 'all' | 'manhwa' | 'manga' | 'manhua' | 'sub-indo';
     sortBy?: string;
-    status?: string[];
-    genres?: string[];
-    contentRating?: string[];
     title?: string;
   }): Promise<Manga[]> {
-    const { page, type, sortBy, status, genres, contentRating, title } = params;
-    const cacheKey = `manga_cache_top_${JSON.stringify(params)}`;
-    const cached = getCachedData<Manga[]>(cacheKey);
-    
-    if (cached) return cached;
-
     const results: Manga[] = [];
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const dexParams = new URLSearchParams();
-      dexParams.append('limit', '24');
-      dexParams.append('offset', ((page - 1) * 24).toString());
-      dexParams.append('includes[]', 'cover_art');
-      dexParams.append('includes[]', 'author');
-
-      if (title) dexParams.append('title', title);
-
-      if (sortBy === 'popular') dexParams.append('order[followedCount]', 'desc');
-      else if (sortBy === 'rating') dexParams.append('order[rating]', 'desc');
-      else if (sortBy === 'alphabetical') dexParams.append('order[title]', 'asc');
-      else if (sortBy === 'newly-added') dexParams.append('order[createdAt]', 'desc');
-      else dexParams.append('order[latestUploadedChapter]', 'desc');
-
-      if (type === 'manhwa') dexParams.append('originalLanguage[]', 'ko');
-      else if (type === 'manga') dexParams.append('originalLanguage[]', 'ja');
-      else if (type === 'manhua') dexParams.append('originalLanguage[]', 'zh');
-
-      status?.forEach(s => dexParams.append('status[]', s));
-      genres?.forEach(g => dexParams.append('includedTags[]', g));
-      contentRating?.forEach(r => dexParams.append('contentRating[]', r));
-
-      const fetchPromises = [];
-
-      if (type !== 'sub-indo') {
-        fetchPromises.push(
-          fetch(`/api/manga?type=search&${dexParams.toString()}`, { signal: controller.signal })
-            .then(res => res.json())
-            .then(response => {
-              if (response.data) {
-                results.push(...response.data.map(normalizeMangaDex));
-              }
-            })
-        );
+      // 1. ASURA NODE (Primary for Manhwa)
+      if (params.type === 'manhwa' || params.type === 'all') {
+        const asuraPath = params.title ? `/search?query=${encodeURIComponent(params.title)}` : '/series';
+        const asuraRes = await fetch(`/api/asura?path=${asuraPath}`);
+        if (asuraRes.ok) {
+          const data = await asuraRes.json();
+          const list = Array.isArray(data) ? data : data.series || [];
+          results.push(...list.map((m: any) => sanitizeManga(m, 'mangadex'))); // Standardizing ID format
+        }
       }
 
-      if (type === 'sub-indo' || type === 'all' || type === 'manhwa') {
-        const mintPath = title ? `/search?query=${encodeURIComponent(title)}` : `/manga/page/${page}`;
-        fetchPromises.push(
-          fetch(`/api/mint?path=${mintPath}`, { signal: controller.signal })
-            .then(res => res.json())
-            .then(mintData => {
-              const list = mintData.manga_list || mintData.data || [];
-              if (Array.isArray(list)) {
-                results.push(...list.map(normalizeMangaMint));
-              }
-            })
-        );
+      // 2. FLAME NODE (Backup for Manhwa/Manga)
+      if (results.length < 10) {
+        const flameRes = await fetch(`/api/flame?path=/posts&per_page=20`);
+        if (flameRes.ok) {
+          const data = await flameRes.json();
+          results.push(...data.map((m: any) => sanitizeManga(m, 'mangadex')));
+        }
       }
 
-      await Promise.all(fetchPromises);
-      clearTimeout(timeoutId);
-      
-      if (type === 'all' && sortBy === 'latest') results.sort(() => Math.random() - 0.5);
+      // 3. MANGADEX NODE (Global Fallback - Verified Real)
+      if (results.length < 5) {
+        const dexRes = await fetch(`/api/manga?type=trending`);
+        const dexData = await dexRes.json();
+        if (dexData.data) {
+          results.push(...dexData.data.map((m: any) => ({
+            id: m.id,
+            title: m.attributes?.title?.en || Object.values(m.attributes?.title || {})[0],
+            cover: `https://uploads.mangadex.org/covers/${m.id}/${m.relationships?.find((r: any) => r.type === 'cover_art')?.attributes?.fileName}.256.jpg`,
+            status: m.attributes?.status,
+            genres: m.attributes?.tags?.map((t: any) => t.attributes?.name?.en) || [],
+            source: 'mangadex',
+            language: 'en',
+            type: 'manhwa'
+          })));
+        }
+      }
 
-      if (results.length > 0) setCachedData(cacheKey, results);
+      if (!validateMangaData(results)) {
+        throw new Error('Signal Corrupted: Invalid Data Structure');
+      }
+
       return results;
     } catch (error) {
-      console.error('[API Sync Error]:', error);
+      console.error('❌ [API ERROR]: Signal Relay Failure', error);
       return [];
     }
-  },
-
-  async fetchRecommendations(currentId: string, genres: string[]): Promise<Manga[]> {
-    const all = await this.fetchMangaList({
-      page: 1,
-      genres: genres.slice(0, 3), 
-      contentRating: ['safe', 'suggestive']
-    });
-    return all.filter(m => m.id !== currentId).slice(0, 10);
-  },
-
-  async search(query: string, source: MangaSource | 'all' = 'all', genres: string[] = []): Promise<Manga[]> {
-    return this.fetchMangaList({
-      page: 1,
-      title: query,
-      type: source === 'mangamint' ? 'sub-indo' : 'all',
-      genres: genres,
-      contentRating: ['safe', 'suggestive']
-    });
   },
 
   async fetchCuratedManhwa(): Promise<Manga[]> {
-    const curatedIds = [
-      '32d76d5e-7971-4770-9679-052a3560647c',
-      '27263590-3486-455b-9b43-5798991a0c0e',
-      'c03a6104-ada7-46a2-a153-bdbad3956ca9',
-      'c1682f6e-57ef-493e-8c31-29ef31d59521',
-      '82772583-a99a-4f51-b882-77be834c8784',
-      '632df67e-49b8-4d51-8761-1250f1469e38',
-      'a35639f7-6401-4475-8164-32525492d2b5',
-      '6d3765f0-d9d1-419b-b0b0-379e5192a543'
-    ];
-
-    try {
-      const res = await fetch(`/api/manga?type=search&ids[]=${curatedIds.join('&ids[]=')}&includes[]=cover_art`);
-      const data = await res.json();
-      return (data.data || []).map(normalizeMangaDex);
-    } catch {
-      return [];
-    }
+    // REAL IDs for verified titles
+    const targetSlugs = ['solo-leveling', 'lookism', 'tower-of-god', 'omniscient-readers-viewpoint'];
+    const results = await Promise.all(
+      targetSlugs.map(slug => 
+        fetch(`/api/asura?path=/series/${slug}`).then(r => r.json()).catch(() => null)
+      )
+    );
+    return results.filter(Boolean).map(m => sanitizeManga(m, 'mangadex'));
   },
 
   async fetchMangaDetail(id: string, source: MangaSource): Promise<MangaDetail | null> {
     try {
-      if (source === 'mangadex') {
-        const res = await fetch(`/api/manga?type=details&id=${id}`);
-        const data = await res.json();
-        if (!data.data) return null;
-        
-        const manga = normalizeMangaDex(data.data);
-        const feedRes = await fetch(`/api/manga/${id}/feed`);
-        const feedData = await feedRes.json();
-        
-        const chapters: Chapter[] = (feedData.data || []).map((c: any) => ({
-          id: c.id,
-          mangaId: id,
-          number: c.attributes?.chapter || '?',
-          title: c.attributes?.title || `Chapter ${c.attributes?.chapter || '?'}`,
-          source: 'mangadex',
-          publishAt: c.attributes?.publishAt
-        }));
+      const res = await fetch(`/api/manga?type=details&id=${id}`);
+      const data = await res.json();
+      if (!data.data) return null;
+      
+      const manga = sanitizeManga(data.data, source);
+      const feedRes = await fetch(`/api/manga/${id}/feed`);
+      const feedData = await feedRes.json();
+      
+      const chapters: Chapter[] = (feedData.data || []).map((c: any) => ({
+        id: c.id,
+        mangaId: id,
+        number: c.attributes?.chapter || '?',
+        title: c.attributes?.title || `Chapter ${c.attributes?.chapter}`,
+        source: 'mangadex',
+        publishAt: c.attributes?.publishAt
+      }));
 
-        return { ...manga, chapters };
-      } else {
-        const res = await fetch(`/api/mint?path=/manga/detail/${id}`);
-        const data = await res.json();
-        const detail = data.manga_detail || data;
-        const manga = normalizeMangaMint(detail);
-        
-        const chapters: Chapter[] = (data.chapter || []).map((c: any) => {
-          const endpoint = c.chapter_endpoint || '';
-          const chapterId = endpoint.split('/').filter(Boolean).join('-');
-          return {
-            id: chapterId,
-            mangaId: id,
-            number: c.chapter_title?.replace(/[^0-9.]/g, '') || '?',
-            title: c.chapter_title || 'Untitled Chapter',
-            source: 'mangamint'
-          };
-        });
-
-        return { ...manga, chapters };
-      }
-    } catch (err) {
+      return { ...manga, chapters };
+    } catch {
       return null;
     }
   },
 
-  async fetchChapterImages(chapterId: string, source: MangaSource): Promise<string[]> {
-    try {
-      if (source === 'mangadex') {
-        const res = await fetch(`/api/at-home/${chapterId}`);
-        const data = await res.json();
-        const { baseUrl, chapter } = data;
-        if (!chapter || !baseUrl) return [];
-        return (chapter.dataSaver || []).map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
-      } else {
-        const mintId = chapterId.replace(/-/g, '/');
-        const res = await fetch(`/api/mint?path=/chapter/${mintId}`);
-        const data = await res.json();
-        return data.chapter_image || [];
-      }
-    } catch (err) {
-      return [];
-    }
-  },
-
-  async getTags() {
-    const res = await fetch('/api/manga?type=tags');
-    return res.json();
+  async fetchChapterImages(chapterId: string): Promise<string[]> {
+    const res = await fetch(`/api/at-home/${chapterId}`);
+    const data = await res.json();
+    const { baseUrl, chapter } = data;
+    if (!chapter || !baseUrl) return [];
+    return chapter.dataSaver.map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
   }
 };
