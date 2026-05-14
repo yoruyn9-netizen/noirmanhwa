@@ -12,7 +12,8 @@ import {
   AlertCircle,
   RotateCcw,
   Filter,
-  Languages
+  Languages,
+  Tags
 } from 'lucide-react';
 import { Manga } from '@/types/manga';
 import { useRouter } from 'next/navigation';
@@ -50,14 +51,28 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const [results, setResults] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const [genres, setGenres] = useState<any[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(params.genre ? [params.genre] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(params.genre ? ['en'] : []); // Default to en if genre selected as mint might not support it
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const res = await mangaApi.getTags();
+        if (res.data) setGenres(res.data);
+      } catch (err) {
+        console.error("Genre fetch error:", err);
+      }
+    };
+    fetchGenres();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 400);
+    }, 500);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -66,7 +81,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       setLoading(true);
       try {
         const source = selectedLanguages.includes('id') ? 'mangamint' : 'mangadex';
-        const res = await mangaApi.search(debouncedQuery, source);
+        const res = await mangaApi.search(debouncedQuery, source, selectedGenres);
         let filtered = res;
 
         if (selectedStatus.length > 0) {
@@ -83,12 +98,16 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
     fetchResults();
     
+    // Update URL without full reload
     const url = new URL(window.location.href);
     if (debouncedQuery) url.searchParams.set('q', debouncedQuery);
     else url.searchParams.delete('q');
     
+    if (selectedGenres.length > 0) url.searchParams.set('genre', selectedGenres[0]);
+    else url.searchParams.delete('genre');
+    
     router.replace(url.pathname + url.search);
-  }, [debouncedQuery, selectedStatus, selectedLanguages, router]);
+  }, [debouncedQuery, selectedStatus, selectedLanguages, selectedGenres, router]);
 
   const toggleStatus = (status: string) => {
     setSelectedStatus(prev => 
@@ -98,17 +117,24 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
   const toggleLanguage = (lang: string) => {
     setSelectedLanguages(prev => 
-      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [lang] // Single source selection for clarity
+    );
+  };
+
+  const toggleGenre = (id: string) => {
+    setSelectedGenres(prev => 
+      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
     );
   };
 
   const resetFilters = () => {
     setSelectedStatus([]);
     setSelectedLanguages([]);
+    setSelectedGenres([]);
     setQuery('');
   };
 
-  const activeFilterCount = selectedStatus.length + selectedLanguages.length;
+  const activeFilterCount = selectedStatus.length + selectedLanguages.length + selectedGenres.length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
@@ -153,8 +179,8 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
               )}
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[70vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0 overflow-hidden">
-            <div className="h-full flex flex-col p-10 space-y-10">
+          <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0 overflow-hidden z-[150]">
+            <div className="h-full flex flex-col p-10 space-y-8">
               <SheetHeader className="flex flex-row items-center justify-between">
                 <div className="space-y-1">
                   <SheetTitle className="text-xl font-black tracking-tight uppercase text-glow">Filters</SheetTitle>
@@ -168,8 +194,9 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                 </button>
               </SheetHeader>
 
-              <ScrollArea className="flex-1">
-                <div className="space-y-10 pb-12">
+              <ScrollArea className="flex-1 pr-4">
+                <div className="space-y-10 pb-20">
+                  {/* Language Section */}
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
                       <Languages className="w-3.5 h-3.5" /> Subtitle Language
@@ -192,6 +219,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                     </div>
                   </section>
 
+                  {/* Status Section */}
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
                       <Filter className="w-3.5 h-3.5" /> Status
@@ -213,15 +241,40 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                       ))}
                     </div>
                   </section>
+
+                  {/* Genre Section */}
+                  <section className="space-y-4">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
+                      <Tags className="w-3.5 h-3.5" /> Genres
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {genres.map((genre) => (
+                        <button
+                          key={genre.id}
+                          onClick={() => toggleGenre(genre.id)}
+                          className={cn(
+                            "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all duration-500",
+                            selectedGenres.includes(genre.id) 
+                              ? "bg-accent border-accent text-white shadow-lg" 
+                              : "bg-[#0a0a0f] border-white/5 text-neutral-500"
+                          )}
+                        >
+                          {genre.attributes.name.en}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
                 </div>
               </ScrollArea>
 
-              <button 
-                onClick={() => setIsFilterOpen(false)}
-                className="w-full py-5 bg-white text-black font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl mb-6"
-              >
-                Apply Filters
-              </button>
+              <div className="pt-4 bg-gradient-to-t from-[#020205] to-transparent pb-6">
+                <button 
+                  onClick={() => setIsFilterOpen(false)}
+                  className="w-full py-5 bg-white text-black font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl"
+                >
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </SheetContent>
         </Sheet>

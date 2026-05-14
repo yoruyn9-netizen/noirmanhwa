@@ -44,7 +44,7 @@ function normalizeMangaDex(item: any): Manga {
     id: item.id,
     title,
     cover: coverUrl,
-    status: item.attributes?.status || 'Unknown',
+    status: item.attributes?.status || 'Ongoing',
     genres: (item.attributes?.tags || []).map((t: any) => t.attributes?.name?.en).filter(Boolean),
     source: 'mangadex',
     language: item.attributes?.originalLanguage || 'en',
@@ -56,10 +56,15 @@ function normalizeMangaDex(item: any): Manga {
 
 /**
  * MangaMint Signal Normalization (Sub-Indo)
+ * Fixed: Correctly extract slug ID from endpoint
  */
 function normalizeMangaMint(item: any): Manga {
+  // Extract slug from endpoint like "/manga/detail/solo-leveling/"
+  const endpoint = item.endpoint || '';
+  const slug = endpoint.split('/').filter(Boolean).pop() || item.id || 'unknown';
+
   return {
-    id: item.endpoint?.replace(/\//g, '') || item.id,
+    id: slug,
     title: item.title || 'Unknown Sub-Indo Title',
     cover: item.thumb || item.image || 'https://picsum.photos/seed/mint/400/600',
     status: item.status || 'Ongoing',
@@ -67,6 +72,7 @@ function normalizeMangaMint(item: any): Manga {
     source: 'mangamint',
     language: 'id',
     description: item.synopsis || '',
+    rating: parseFloat(item.score) || undefined
   };
 }
 
@@ -84,7 +90,7 @@ export const mangaApi = {
 
     const results: Manga[] = [];
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const fetchPromises = [];
@@ -94,8 +100,8 @@ export const mangaApi = {
           fetch(`/api/manga?type=search&limit=20&offset=${(page - 1) * 20}`, { signal: controller.signal })
             .then(res => res.json())
             .then(response => {
-              console.log('🌍 MANGADEX SEARCH:', { count: response.data?.length, first: response.data?.[0]?.attributes?.title?.en });
               if (response.data && Array.isArray(response.data)) {
+                console.log('🌍 MANGADEX LOADED:', response.data.length);
                 results.push(...response.data.map(normalizeMangaDex));
               }
             })
@@ -108,9 +114,11 @@ export const mangaApi = {
           fetch(`/api/mint?path=/manga/page/${page}`, { signal: controller.signal })
             .then(res => res.json())
             .then(mintData => {
-              console.log('🇮 MANGAMINT LIST:', { count: mintData.manga_list?.length, first: mintData.manga_list?.[0]?.title });
-              if (mintData.manga_list && Array.isArray(mintData.manga_list)) {
-                results.push(...mintData.manga_list.map(normalizeMangaMint));
+              // MangaMint returns data in different structures depending on endpoint
+              const list = mintData.manga_list || mintData.data || [];
+              if (Array.isArray(list)) {
+                console.log('🇮 MANGAMINT LOADED:', list.length);
+                results.push(...list.map(normalizeMangaMint));
               }
             })
             .catch(err => console.error('❌ MangaMint Node Failed:', err))
@@ -120,7 +128,6 @@ export const mangaApi = {
       await Promise.all(fetchPromises);
       clearTimeout(timeoutId);
       
-      // Shuffle results if combined for variety
       if (!source) {
         results.sort(() => Math.random() - 0.5);
       }
@@ -129,10 +136,9 @@ export const mangaApi = {
         setCachedData(cacheKey, results);
       }
       
-      console.log('✅ TOTAL SYNCHRONIZED:', results.length);
       return results;
     } catch (error) {
-      console.error('[CRITICAL]: Synchronization timed out or failed:', error);
+      console.error('[CRITICAL]: Synchronization failed:', error);
       return [];
     }
   },
@@ -163,18 +169,24 @@ export const mangaApi = {
 
         return { ...manga, chapters };
       } else {
-        // Mint requires full endpoint path for detail
         const res = await fetch(`/api/mint?path=/manga/detail/${id}`);
         const data = await res.json();
-        const manga = normalizeMangaMint(data);
+        // Handle nested detail structure from MangaMint
+        const detail = data.manga_detail || data;
+        const manga = normalizeMangaMint(detail);
         
-        const chapters: Chapter[] = (data.chapter || []).map((c: any) => ({
-          id: c.chapter_endpoint?.replace(/^\//, '').replace(/\//g, '-'), // Flatten path for URL
-          mangaId: id,
-          number: c.chapter_title?.replace(/[^0-9.]/g, '') || '?',
-          title: c.chapter_title || 'Untitled Unit',
-          source: 'mangamint'
-        }));
+        const chapters: Chapter[] = (data.chapter || []).map((c: any) => {
+          const endpoint = c.chapter_endpoint || '';
+          const chapterId = endpoint.split('/').filter(Boolean).join('-'); // Convert path to URL-safe ID
+          
+          return {
+            id: chapterId,
+            mangaId: id,
+            number: c.chapter_title?.replace(/[^0-9.]/g, '') || '?',
+            title: c.chapter_title || 'Untitled Chapter',
+            source: 'mangamint'
+          };
+        });
 
         return { ...manga, chapters };
       }
@@ -194,10 +206,8 @@ export const mangaApi = {
         const data = await res.json();
         const { baseUrl, chapter } = data;
         if (!chapter || !baseUrl) return [];
-        // Use data-saver for maximum reliability and speed on mobile
         return (chapter.dataSaver || []).map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
       } else {
-        // Restore flattened path
         const mintId = chapterId.replace(/-/g, '/');
         const res = await fetch(`/api/mint?path=/chapter/${mintId}`);
         const data = await res.json();
@@ -209,19 +219,29 @@ export const mangaApi = {
     }
   },
 
-  async search(query: string, source: MangaSource = 'mangadex'): Promise<Manga[]> {
+  async search(query: string, source: MangaSource = 'mangadex', tags: string[] = []): Promise<Manga[]> {
     try {
       if (source === 'mangadex') {
-        const res = await fetch(`/api/manga?type=search&title=${encodeURIComponent(query)}&limit=20`);
+        let url = `/api/manga?type=search&limit=20&title=${encodeURIComponent(query)}`;
+        if (tags.length > 0) {
+          tags.forEach(t => url += `&includedTags[]=${t}`);
+        }
+        const res = await fetch(url);
         const data = await res.json();
         return (data.data || []).map(normalizeMangaDex);
       } else {
         const res = await fetch(`/api/mint?path=/search/${encodeURIComponent(query)}`);
         const data = await res.json();
-        return (data.manga_list || []).map(normalizeMangaMint);
+        const list = data.manga_list || [];
+        return list.map(normalizeMangaMint);
       }
     } catch {
       return [];
     }
+  },
+
+  async getTags() {
+    const res = await fetch('/api/manga?type=tags');
+    return res.json();
   }
 };
