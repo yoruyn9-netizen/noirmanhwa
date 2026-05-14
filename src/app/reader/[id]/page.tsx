@@ -10,7 +10,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 
 /**
  * Unified Reader Page (Single Segment)
- * Handles /reader/[chapterId] legacy links by synchronizing with the new Reader protocol.
+ * Handles /reader/[id] links by synchronizing with the Noir Reader protocol.
  */
 export default function SingleChapterReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chapterId } = use(params);
@@ -28,10 +28,14 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
       setError(false);
       try {
         const imgs = await mangaApi.fetchChapterImages(chapterId, source);
-        if (imgs.length === 0) throw new Error('Empty node');
+        if (imgs.length === 0) throw new Error('Empty node signal');
         setImages(imgs);
+        
+        // Attempt to fetch manga title for better UX
+        // In a single-segment route, we might not have the mangaId immediately,
+        // but the ReaderView handles missing titles gracefully.
       } catch (err) {
-        console.error('[Reader Error]:', err);
+        console.error('[Reader Node Failure]:', err);
         setError(true);
       } finally {
         setLoading(false);
@@ -47,7 +51,10 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
           <Loader2 className="w-12 h-12 text-accent animate-spin" />
           <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white">Syncing Matrix</p>
+        <div className="text-center space-y-2">
+          <h2 className="text-sm font-black uppercase tracking-[0.5em] text-white">Syncing Matrix</h2>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Calibrating sensory input streams</p>
+        </div>
       </div>
     );
   }
@@ -55,9 +62,21 @@ export default function SingleChapterReaderPage({ params }: { params: Promise<{ 
   if (error) {
     return (
       <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center p-10 text-center space-y-8 z-[200]">
-        <AlertTriangle className="w-16 h-16 text-red-500 opacity-20" />
-        <h2 className="text-xl font-black uppercase tracking-tighter text-white">Transmission Interrupted</h2>
-        <button onClick={() => window.location.reload()} className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest">Re-establish Link</button>
+        <div className="w-20 h-20 bg-red-500/10 rounded-[2.5rem] border border-red-500/20 flex items-center justify-center">
+          <AlertTriangle className="w-10 h-10 text-red-500" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black uppercase tracking-tighter text-white">Transmission Interrupted</h2>
+          <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-xs mx-auto">
+            The remote node failed to return a valid visual stream. Re-establish your neural link.
+          </p>
+        </div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:bg-accent hover:text-white transition-all"
+        >
+          RE-ESTABLISH LINK
+        </button>
       </div>
     );
   }

@@ -10,7 +10,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 
 /**
  * High-Fidelity Reader Page (Nested Segments)
- * Handles /reader/[mangaId]/[chapterId]
+ * Handles /reader/[id]/[chapter] where id is MangaID and chapter is ChapterID.
  */
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
   const { id: mangaId, chapter: chapterId } = use(params);
@@ -32,7 +32,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
           mangaApi.fetchMangaDetail(mangaId, source)
         ]);
         
-        if (imgs.length === 0) throw new Error('Empty node');
+        if (imgs.length === 0) throw new Error('Empty node signal');
         
         setImages(imgs);
         if (detail) setMangaTitle(detail.title);
@@ -70,12 +70,12 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
         <div className="space-y-2">
           <h2 className="text-xl font-black uppercase tracking-tighter text-white">Transmission Interrupted</h2>
           <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest max-w-xs mx-auto">
-            The remote node failed to return a valid visual stream. Check your neural link.
+            The remote node failed to return a valid visual stream. Check your neural link status.
           </p>
         </div>
         <button 
           onClick={() => window.location.reload()}
-          className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl"
+          className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:bg-accent hover:text-white transition-all"
         >
           RE-ESTABLISH LINK
         </button>
@@ -87,7 +87,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
     <ReaderView 
       images={images}
       mangaTitle={mangaTitle}
-      chapterNum={chapterId}
+      chapterNum={chapterId.substring(0, 4)} // Approximation for UI
       source={source}
     />
   );

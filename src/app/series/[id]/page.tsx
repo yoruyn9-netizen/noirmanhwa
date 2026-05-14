@@ -82,7 +82,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           <div className="grid grid-cols-2 gap-4 px-4">
              <BookmarkButton manga={manga} />
              <Link 
-              href={chapters.length > 0 ? `/reader/${chapters[0].id}` : '#'} 
+              href={chapters.length > 0 ? `/reader/${id}/${chapters[0].id}` : '#'} 
               className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
             >
                <Play className="w-4 h-4 fill-current" /> READ NOW
@@ -99,7 +99,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           </div>
         </div>
 
-        <ChapterList chapters={chapters} />
+        <ChapterList chapters={chapters} mangaId={id} source="mangadex" />
       </div>
     );
   } catch (err: any) {
