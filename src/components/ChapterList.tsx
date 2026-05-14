@@ -16,6 +16,10 @@ interface ChapterListProps {
   mangaId?: string;
 }
 
+/**
+ * Chapter Stack component for series details.
+ * Links to unified /reader/[id] route.
+ */
 export default function ChapterList({ chapters, mangaId }: ChapterListProps) {
   const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>('all');
 

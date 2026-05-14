@@ -10,13 +10,13 @@ import { useRouter } from 'next/navigation';
 /**
  * Stable Reader Page Node
  * Consolidated to 'id' slug to prevent Next.js routing collisions.
+ * Handles single chapter reading protocol.
  */
 export default function ReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chapterId } = use(params);
   const router = useRouter();
   
   const [data, setData] = useState<any>(null);
-  const [mangaDetail, setMangaDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -29,9 +29,6 @@ export default function ReaderPage({ params }: { params: Promise<{ id: string }>
         if (res.error) throw new Error("AtHome server unreachable");
         
         setData(res);
-
-        // Attempt to fetch sibling context if possible
-        // (In this stable version, we focus on rendering the current chapter)
       } catch (err) {
         console.error('[Reader Node Failure]:', err);
         setError(true);
