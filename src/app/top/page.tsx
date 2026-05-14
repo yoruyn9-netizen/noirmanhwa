@@ -67,15 +67,15 @@ export default function TopListPage() {
       </div>
 
       <Tabs defaultValue="trending" className="w-full" onValueChange={setActiveTab}>
-        <div className="flex justify-center mb-10 overflow-x-auto hide-scrollbar pb-2">
-          <TabsList className="bg-[#0a0a0f]/60 border border-white/5 p-1.5 rounded-2xl h-auto flex-nowrap">
-            <TabsTrigger value="trending" className="px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+        <div className="flex justify-center mb-10 overflow-x-auto hide-scrollbar pb-2 px-2">
+          <TabsList className="bg-[#0a0a0f]/60 border border-white/5 p-1.5 rounded-2xl h-auto flex-nowrap min-w-max">
+            <TabsTrigger value="trending" className="px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all whitespace-nowrap">
               Trending
             </TabsTrigger>
-            <TabsTrigger value="popular" className="px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+            <TabsTrigger value="popular" className="px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all whitespace-nowrap">
               Popular Manhwa
             </TabsTrigger>
-            <TabsTrigger value="rated" className="px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+            <TabsTrigger value="rated" className="px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all whitespace-nowrap">
               Highest Rated
             </TabsTrigger>
           </TabsList>
