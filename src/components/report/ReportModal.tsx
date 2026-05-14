@@ -136,14 +136,19 @@ export default function ReportModal({ isOpen, onClose, chapterId }: ReportModalP
                 </div>
 
                 <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !description.trim()}
-                  className="w-full py-5 bg-red-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-red-600/20 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:scale-100 transition-all flex items-center justify-center gap-3"
-                >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
-                  SUBMIT ERROR LOG
-                </button>
-              </div>
+  onClick={handleSubmit}
+  disabled={isSubmitting || !description.trim()}
+  className="w-full py-5 bg-red-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-red-600/20 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:scale-100 transition-all flex items-center justify-center gap-3"
+>
+  {isSubmitting ? (
+    <Loader2 className="w-5 h-5 animate-spin" />
+  ) : (
+    <>
+      <Send className="w-4 h-4" />
+      <span>SUBMIT ERROR LOG</span>
+    </>
+  )}
+</button>
             )}
           </div>
         </div>
