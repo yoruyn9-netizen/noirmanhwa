@@ -6,6 +6,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Truncates text to a specific length and adds ellipsis
+ */
+export function truncateTitle(title: string, maxLength: number = 40): string {
+  if (!title) return '';
+  if (title.length <= maxLength) return title;
+  return title.slice(0, maxLength).trim() + '...';
+}
+
+/**
+ * Chunks an array into smaller arrays of a specific size
+ */
+export function chunkArray<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
 export function getCoverUrl(manga: Manga, size: '256' | '512' | 'original' = '512'): string {
   if (!manga) return 'https://placehold.co/400x600/0a0a0f/6366f1?text=No+Data';
   
@@ -23,14 +43,12 @@ export function getCoverUrl(manga: Manga, size: '256' | '512' | 'original' = '51
 export function getMangaTitle(manga: Manga): string {
   if (!manga?.attributes?.title) return 'Unknown Title';
   const t = manga.attributes.title;
-  // Prioritize Indonesian then English
   return t.id || t.en || t.ja || t['ja-ro'] || Object.values(t)[0] || 'Unknown Title';
 }
 
 export function getMangaDescription(manga: Manga): string {
   if (!manga?.attributes?.description) return 'Synchronizing data summary...';
   const desc = manga.attributes.description;
-  // Prioritize Indonesian then English
   const text = desc.id || desc.en || desc.ja || Object.values(desc)[0] || 'No summary data found.';
   return cleanDescription(text);
 }
@@ -43,17 +61,14 @@ export function formatTimeAgo(dateString: string): string {
   if (isNaN(date.getTime())) return 'Recently';
   if (diffInSeconds < 60) return 'Just now';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 8400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
 
-/**
- * Strips markdown links and formatting for clean previews
- */
 export function cleanDescription(text: string): string {
   if (!text) return "";
   return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Strip markdown links but keep text
-    .replace(/[#*`~]/g, '') // Strip common markdown symbols
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#*`~]/g, '')
     .trim();
 }

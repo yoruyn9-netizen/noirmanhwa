@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -6,11 +5,12 @@ import { mangaApi } from '@/lib/mangaApi';
 import { Manga } from '@/types/manga';
 import MangaCard from './MangaCard';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode, Autoplay } from 'swiper/modules';
-import { Flame, Sparkles } from 'lucide-react';
+import { Pagination, Autoplay } from 'swiper/modules';
+import { Flame, Sparkles, LayoutGrid } from 'lucide-react';
+import { chunkArray } from '@/lib/utils';
 
 import 'swiper/css';
-import 'swiper/css/free-mode';
+import 'swiper/css/pagination';
 
 export default function PopularManhwaCarousel() {
   const [mangas, setMangas] = useState<Manga[]>([]);
@@ -27,38 +27,41 @@ export default function PopularManhwaCarousel() {
 
   if (loading || mangas.length === 0) return null;
 
+  // Split into slides of 10 for paginated layout (2 rows x 5 cols on desktop, 2x2 on mobile)
+  const itemsPerSlide = 10;
+  const chunkedMangas = chunkArray(mangas, itemsPerSlide);
+
   return (
-    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-full overflow-hidden">
       <div className="flex items-center justify-between px-2">
         <div className="space-y-1">
-          <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-            <Flame className="w-6 h-6 text-red-500 fill-red-500 animate-pulse" /> Trending Manhwa
+          <h2 className="text-lg font-black uppercase tracking-tighter text-white flex items-center gap-3">
+            <Flame className="w-5 h-5 text-red-500 fill-red-500 animate-pulse" /> Trending Manhwa
           </h2>
-          <p className="text-[9px] font-bold text-neutral-600 uppercase tracking-[0.4em] ml-1">Legendary Korean series</p>
+          <p className="text-[9px] font-bold text-neutral-600 uppercase tracking-[0.4em] ml-1">Ranked Legends</p>
         </div>
-        <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
+        <div className="px-3 py-1.5 bg-accent/10 border border-accent/20 rounded-xl">
            <span className="text-[7px] font-black text-accent uppercase tracking-widest flex items-center gap-2">
-             <Sparkles className="w-2 h-2" /> Curated List
+             <Sparkles className="w-2.5 h-2.5" /> Featured Data
            </span>
         </div>
       </div>
 
       <Swiper
-        slidesPerView={2.3}
+        modules={[Pagination, Autoplay]}
+        slidesPerView={1}
         spaceBetween={20}
-        freeMode={true}
-        autoplay={{ delay: 5000 }}
-        modules={[FreeMode, Autoplay]}
-        className="!overflow-visible"
-        breakpoints={{
-          640: { slidesPerView: 3.5 },
-          1024: { slidesPerView: 5.5 },
-          1440: { slidesPerView: 6.5 }
-        }}
+        pagination={{ clickable: true, dynamicBullets: true }}
+        autoplay={{ delay: 8000, disableOnInteraction: true }}
+        className="!pb-12"
       >
-        {mangas.map((m) => (
-          <SwiperSlide key={m.id}>
-             <MangaCard manga={m} isRecommended={true} />
+        {chunkedMangas.map((slide, slideIdx) => (
+          <SwiperSlide key={slideIdx}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 px-2">
+              {slide.map((m) => (
+                <MangaCard key={m.id} manga={m} isRecommended={true} compact />
+              ))}
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>
