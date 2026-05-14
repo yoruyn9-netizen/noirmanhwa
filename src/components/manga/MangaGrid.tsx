@@ -87,32 +87,28 @@ export default function MangaGrid() {
 
       {/* Empty State */}
       {!loading && !error && mangas.length === 0 && (
-        <div className="py-32 text-center space-y-6 glass rounded-[3rem] border-dashed">
-          <SearchX className="w-16 h-16 text-neutral-800 mx-auto" />
-          <div className="space-y-2">
-            <h3 className="text-sm font-black uppercase tracking-tight">No Signals Detected</h3>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-widest opacity-60">The grid is currently silent in this frequency.</p>
-          </div>
+        <div className="py-32 text-center space-y-6">
+          <h3 className="text-sm font-black uppercase tracking-tight text-neutral-400">No Signal Detected</h3>
           <button 
             onClick={() => loadData(true)}
-            className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black font-black rounded-xl text-[8px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all shadow-xl"
+            className="inline-flex items-center gap-2 px-10 py-3 bg-accent text-white font-black rounded-xl text-[8px] uppercase tracking-widest hover:bg-accent/80 transition-all shadow-xl active:scale-95"
           >
-            Re-scan Matrix
+            <RefreshCw className="w-3 h-3" /> Refresh
           </button>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="py-20 text-center space-y-6 glass rounded-[3rem] border-dashed border-red-500/20">
+        <div className="py-20 text-center space-y-6">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto opacity-40" />
           <div className="space-y-2">
             <h3 className="text-base font-black uppercase tracking-tight">Sync Interrupted</h3>
-            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Neural connection to remote nodes failed (CORS or Network).</p>
+            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Neural connection to remote nodes failed.</p>
           </div>
           <button 
             onClick={() => loadData(true)}
-            className="inline-flex items-center gap-3 px-8 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 font-black text-[9px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+            className="inline-flex items-center gap-3 px-8 py-3 bg-red-500 text-white font-black text-[9px] uppercase tracking-widest hover:bg-red-600 transition-all rounded-xl shadow-xl"
           >
             <RefreshCw className="w-3 h-3" /> Re-establish Link
           </button>
