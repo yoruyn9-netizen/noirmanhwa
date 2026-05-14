@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -11,19 +10,12 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { isGlobalUIVisible, setGlobalUIVisible } = useUIStore();
+  const { isGlobalUIVisible } = useUIStore();
   const { user, checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-
-  // Ensure bar is visible on navigation unless it's a reader page
-  useEffect(() => {
-    if (!pathname.includes('/reader/')) {
-      setGlobalUIVisible(true);
-    }
-  }, [pathname, setGlobalUIVisible]);
 
   const navItems = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
@@ -34,42 +26,27 @@ export default function BottomNav() {
     { id: 'profile', icon: user ? User : Fingerprint, label: user ? 'PROFILE' : 'LOGIN', path: user ? '/profile' : '/login' },
   ];
 
+  if (!isGlobalUIVisible) return null;
+
   return (
-    <nav className={cn(
-      "fixed bottom-8 left-1/2 -translate-x-1/2 z-30 bg-[#050508]/60 backdrop-blur-2xl rounded-full border border-white/5 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-      !isGlobalUIVisible ? "translate-y-[200%] opacity-0" : "translate-y-0 opacity-100"
-    )}>
-      <div className="flex items-center gap-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.path;
-          
-          return (
-            <Link
-              key={item.id}
-              href={item.path}
-              className={cn(
-                "relative flex items-center gap-2 transition-all duration-500 py-3 px-4 sm:px-5 rounded-full group overflow-hidden",
-                isActive ? "bg-accent/10 text-accent" : "text-neutral-600 hover:text-white"
-              )}
-            >
-              <item.icon className={cn(
-                "w-4 h-4 transition-all duration-500", 
-                isActive && "scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]"
-              )} />
-              
-              {isActive && (
-                <span className="text-[8px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-500">
-                  {item.label}
-                </span>
-              )}
-              
-              {isActive && (
-                <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-4 h-0.5 bg-accent shadow-[0_0_10px_rgba(139,92,246,1)] rounded-full" />
-              )}
-            </Link>
-          );
-        })}
-      </div>
+    <nav className="bottom-nav">
+      {navItems.map((item) => {
+        const isActive = pathname === item.path || (item.path !== '/' && pathname?.startsWith(item.path));
+        const Icon = item.icon;
+        
+        return (
+          <Link
+            key={item.id}
+            href={item.path}
+            className={cn("nav-item", isActive && "active")}
+          >
+            <div className="nav-icon">
+              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+            </div>
+            <span className="nav-label">{item.label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
