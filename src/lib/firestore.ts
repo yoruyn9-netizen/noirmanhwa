@@ -39,8 +39,21 @@ export const syncUserToFirestore = async (user: any) => {
       role: user.role || 'user',
       isPremium: false,
       isBanned: false,
-      updatedAt: new Date().toISOString()
+      joinedAt: serverTimestamp(),
+      lastActive: serverTimestamp(),
+      updatedAt: new Date().toISOString(),
+      bio: "",
+      readingHistory: [],
+      stats: {
+        totalMangaRead: 0,
+        totalChaptersRead: 0,
+        favoriteGenre: "None",
+        totalReadingTime: 0
+      }
     });
+  } else {
+    // Update last active
+    await updateDoc(userRef, { lastActive: serverTimestamp() });
   }
 };
 
@@ -48,7 +61,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   if (!uid) return null;
   const userRef = doc(db, 'users', uid);
   const snap = await getDoc(userRef);
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+  return snap.exists() ? ({ uid: snap.id, ...snap.data() } as UserProfile) : null;
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>) => {
@@ -60,7 +73,7 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   const usersRef = collection(db, 'users');
   const snap = await getDocs(usersRef);
-  return snap.docs.map(doc => ({ ...doc.data() } as UserProfile));
+  return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
 };
 
 /**
@@ -68,7 +81,6 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
  */
 export const sendChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
   const chatRef = collection(db, 'chat_messages');
-  // Avoid sending undefined/null fields that Firestore might reject or that cause UI bugs
   const payload = {
     ...msg,
     replyTo: msg.replyTo || null,
@@ -82,7 +94,7 @@ export const sendChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>
 export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => {
   const q = query(
     collection(db, 'chat_messages'),
-    orderBy('timestamp', 'asc'),
+    orderBy('timestamp', 'desc'),
     limit(100)
   );
   
@@ -90,7 +102,7 @@ export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => 
     const messages = snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as ChatMessage));
+    } as ChatMessage)).reverse();
     callback(messages);
   });
 };

@@ -13,9 +13,13 @@ import {
   X,
   Sparkles,
   Edit3,
-  AlignLeft
+  AlignLeft,
+  Camera
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AvatarDisplay from './AvatarDisplay';
+import ProfilePictureUploader from './ProfilePictureUploader';
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 interface ProfileEditorProps {
   onClose: () => void;
@@ -28,6 +32,7 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
   const [name, setName] = useState(user?.displayName || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isAvatarUploaderOpen, setIsAvatarUploaderOpen] = useState(false);
 
   const handleSave = async () => {
     if (!user || !name.trim()) return;
@@ -73,20 +78,17 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
         {/* Avatar Section */}
         <div className="flex flex-col items-center gap-6">
           <div className="relative group">
-            <div className="w-24 h-24 rounded-[2.5rem] border-2 border-accent/20 p-1 group-hover:border-accent transition-all duration-700">
-               <div className="w-full h-full rounded-[2.2rem] overflow-hidden bg-[#0a0a0f] flex items-center justify-center">
-                 {user?.photoURL ? (
-                    <img src={user.photoURL} className="w-full h-full object-cover" alt="" />
-                 ) : (
-                    <User className="w-10 h-10 text-neutral-800" />
-                 )}
-               </div>
+            <div className="p-1 rounded-[2.8rem] border-2 border-accent/20 group-hover:border-accent transition-all duration-700">
+               <AvatarDisplay src={user?.photoURL} name={user?.displayName} size="xl" className="border-0 shadow-none" />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-accent text-white rounded-xl flex items-center justify-center border-4 border-[#0a0a0f] shadow-xl">
-              <Sparkles className="w-3 h-3" />
-            </div>
+            <button 
+              onClick={() => setIsAvatarUploaderOpen(true)}
+              className="absolute -bottom-2 -right-2 w-10 h-10 bg-accent text-white rounded-2xl flex items-center justify-center border-4 border-[#0a0a0f] shadow-xl hover:scale-110 active:scale-95 transition-all"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
           </div>
-          <span className="text-[7px] font-black text-neutral-600 uppercase tracking-[0.3em]">Synched via Provider</span>
+          <span className="text-[7px] font-black text-neutral-600 uppercase tracking-[0.3em]">Encrypted visual identity</span>
         </div>
 
         <div className="space-y-6">
@@ -134,6 +136,12 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
           SAVE IDENTITY NODE
         </button>
       </div>
+
+      <Sheet open={isAvatarUploaderOpen} onOpenChange={setIsAvatarUploaderOpen}>
+        <SheetContent side="bottom" className="h-[80vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-0 overflow-y-auto z-[250]">
+          <ProfilePictureUploader onClose={() => setIsAvatarUploaderOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </motion.div>
   );
 }
