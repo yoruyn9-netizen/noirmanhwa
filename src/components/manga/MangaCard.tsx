@@ -41,7 +41,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
       <Link href={`/manga/${manga.id}?source=${manga.source}`} className="block select-none" draggable={false}>
         {/* Poster Container */}
         <div className={cn(
-          "shinigami-card aspect-[2/3] max-h-[350px] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border transition-all duration-700",
+          "shinigami-card aspect-[2/3] max-h-[300px] relative rounded-2xl overflow-hidden bg-[#0a0a0f] border transition-all duration-700",
           isRecommended ? "border-accent/40 shadow-[0_0_20px_rgba(139,92,246,0.15)]" : "border-white/5 group-hover:border-accent/30"
         )}>
           <SafeImage 
@@ -127,7 +127,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
 export function MangaCardSkeleton() {
   return (
     <div className="space-y-3 animate-pulse w-full">
-      <div className="aspect-[2/3] max-h-[350px] bg-neutral-900/50 rounded-2xl border border-white/5" />
+      <div className="aspect-[2/3] max-h-[300px] bg-neutral-900/50 rounded-2xl border border-white/5" />
       <div className="space-y-2 px-1">
         <div className="h-2.5 bg-neutral-900 rounded-full w-full" />
         <div className="h-2 bg-neutral-900 rounded-full w-2/3" />

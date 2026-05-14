@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -147,7 +146,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 px-2">
         <div className="flex-1 relative group">
           <SearchIcon className={cn(
             "absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 transition-all duration-500 z-20",
@@ -228,7 +227,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                       {STATUS_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
-                          onClick={() => toggleStatus(opt.value)}
+                          onClick={() => toggleStatus(status.value)}
                           className={cn(
                             "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500",
                             selectedStatus.includes(opt.value) 
@@ -295,7 +294,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
            <button onClick={resetFilters} className="px-8 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-accent font-black text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all">Clear All Filters</button>
         </div>
       ) : (
-        <div className="manga-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 px-2 sm:px-4">
           {results.map((manga) => (
             <MangaCard key={`${manga.id}-${manga.source}`} manga={manga} />
           ))}
