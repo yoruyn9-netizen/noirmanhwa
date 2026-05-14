@@ -8,8 +8,12 @@ import { useSearchParams } from 'next/navigation';
 import ReaderView from '@/components/manga/ReaderView';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
+/**
+ * High-Fidelity Reader Page (Nested Segments)
+ * Handles /reader/[mangaId]/[chapterId]
+ */
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
-  const { id, chapter } = use(params);
+  const { id: mangaId, chapter: chapterId } = use(params);
   const searchParams = useSearchParams();
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
@@ -24,8 +28,8 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
       setError(false);
       try {
         const [imgs, detail] = await Promise.all([
-          mangaApi.fetchChapterImages(chapter, source),
-          mangaApi.fetchMangaDetail(id, source)
+          mangaApi.fetchChapterImages(chapterId, source),
+          mangaApi.fetchMangaDetail(mangaId, source)
         ]);
         
         if (imgs.length === 0) throw new Error('Empty node');
@@ -33,13 +37,14 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
         setImages(imgs);
         if (detail) setMangaTitle(detail.title);
       } catch (err) {
+        console.error('[Reader Detail Failure]:', err);
         setError(true);
       } finally {
         setLoading(false);
       }
     };
     loadReader();
-  }, [id, chapter, source]);
+  }, [mangaId, chapterId, source]);
 
   if (loading) {
     return (
@@ -82,7 +87,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
     <ReaderView 
       images={images}
       mangaTitle={mangaTitle}
-      chapterNum={chapter}
+      chapterNum={chapterId}
       source={source}
     />
   );

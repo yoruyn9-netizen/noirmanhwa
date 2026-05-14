@@ -81,7 +81,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
 
       <div className="pt-24 space-y-12">
         <div className="flex flex-col md:flex-row gap-12 px-4">
-          {/* Cover Section */}
           <div className="relative w-full md:w-80 flex-shrink-0 group">
             <div className="aspect-[2/3] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl bg-[#0a0a0f]">
               <SafeImage src={data.cover} alt={data.title} className="group-hover:scale-105 transition-transform duration-1000" />
@@ -90,7 +89,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             <FlagBadge source={source} className="absolute -top-4 -right-4 w-12 h-12 text-xl" />
           </div>
 
-          {/* Info Section */}
           <div className="flex-1 space-y-8">
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -108,12 +106,14 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Link 
-                href={`/reader/${id}/${data.chapters[0]?.id || ''}?source=${source}`}
-                className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
-              >
-                <Play className="w-4 h-4 fill-current" /> READ START
-              </Link>
+              {data.chapters.length > 0 && (
+                <Link 
+                  href={`/reader/${id}/${data.chapters[data.chapters.length - 1].id}?source=${source}`}
+                  className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
+                >
+                  <Play className="w-4 h-4 fill-current" /> READ START
+                </Link>
+              )}
               <button className="flex items-center justify-center gap-3 py-5 bg-accent/10 border border-accent/20 text-accent rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
                 ARCHIVE NODE
               </button>
@@ -130,7 +130,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Chapters */}
         <section className="space-y-8 px-4 pt-10">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-[12px] font-black uppercase tracking-tighter flex items-center gap-3 text-white">
@@ -165,7 +164,6 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </section>
 
-        {/* Recommendations */}
         <RecommendationCarousel mangas={recommendations} />
       </div>
     </div>
