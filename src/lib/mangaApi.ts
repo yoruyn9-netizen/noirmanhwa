@@ -38,7 +38,7 @@ function normalizeMangaDex(item: any): Manga {
     ? `https://uploads.mangadex.org/covers/${item.id}/${fileName}.512.jpg`
     : 'https://picsum.photos/seed/manga/400/600';
 
-  const title = item.attributes?.title?.en || item.attributes?.title?.id || (item.attributes?.title ? Object.values(item.attributes.title)[0] : 'Unknown Node') as string;
+  const title = item.attributes?.title?.en || item.attributes?.title?.id || (item.attributes?.title ? Object.values(item.attributes.title)[0] : 'Unknown Title');
 
   return {
     id: item.id,
@@ -49,7 +49,7 @@ function normalizeMangaDex(item: any): Manga {
     source: 'mangadex',
     language: item.attributes?.originalLanguage || 'en',
     description: item.attributes?.description?.en || item.attributes?.description?.id || '',
-    author: 'Unknown Signal',
+    author: 'Unknown Author',
     year: item.attributes?.year
   };
 }
@@ -59,8 +59,8 @@ function normalizeMangaDex(item: any): Manga {
  */
 function normalizeMangaMint(item: any): Manga {
   return {
-    id: item.endpoint || item.id,
-    title: item.title || 'Unknown Mint Node',
+    id: item.endpoint?.replace(/\//g, '') || item.id,
+    title: item.title || 'Unknown Sub-Indo Title',
     cover: item.thumb || item.image || 'https://picsum.photos/seed/mint/400/600',
     status: item.status || 'Ongoing',
     genres: item.genres || [],
@@ -78,7 +78,7 @@ export const mangaApi = {
     const cacheKey = `manga_cache_${source || 'all'}_${page}`;
     const cached = getCachedData<Manga[]>(cacheKey);
     if (cached) {
-      console.log(`📦 Using cached matrix data for: ${source || 'all'} (Page ${page})`);
+      console.log(`📦 Using cached data for: ${source || 'all'} (Page ${page})`);
       return cached;
     }
 
@@ -90,45 +90,49 @@ export const mangaApi = {
       const fetchPromises = [];
 
       if (!source || source === 'mangadex') {
-        // Use local proxy to avoid CORS
         fetchPromises.push(
           fetch(`/api/manga?type=search&limit=20&offset=${(page - 1) * 20}`, { signal: controller.signal })
             .then(res => res.json())
             .then(response => {
-              console.log('📡 [Proxy] Fetching MangaDex...', response.data?.length || 0);
+              console.log('🌍 MANGADEX SEARCH:', { count: response.data?.length, first: response.data?.[0]?.attributes?.title?.en });
               if (response.data && Array.isArray(response.data)) {
                 results.push(...response.data.map(normalizeMangaDex));
               }
             })
-            .catch(err => console.error('❌ Proxy MangaDex Failure:', err))
+            .catch(err => console.error('❌ MangaDex Node Failed:', err))
         );
       }
 
       if (!source || source === 'mangamint') {
-        // Use local proxy for Mint as well
         fetchPromises.push(
           fetch(`/api/mint?path=/manga/page/${page}`, { signal: controller.signal })
             .then(res => res.json())
             .then(mintData => {
-              console.log('📡 [Proxy] Fetching MangaMint...', mintData.manga_list?.length || 0);
+              console.log('🇮 MANGAMINT LIST:', { count: mintData.manga_list?.length, first: mintData.manga_list?.[0]?.title });
               if (mintData.manga_list && Array.isArray(mintData.manga_list)) {
                 results.push(...mintData.manga_list.map(normalizeMangaMint));
               }
             })
-            .catch(err => console.error('❌ Proxy MangaMint Failure:', err))
+            .catch(err => console.error('❌ MangaMint Node Failed:', err))
         );
       }
 
       await Promise.all(fetchPromises);
       clearTimeout(timeoutId);
       
+      // Shuffle results if combined for variety
+      if (!source) {
+        results.sort(() => Math.random() - 0.5);
+      }
+
       if (results.length > 0) {
         setCachedData(cacheKey, results);
       }
       
+      console.log('✅ TOTAL SYNCHRONIZED:', results.length);
       return results;
     } catch (error) {
-      console.error('[CRITICAL]: Neural synchronization failed:', error);
+      console.error('[CRITICAL]: Synchronization timed out or failed:', error);
       return [];
     }
   },
@@ -159,12 +163,13 @@ export const mangaApi = {
 
         return { ...manga, chapters };
       } else {
+        // Mint requires full endpoint path for detail
         const res = await fetch(`/api/mint?path=/manga/detail/${id}`);
         const data = await res.json();
         const manga = normalizeMangaMint(data);
         
         const chapters: Chapter[] = (data.chapter || []).map((c: any) => ({
-          id: c.chapter_endpoint,
+          id: c.chapter_endpoint?.replace(/^\//, '').replace(/\//g, '-'), // Flatten path for URL
           mangaId: id,
           number: c.chapter_title?.replace(/[^0-9.]/g, '') || '?',
           title: c.chapter_title || 'Untitled Unit',
@@ -189,9 +194,12 @@ export const mangaApi = {
         const data = await res.json();
         const { baseUrl, chapter } = data;
         if (!chapter || !baseUrl) return [];
+        // Use data-saver for maximum reliability and speed on mobile
         return (chapter.dataSaver || []).map((file: string) => `${baseUrl}/data-saver/${chapter.hash}/${file}`);
       } else {
-        const res = await fetch(`/api/mint?path=/chapter/${chapterId}`);
+        // Restore flattened path
+        const mintId = chapterId.replace(/-/g, '/');
+        const res = await fetch(`/api/mint?path=/chapter/${mintId}`);
         const data = await res.json();
         return data.chapter_image || [];
       }

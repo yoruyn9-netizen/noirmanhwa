@@ -7,7 +7,7 @@ import { Manga } from '@/types/manga';
 import { useMangaStore } from '@/store/mangaStore';
 import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { useInView } from 'react-intersection-observer';
-import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MangaGrid() {
@@ -40,7 +40,7 @@ export default function MangaGrid() {
       } else {
         setMangas(prev => reset ? data : [...prev, ...data]);
         setPage(nextPage + 1);
-        setHasMore(true);
+        setHasMore(data.length >= 20); // Assume more if we hit limit
       }
     } catch (err) {
       console.error('[Grid Sync Error]:', err);
@@ -50,7 +50,11 @@ export default function MangaGrid() {
     }
   }, [loading, page, preferredSource]);
 
+  // Handle source switch
   useEffect(() => {
+    setMangas([]);
+    setPage(1);
+    setHasMore(true);
     loadData(true);
   }, [preferredSource]);
 
@@ -86,13 +90,17 @@ export default function MangaGrid() {
 
       {/* Empty State */}
       {!loading && !error && mangas.length === 0 && (
-        <div className="py-32 text-center space-y-6">
-          <h3 className="text-sm font-black uppercase tracking-tight text-neutral-400">No signals detected</h3>
+        <div className="py-32 text-center space-y-6 glass rounded-[3rem] border-dashed">
+          <Zap className="w-12 h-12 text-accent opacity-20 mx-auto" />
+          <div className="space-y-2">
+            <h3 className="text-base font-black uppercase tracking-tight">No signals detected</h3>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">The matrix is silent on this frequency.</p>
+          </div>
           <button 
             onClick={() => loadData(true)}
             className="inline-flex items-center gap-2 px-10 py-3 bg-accent text-white font-black rounded-xl text-[8px] uppercase tracking-widest hover:bg-accent/80 transition-all shadow-xl active:scale-95"
           >
-            <RefreshCw className="w-3 h-3" /> Refresh
+            <RefreshCw className="w-3 h-3" /> Refresh Grid
           </button>
         </div>
       )}
@@ -102,14 +110,14 @@ export default function MangaGrid() {
         <div className="py-20 text-center space-y-6">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto opacity-40" />
           <div className="space-y-2">
-            <h3 className="text-base font-black uppercase tracking-tight">Failed to load</h3>
-            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Please check your connection and try again.</p>
+            <h3 className="text-base font-black uppercase tracking-tight">Sync Failed</h3>
+            <p className="text-neutral-500 text-[10px] uppercase tracking-widest">Network connectivity issues detected.</p>
           </div>
           <button 
             onClick={() => loadData(true)}
             className="inline-flex items-center gap-3 px-8 py-3 bg-red-500 text-white font-black text-[9px] uppercase tracking-widest hover:bg-red-600 transition-all rounded-xl shadow-xl"
           >
-            <RefreshCw className="w-3 h-3" /> Retry
+            <RefreshCw className="w-3 h-3" /> Retry Sync
           </button>
         </div>
       )}
@@ -122,7 +130,7 @@ export default function MangaGrid() {
 
       {!hasMore && mangas.length > 0 && (
         <p className="text-center text-[8px] font-black text-neutral-700 uppercase tracking-[0.5em] py-10">
-          End of List
+          End of Visual Signal
         </p>
       )}
     </div>
