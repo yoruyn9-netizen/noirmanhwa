@@ -1,12 +1,34 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { Home, Search, Bookmark, Grid, User, Fingerprint, Trophy } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { 
+  Home, 
+  Search, 
+  Trophy, 
+  Bookmark, 
+  LayoutGrid, 
+  Fingerprint, 
+  User 
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui';
 import { useAuthStore } from '@/store/authStore';
+
+// 🔒 NAVBAR LOCKED - DO NOT MODIFY STRUCTURE
+/**
+ * Bottom Navigation component strictly following Picture 22 reference.
+ * Floating pill-shaped bar with active item highlighting and revealed labels.
+ */
+const navItems = [
+  { href: '/', icon: Home, label: 'HOME' },
+  { href: '/search', icon: Search, label: 'SEARCH' },
+  { href: '/top', icon: Trophy, label: 'TOP' },
+  { href: '/bookmarks', icon: Bookmark, label: 'LIBRARY' },
+  { href: '/genre', icon: LayoutGrid, label: 'GENRES' },
+  { href: '/login', icon: Fingerprint, label: 'LOGIN' },
+];
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -17,36 +39,56 @@ export default function BottomNav() {
     checkAuth();
   }, [checkAuth]);
 
-  const navItems = [
-    { id: 'home', icon: Home, label: 'HOME', path: '/' },
-    { id: 'search', icon: Search, label: 'SEARCH', path: '/search' },
-    { id: 'top', icon: Trophy, label: 'TOP', path: '/top' },
-    { id: 'bookmark', icon: Bookmark, label: 'LIBRARY', path: '/bookmarks' },
-    { id: 'genre', icon: Grid, label: 'GENRES', path: '/genre' },
-    { id: 'profile', icon: user ? User : Fingerprint, label: user ? 'PROFILE' : 'LOGIN', path: user ? '/profile' : '/login' },
-  ];
-
   if (!isGlobalUIVisible) return null;
 
   return (
-    <nav className="bottom-nav">
-      {navItems.map((item) => {
-        const isActive = pathname === item.path || (item.path !== '/' && pathname?.startsWith(item.path));
-        const Icon = item.icon;
-        
-        return (
-          <Link
-            key={item.id}
-            href={item.path}
-            className={cn("nav-item", isActive && "active")}
-          >
-            <div className="nav-icon">
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-            </div>
-            <span className="nav-label">{item.label}</span>
-          </Link>
-        );
-      })}
+    <nav className="fixed bottom-8 left-0 right-0 z-[100] px-4 flex justify-center pointer-events-none select-none animate-in fade-in slide-in-from-bottom-10 duration-1000">
+      <div className="bg-[#050508]/90 backdrop-blur-3xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 shadow-[0_20px_50px_rgba(0,0,0,0.8)] pointer-events-auto ring-1 ring-white/10">
+        {navItems.map(({ href, icon: Icon, label }) => {
+          // Identity Logic for Profile vs Login
+          let targetHref = href;
+          let targetIcon = Icon;
+          let targetLabel = label;
+          
+          if (label === 'LOGIN' && user) {
+            targetHref = '/profile';
+            targetIcon = User;
+            targetLabel = 'PROFILE';
+          }
+
+          const isActive = pathname === targetHref || (targetHref !== '/' && pathname?.startsWith(targetHref));
+          
+          return (
+            <Link
+              key={label}
+              href={targetHref}
+              className={cn(
+                "relative flex items-center gap-2.5 px-5 py-3 rounded-full transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group",
+                isActive 
+                  ? "bg-purple-600/20 text-purple-400 shadow-[inset_0_0_20px_rgba(168,85,247,0.1)]" 
+                  : "text-neutral-600 hover:text-neutral-400"
+              )}
+            >
+              <targetIcon 
+                size={18} 
+                strokeWidth={isActive ? 2.5 : 2} 
+                className={cn("transition-transform duration-500", isActive && "scale-110")} 
+              />
+              
+              {isActive && (
+                <span className="text-[10px] font-black tracking-[0.2em] uppercase animate-in fade-in slide-in-from-left-3 duration-700">
+                  {targetLabel}
+                </span>
+              )}
+
+              {/* Glowing bar at bottom of pill item */}
+              {isActive && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-purple-500 rounded-full animate-in zoom-in duration-1000 shadow-[0_0_10px_rgba(168,85,247,1)]" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }
