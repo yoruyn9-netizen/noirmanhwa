@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -9,9 +10,7 @@ import {
   Loader2, 
   SearchIcon as SearchIconLucide, 
   AlertCircle,
-  Check,
   RotateCcw,
-  Globe,
   Filter,
   Languages
 } from 'lucide-react';
@@ -42,12 +41,6 @@ const LANGUAGE_OPTIONS = [
   { label: 'Indonesian Sub', value: 'id' },
 ];
 
-const ORIGIN_OPTIONS = [
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese', value: 'zh' },
-];
-
 export default function SearchPage({ searchParams }: SearchPageProps) {
   const params = use(searchParams);
   const router = useRouter();
@@ -57,11 +50,8 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const [results, setResults] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [selectedTags, setSelectedTags] = useState<string[]>(params.genre ? [params.genre] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [selectedOrigins, setSelectedOrigins] = useState<string[]>([]);
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -72,27 +62,17 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   }, [query]);
 
   useEffect(() => {
-    fetch('/api/manga?type=tags')
-      .then(res => res.json())
-      .then(res => {
-        if (res.data) setAvailableTags(res.data);
-      }).catch(console.error);
-  }, []);
-
-  useEffect(() => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        // Simple search via proxy
-        const res = await mangaApi.search(debouncedQuery);
+        // Fix: If Indonesian Sub is selected, prioritize mangamint source
+        const source = selectedLanguages.includes('id') ? 'mangamint' : 'mangadex';
+        const res = await mangaApi.search(debouncedQuery, source);
         let filtered = res;
 
-        // Apply local filtering for MVP if API filters are complex
+        // Apply local status filtering if needed
         if (selectedStatus.length > 0) {
           filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
-        }
-        if (selectedLanguages.length > 0) {
-          filtered = filtered.filter(m => selectedLanguages.includes(m.language.toLowerCase()));
         }
 
         setResults(filtered);
@@ -127,11 +107,10 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const resetFilters = () => {
     setSelectedStatus([]);
     setSelectedLanguages([]);
-    setSelectedOrigins([]);
     setQuery('');
   };
 
-  const activeFilterCount = selectedStatus.length + selectedLanguages.length + selectedOrigins.length;
+  const activeFilterCount = selectedStatus.length + selectedLanguages.length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
@@ -140,7 +119,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           <SearchIconLucide className="w-5 h-5 text-accent" /> Search Manga
         </h1>
         <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-40 ml-1">
-          Explore thousands of titles
+          Find your next favorite title
         </p>
       </div>
 
@@ -154,7 +133,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
             type="text" 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title..." 
+            placeholder="Search titles..." 
             className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl pl-12 pr-5 py-3.5 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-black placeholder:text-muted-foreground/30 relative z-10 transition-all shadow-2xl"
           />
         </div>
@@ -195,7 +174,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                 <div className="space-y-10 pb-12">
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Languages className="w-3.5 h-3.5" /> Translation
+                      <Languages className="w-3.5 h-3.5" /> Subtitle Language
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {LANGUAGE_OPTIONS.map((opt) => (
@@ -217,7 +196,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Filter className="w-3.5 h-3.5" /> Manga Status
+                      <Filter className="w-3.5 h-3.5" /> Status
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {STATUS_OPTIONS.map((opt) => (

@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
-import { Home, Search, Bookmark, Grid, User, Fingerprint } from 'lucide-react';
+import { Home, Search, Bookmark, Grid, User, Fingerprint, Trophy } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -10,16 +11,24 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { isGlobalUIVisible } = useUIStore();
+  const { isGlobalUIVisible, setGlobalUIVisible } = useUIStore();
   const { user, checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  // Fix for bar disappearing: ensure it's visible on navigation unless it's a reader page
+  useEffect(() => {
+    if (!pathname.includes('/reader/')) {
+      setGlobalUIVisible(true);
+    }
+  }, [pathname, setGlobalUIVisible]);
+
   const navItems = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
     { id: 'search', icon: Search, label: 'SEARCH', path: '/search' },
+    { id: 'top', icon: Trophy, label: 'TOP', path: '/top' },
     { id: 'bookmark', icon: Bookmark, label: 'LIBRARY', path: '/bookmarks' },
     { id: 'genre', icon: Grid, label: 'GENRES', path: '/genre' },
     { id: 'profile', icon: user ? User : Fingerprint, label: user ? 'PROFILE' : 'LOGIN', path: user ? '/profile' : '/login' },
@@ -39,7 +48,7 @@ export default function BottomNav() {
               key={item.id}
               href={item.path}
               className={cn(
-                "relative flex items-center gap-2 transition-all duration-500 py-3 px-5 rounded-full group overflow-hidden",
+                "relative flex items-center gap-2 transition-all duration-500 py-3 px-4 sm:px-5 rounded-full group overflow-hidden",
                 isActive ? "bg-accent/10 text-accent" : "text-neutral-600 hover:text-white"
               )}
             >

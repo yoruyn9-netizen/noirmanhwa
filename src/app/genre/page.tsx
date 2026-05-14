@@ -32,7 +32,7 @@ export default function GenrePage() {
           <Loader2 className="w-8 h-8 text-accent animate-spin" />
           <div className="absolute inset-0 blur-xl bg-accent/20 animate-pulse" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Syncing Categories</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Loading Categories</p>
       </div>
     );
   }
@@ -44,8 +44,8 @@ export default function GenrePage() {
           <Sparkles className="w-8 h-8 text-accent" />
         </div>
         <div className="space-y-1.5">
-          <h1 className="text-3xl font-black tracking-tighter uppercase text-glow">Signature Index</h1>
-          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.4em] opacity-40">Filter global manifold frequencies</p>
+          <h1 className="text-3xl font-black tracking-tighter uppercase text-glow">Genre Categories</h1>
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.4em] opacity-40">Filter by your favorite story types</p>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function GenrePage() {
               </span>
               
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-2 group-hover:translate-y-0">
-                <span className="text-[7px] font-black text-accent uppercase tracking-widest">Select Node</span>
+                <span className="text-[7px] font-black text-accent uppercase tracking-widest">Select Genre</span>
                 <ChevronRight className="w-3 h-3 text-accent" />
               </div>
 

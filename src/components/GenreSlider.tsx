@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -15,7 +16,7 @@ export default function GenreSlider({ genres }: GenreSliderProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between px-2">
-         <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-600">Frequencies</h3>
+         <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-600">Categories</h3>
       </div>
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-2.5 pb-4">

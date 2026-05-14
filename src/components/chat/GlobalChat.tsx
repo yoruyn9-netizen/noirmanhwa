@@ -14,11 +14,9 @@ import {
   Send, 
   MessageSquare, 
   Lock, 
-  ArrowRight,
   X,
   AtSign,
-  Maximize2,
-  Minimize2
+  Maximize2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -75,7 +73,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
       setShowMentions(false);
     } catch (err) {
       console.error('[Chat Fail]:', err);
-      toast({ variant: 'destructive', title: 'Uplink Failed', description: 'Could not transmit message.' });
+      toast({ variant: 'destructive', title: 'Transmission Failed', description: 'Could not send message.' });
     }
   };
 
@@ -119,7 +117,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
       setInputText('');
       setShowMentions(false);
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Sync Failed', description: 'Could not mention node.' });
+      toast({ variant: 'destructive', title: 'Sync Failed', description: 'Could not mention title.' });
     }
   };
 
@@ -130,16 +128,16 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
           <Lock className="w-8 h-8 text-accent/40" />
         </div>
         <div className="space-y-3">
-          <h3 className="text-xl font-black uppercase tracking-tight text-white">Neural Gate Active</h3>
+          <h3 className="text-xl font-black uppercase tracking-tight text-white">Chat Restricted</h3>
           <p className="text-muted-foreground text-[10px] uppercase tracking-widest max-w-[240px] mx-auto opacity-60">
-            Establish a verified neural link to access the global transmission grid.
+            Please sign in to participate in the global chat community.
           </p>
         </div>
         <Link 
           href="/login" 
           className="px-12 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] hover:bg-accent hover:text-white transition-all shadow-2xl"
         >
-          Authorize Link
+          Sign In Now
         </Link>
       </section>
     );
@@ -158,7 +156,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
               <MessageSquare className="w-5 h-5 text-accent" />
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full animate-ping" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tighter text-white">Global Frequency</h2>
+            <h2 className="text-xl font-black uppercase tracking-tighter text-white">Global Chat</h2>
           </div>
           
           {previewMode ? (
@@ -167,12 +165,12 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
               className="flex items-center gap-2 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-accent/10 hover:border-accent/20 transition-all text-accent group"
             >
               <Maximize2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              <span className="text-[8px] font-black uppercase tracking-widest">Full Interface</span>
+              <span className="text-[8px] font-black uppercase tracking-widest">Open Chat</span>
             </button>
           ) : (
              <div className="flex items-center gap-3 text-neutral-600 font-bold text-[8px] uppercase tracking-widest">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-              Real-time Uplink
+              Online
             </div>
           )}
         </div>
@@ -190,7 +188,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
                 <div className="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
-                <span className="text-[9px] font-black uppercase tracking-widest">Syncing Frequencies</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Loading Messages</span>
               </div>
             ) : (
               displayedMessages.map((msg) => (
@@ -208,7 +206,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
           {previewMode && (
              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-[#020205] to-transparent flex justify-center">
                <Link href="/chat" className="px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 hover:scale-105 transition-all">
-                 Join Transmission
+                 Join the Conversation
                </Link>
              </div>
           )}
@@ -233,7 +231,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                     <div className="flex items-center gap-4">
                       <AtSign className="w-4 h-4 text-accent" />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-accent">Targeting {replyingTo.senderName}</p>
+                        <p className="text-[8px] font-black uppercase text-accent">Replying to {replyingTo.senderName}</p>
                         <p className="text-[10px] text-white/40 line-clamp-1">{replyingTo.text}</p>
                       </div>
                     </div>
@@ -254,7 +252,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                       handleSend();
                     }
                   }}
-                  placeholder={showMentions ? "Syncing search nodes..." : "Transmit message... use / for node mention"}
+                  placeholder={showMentions ? "Searching titles..." : "Type a message... (use / to mention a title)"}
                   className="w-full bg-[#050508] border border-white/5 rounded-[2rem] pl-6 pr-20 py-5 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-medium placeholder:text-neutral-700 min-h-[64px] max-h-32 resize-none transition-all shadow-inner"
                 />
                 <button 
@@ -268,11 +266,11 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
               
               <div className="mt-4 flex items-center justify-between px-4">
                  <span className="text-[7px] font-black text-neutral-700 uppercase tracking-widest">
-                   ENTER TO TRANSMIT • SHIFT+ENTER FOR MULTILINE
+                   ENTER TO SEND • SHIFT+ENTER FOR NEW LINE
                  </span>
                  <div className="flex items-center gap-4">
                    <div className="w-1.5 h-1.5 rounded-full bg-accent/40 animate-pulse" />
-                   <span className="text-[7px] font-black text-neutral-700 uppercase tracking-widest">SYNC: STABILIZED</span>
+                   <span className="text-[7px] font-black text-neutral-700 uppercase tracking-widest">CONNECTED</span>
                  </div>
               </div>
             </div>
