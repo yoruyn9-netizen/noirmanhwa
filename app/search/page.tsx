@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import MangaCard from '@/components/manga/MangaCard';
 import { 
@@ -29,7 +28,7 @@ const STATUS_OPTIONS = [
   { label: 'Hiatus', value: 'hiatus' },
 ];
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const { openPanel, closePanel } = useUIStore();
   
@@ -78,11 +77,10 @@ export default function SearchPage() {
     setQuery('');
   };
 
-  // Sync internal filter state with global UI store to hide BottomNav
   const handleFilterOpenChange = (open: boolean) => {
     setIsFilterOpen(open);
     if (open) {
-      openPanel('search'); // Global panel trigger
+      openPanel('search');
     } else {
       closePanel();
     }
@@ -170,5 +168,13 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
