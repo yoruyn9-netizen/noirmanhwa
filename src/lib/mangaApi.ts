@@ -1,6 +1,6 @@
 
 /**
- * @fileOverview Unified API Interface - STRICT REAL DATA ONLY
+ * @fileOverview Unified API Interface - REAL DATA ONLY
  */
 
 export interface Manga {
@@ -14,7 +14,7 @@ export interface Manga {
 }
 
 /**
- * Fetches the composite discovery stream from all nodes.
+ * Fetches the composite discovery stream from the hardened matrix.
  */
 export async function fetchMangaList(): Promise<Manga[]> {
   try {
@@ -24,7 +24,8 @@ export async function fetchMangaList(): Promise<Manga[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Neural Link Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Neural Link Error: ${response.status}`);
     }
 
     const result = await response.json();
@@ -36,7 +37,7 @@ export async function fetchMangaList(): Promise<Manga[]> {
     console.log(`✅ [SIGNAL ESTABLISHED]: ${result.total} real titles loaded.`);
     return result.data || [];
   } catch (error) {
-    console.error('❌ [API]: Critical fetch failure.', error);
+    console.error('❌ [API]: Uplink synchronization failure.', error);
     throw error;
   }
 }
@@ -46,7 +47,6 @@ export async function fetchCuratedManhwa(): Promise<Manga[]> {
 }
 
 export async function fetchChapters(mangaId: string, source: string): Promise<any[]> {
-  // Currently optimized for Asura series
   if (source === 'asura') {
     try {
       const res = await fetch(`/api/asura?path=/series/${mangaId}/chapters`);
