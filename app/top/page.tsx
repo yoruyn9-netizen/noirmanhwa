@@ -45,42 +45,42 @@ export default function TopListPage() {
   }, [activeTab]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 max-w-7xl mx-auto pb-32 px-2 sm:px-4 relative">
+    <div className="space-y-6 animate-in fade-in duration-700 max-w-7xl mx-auto pb-32 px-2 relative">
       {/* Dynamic Background Node */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-accent/5 blur-[100px] pointer-events-none -z-10" />
 
       {/* Optimized Header Section */}
-      <header className="flex flex-col items-center text-center space-y-4 pt-4">
+      <header className="flex flex-col items-center text-center space-y-3 pt-2">
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
           className="relative group"
         >
-          <div className="w-14 h-14 bg-accent/5 rounded-2xl border border-accent/20 flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:border-accent/40 group-hover:scale-105">
-            <Trophy className="w-7 h-7 text-accent animate-pulse" />
+          <div className="w-12 h-12 bg-accent/5 rounded-xl border border-accent/20 flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:border-accent/40 group-hover:scale-105">
+            <Trophy className="w-6 h-6 text-accent animate-pulse" />
           </div>
-          <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-500 animate-bounce" />
-          <div className="absolute inset-0 bg-accent/10 rounded-2xl blur-xl -z-10 opacity-30" />
+          <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-yellow-500 animate-bounce" />
+          <div className="absolute inset-0 bg-accent/10 rounded-xl blur-xl -z-10 opacity-30" />
         </motion.div>
         
         <div className="space-y-1">
-          <h1 className="text-2xl font-black tracking-tighter uppercase text-glow leading-none">The Leaderboard</h1>
+          <h1 className="text-xl font-black tracking-tighter uppercase text-glow leading-none">The Leaderboard</h1>
           <p className="text-[7px] font-black text-neutral-600 uppercase tracking-[0.4em] opacity-60">Synchronizing Global Narrative Ranks</p>
         </div>
       </header>
 
       {/* Protocol Tabs */}
       <Tabs defaultValue="trending" className="w-full" onValueChange={setActiveTab}>
-        <div className="flex justify-center mb-12 overflow-x-auto hide-scrollbar pb-2">
+        <div className="flex justify-center mb-8 overflow-x-auto hide-scrollbar pb-2">
           <TabsList className="bg-[#0a0a0f]/40 backdrop-blur-xl border border-white/5 p-1 rounded-2xl h-auto flex items-center gap-1">
-            <TabsTrigger value="trending" className="px-5 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+            <TabsTrigger value="trending" className="px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
               <TrendingUp className="w-3 h-3 mr-2" /> Trending
             </TabsTrigger>
-            <TabsTrigger value="popular" className="px-5 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+            <TabsTrigger value="popular" className="px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
               <BarChart3 className="w-3 h-3 mr-2" /> Popular
             </TabsTrigger>
-            <TabsTrigger value="rated" className="px-5 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+            <TabsTrigger value="rated" className="px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
               <Star className="w-3 h-3 mr-2" /> Top Rated
             </TabsTrigger>
           </TabsList>
@@ -107,28 +107,28 @@ export default function TopListPage() {
                 key="grid"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-12 pt-10"
+                className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-x-2 gap-y-10 pt-6"
               >
                 {mangas.map((manga, idx) => (
                   <motion.div 
                     key={`${activeTab}-${manga.id}-${idx}`} 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.03, type: "spring", stiffness: 120, damping: 20 }}
-                    className="relative"
+                    transition={{ delay: idx * 0.02, type: "spring", stiffness: 120, damping: 20 }}
+                    className="relative z-0"
                   >
-                    {/* Rank Badge - ENFORCED FRONT STACKING */}
+                    {/* Rank Badge - ENFORCED MAXIMUM FRONT STACKING */}
                     <div className={cn(
-                      "absolute -top-4 -left-2 w-10 h-10 rounded-2xl flex items-center justify-center z-[50] shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-all duration-500 border-2",
-                      idx === 0 ? "bg-yellow-500 text-black border-white scale-110 shadow-yellow-500/30" :
-                      idx === 1 ? "bg-slate-300 text-black border-white shadow-slate-300/30" :
-                      idx === 2 ? "bg-orange-500 text-black border-white shadow-orange-500/30" :
+                      "absolute -top-3 -left-1 w-8 h-8 rounded-xl flex items-center justify-center z-[100] shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-all duration-500 border-2",
+                      idx === 0 ? "bg-yellow-500 text-black border-white scale-110 shadow-yellow-500/40" :
+                      idx === 1 ? "bg-slate-300 text-black border-white shadow-slate-300/40" :
+                      idx === 2 ? "bg-orange-500 text-black border-white shadow-orange-500/40" :
                       "bg-black/95 text-white border-white/10 backdrop-blur-xl"
                     )}>
                       {idx < 3 ? (
-                        <Medal className="w-6 h-6" />
+                        <Medal className="w-5 h-5" />
                       ) : (
-                        <span className="text-[10px] font-black">{idx + 1}</span>
+                        <span className="text-[9px] font-black">{idx + 1}</span>
                       )}
                     </div>
 
