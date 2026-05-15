@@ -1,22 +1,20 @@
 
 "use client";
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import MangaCard from '@/components/manga/MangaCard';
 import { 
   Search as SearchIcon, 
-  SlidersHorizontal, 
   Loader2, 
   SearchIcon as SearchIconLucide, 
   AlertCircle,
   RotateCcw,
-  Filter,
-  Languages,
-  Tags
+  Filter
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useUIStore } from '@/store/ui';
 import {
   Sheet,
   SheetContent,
@@ -24,7 +22,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const STATUS_OPTIONS = [
   { label: 'Ongoing', value: 'ongoing' },
@@ -33,8 +30,8 @@ const STATUS_OPTIONS = [
 ];
 
 export default function SearchPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { openPanel, closePanel } = useUIStore();
   
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<Manga[]>([]);
@@ -81,6 +78,16 @@ export default function SearchPage() {
     setQuery('');
   };
 
+  // Sync internal filter state with global UI store to hide BottomNav
+  const handleFilterOpenChange = (open: boolean) => {
+    setIsFilterOpen(open);
+    if (open) {
+      openPanel('search'); // Global panel trigger
+    } else {
+      closePanel();
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
       <div className="space-y-1 ml-1">
@@ -107,7 +114,7 @@ export default function SearchPage() {
           />
         </div>
         
-        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <Sheet open={isFilterOpen} onOpenChange={handleFilterOpenChange}>
           <SheetTrigger asChild>
             <button className={cn(
               "p-4 bg-[#0a0a0f] border border-white/5 rounded-2xl hover:bg-white/5 transition-all active:scale-95 relative shadow-2xl",
