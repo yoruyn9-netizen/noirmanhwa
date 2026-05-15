@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -33,7 +34,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
       <Link href={`/manga/${manga.id}?source=${manga.source}`} className="block select-none">
         {/* Poster Matrix */}
         <div className={cn(
-          "shinigami-card aspect-[2/3] relative rounded-[2rem] overflow-hidden bg-[#0a0a0f] border transition-all duration-700 shadow-2xl",
+          "shinigami-card aspect-[2/3] relative rounded-3xl overflow-hidden bg-[#0a0a0f] border transition-all duration-700 shadow-2xl",
           isRecommended ? "border-accent/40 ring-1 ring-accent/20" : "border-white/5 group-hover:border-accent/30"
         )}>
           <SafeImage 
@@ -46,8 +47,8 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
           
           {/* Origin Node Badge */}
-          <div className="absolute top-4 right-4 z-20">
-             <FlagBadge source={manga.source} size="sm" className="shadow-2xl" />
+          <div className="absolute top-3 right-3 z-20">
+             <FlagBadge source={manga.source} size="sm" className="shadow-2xl scale-90" />
           </div>
 
           {/* New Signal Indicator */}
@@ -58,10 +59,10 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
           )}
 
           {/* Data Meta Footer */}
-          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20">
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-20">
             <div className="flex items-center gap-2">
               <span className={cn(
-                "text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border backdrop-blur-md",
+                "text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border backdrop-blur-md",
                 manga.status.toLowerCase() === 'ongoing' ? 'text-accent border-accent/20 bg-accent/5' : 'text-green-400 border-green-500/20 bg-green-500/5'
               )}>
                 {manga.status}
@@ -70,9 +71,9 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
 
             {/* Performance Metric (Rating) */}
             {manga.rating && (
-              <div className="flex items-center gap-1 text-yellow-400 bg-black/80 px-2 py-1 rounded-lg backdrop-blur-md border border-white/10 shadow-2xl">
-                <Star className="w-2.5 h-2.5 fill-current" />
-                <span className="text-[8px] font-black">{manga.rating}</span>
+              <div className="flex items-center gap-1 text-yellow-400 bg-black/80 px-1.5 py-0.5 rounded-md backdrop-blur-md border border-white/10 shadow-2xl">
+                <Star className="w-2 h-2 fill-current" />
+                <span className="text-[7px] font-black">{manga.rating}</span>
               </div>
             )}
           </div>
@@ -86,24 +87,24 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
         </div>
 
         {/* Narrative Signature */}
-        <div className="mt-4 space-y-2 px-1">
+        <div className="mt-3 space-y-1.5 px-0.5">
           <h3 className={cn(
             "font-black uppercase tracking-tight text-white leading-tight group-hover:text-accent transition-colors duration-500 line-clamp-1",
-            compact ? "text-[10px]" : "text-[12px]"
+            compact ? "text-[9px]" : "text-[11px]"
           )}>
-            {truncateTitle(manga.title, 40)}
+            {truncateTitle(manga.title, compact ? 30 : 40)}
           </h3>
           
-          <div className="flex items-center gap-3">
-             <div className="flex flex-wrap gap-1.5">
+          <div className="flex items-center gap-2">
+             <div className="flex flex-wrap gap-1">
                {displayGenres.map((g, i) => (
-                 <span key={i} className="text-[7px] font-bold text-neutral-500 uppercase tracking-widest border border-white/5 px-2 py-0.5 rounded-md bg-white/5 whitespace-nowrap">
+                 <span key={i} className="text-[6px] font-bold text-neutral-500 uppercase tracking-widest border border-white/5 px-1.5 py-0.5 rounded bg-white/5 whitespace-nowrap">
                    {g}
                  </span>
                ))}
              </div>
-             <span className="w-1 h-1 rounded-full bg-neutral-800 shrink-0" />
-             <span className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.2em] shrink-0">
+             <span className="w-0.5 h-0.5 rounded-full bg-neutral-800 shrink-0" />
+             <span className="text-[7px] font-bold text-neutral-700 uppercase tracking-[0.1em] shrink-0">
                {manga.year || '2024'}
              </span>
           </div>
@@ -119,7 +120,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
 export function MangaCardSkeleton() {
   return (
     <div className="w-full h-full animate-pulse">
-      <div className="aspect-[2/3] w-full bg-white/5 rounded-[2rem] border border-white/5 mb-4" />
+      <div className="aspect-[2/3] w-full bg-white/5 rounded-3xl border border-white/5 mb-4" />
       <div className="space-y-2 px-1">
         <div className="h-3 w-3/4 bg-white/10 rounded-full" />
         <div className="flex items-center gap-2">
