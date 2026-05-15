@@ -12,7 +12,9 @@ import {
   Send, 
   MessageSquare, 
   Maximize2,
-  Loader2
+  Loader2,
+  X,
+  Reply
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,6 +32,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -57,15 +60,22 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
         senderName: user.displayName || 'Guest',
         senderPhoto: user.photoURL,
         isOwner: user.role === 'owner',
-        replyTo: null,
-        replyToUser: null,
+        replyTo: replyTarget?.id || null,
+        replyToUser: replyTarget?.senderName || null,
+        replyToText: replyTarget?.text || null,
         mangaMention: null 
       });
 
       setInputText('');
+      setReplyTarget(null);
     } catch (err) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
     }
+  };
+
+  const handleReplyAction = (msg: ChatMessage) => {
+    if (!user) return;
+    setReplyTarget(msg);
   };
 
   const displayedMessages = previewMode ? messages.slice(-5) : messages;
@@ -102,7 +112,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
         }>
           <div 
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 hide-scrollbar"
+            className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar"
           >
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
@@ -116,12 +126,38 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                   message={msg} 
                   isMe={user?.uid === msg.senderId}
                   onUserClick={setSelectedUserId}
+                  onReplyClick={() => handleReplyAction(msg)}
                 />
               ))
             )}
           </div>
 
-          <div className="p-6 bg-white/5 border-t border-white/5">
+          {/* Reply Preview Bar */}
+          <AnimatePresence>
+            {replyTarget && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="bg-white/5 border-t border-white/10 overflow-hidden"
+              >
+                <div className="px-6 py-3 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 border-l-2 border-accent pl-3 overflow-hidden">
+                    <Reply className="w-3 h-3 text-accent shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black text-accent uppercase tracking-widest">Replying to {replyTarget.senderName}</p>
+                      <p className="text-[10px] text-neutral-400 truncate italic">{replyTarget.text}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setReplyTarget(null)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                    <X className="w-3 h-3 text-neutral-500" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="p-6 bg-white/5 border-t border-white/5 relative z-10">
             {!user ? (
               <div className="flex items-center justify-between">
                 <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Sign in to participate in the chat</p>
@@ -140,13 +176,13 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                       handleSend();
                     }
                   }}
-                  placeholder="Type your message..."
+                  placeholder={replyTarget ? "Type your reply..." : "Type your message..."}
                   className="w-full bg-[#050508] border border-white/5 rounded-2xl pl-6 pr-16 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-medium placeholder:text-neutral-700 min-h-[56px] max-h-32 resize-none"
                 />
                 <button 
                   onClick={handleSend}
                   disabled={!inputText.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-accent text-white rounded-xl shadow-lg disabled:opacity-20 transition-all"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-accent text-white rounded-xl shadow-lg disabled:opacity-20 transition-all active:scale-90"
                 >
                   <Send className="w-4 h-4" />
                 </button>

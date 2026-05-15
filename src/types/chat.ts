@@ -11,6 +11,7 @@ export interface ChatMessage {
   isOwner?: boolean;
   replyTo?: string | null;
   replyToUser?: string | null;
+  replyToText?: string | null;
   mangaMention?: {
     mangaId: string;
     title: string;

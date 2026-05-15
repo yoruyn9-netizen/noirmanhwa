@@ -101,6 +101,7 @@ export const sendChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>
     ...msg,
     replyTo: msg.replyTo || null,
     replyToUser: msg.replyToUser || null,
+    replyToText: msg.replyToText || null,
     mangaMention: msg.mangaMention || null,
     timestamp: serverTimestamp()
   };
