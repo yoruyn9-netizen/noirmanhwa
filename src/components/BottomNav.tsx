@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -30,7 +31,7 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { isGlobalUIVisible, isOpen } = useUIStore();
+  const { isGlobalUIVisible, isOpen, isWelcomePhase } = useUIStore();
   const { user, checkAuth } = useAuthStore();
 
   useEffect(() => {
@@ -38,15 +39,16 @@ export default function BottomNav() {
   }, [checkAuth]);
 
   // HIDE LOGIC: Navbar is hidden if:
-  // 1. Global visibility is manually toggled off
+  // 1. Global visibility is manually toggled off (e.g., Reader mode)
   // 2. A side-panel/sheet is open
   // 3. User is in the full-screen chat terminal (/chat)
+  // 4. THE WELCOME PHASE IS ACTIVE (Loading Screen)
   const isChatPage = pathname === '/chat';
-  const isVisible = isGlobalUIVisible && !isOpen && !isChatPage;
+  const isVisible = isGlobalUIVisible && !isOpen && !isChatPage && !isWelcomePhase;
 
   return (
     <nav className={cn(
-      "fixed bottom-6 left-0 right-0 z-[100] px-3 flex justify-center pointer-events-none select-none transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+      "fixed bottom-6 left-0 right-0 z-[100] px-3 flex justify-center pointer-events-none select-none transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
       isVisible ? "translate-y-0 opacity-100" : "translate-y-32 opacity-0"
     )}>
       <div className="bg-[#0a0a0f]/60 backdrop-blur-2xl border border-white/5 rounded-full p-1 flex items-center gap-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] pointer-events-auto ring-1 ring-white/5 max-w-full overflow-hidden">

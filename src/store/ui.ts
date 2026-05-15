@@ -23,6 +23,7 @@ interface UIState {
   activePanel: PanelType;
   isOpen: boolean;
   isGlobalUIVisible: boolean;
+  isWelcomePhase: boolean;
   readerSettings: ReaderSettings;
   appSettings: AppSettings;
   bookmarks: any[];
@@ -31,6 +32,7 @@ interface UIState {
   openPanel: (name: PanelType) => void;
   closePanel: () => void;
   setGlobalUIVisible: (visible: boolean) => void;
+  setWelcomePhase: (active: boolean) => void;
   updateReaderSettings: (settings: Partial<ReaderSettings>) => void;
   updateAppSettings: (settings: Partial<AppSettings>) => void;
   addBookmark: (manga: any) => void;
@@ -46,6 +48,7 @@ export const useUIStore = create<UIState>()(
       activePanel: 'none',
       isOpen: false,
       isGlobalUIVisible: true,
+      isWelcomePhase: false,
       readerSettings: {
         direction: 'vertical',
         fitMode: 'fit',
@@ -65,6 +68,7 @@ export const useUIStore = create<UIState>()(
       openPanel: (name) => set({ activePanel: name, isOpen: true }),
       closePanel: () => set({ isOpen: false, activePanel: 'none' }),
       setGlobalUIVisible: (visible) => set({ isGlobalUIVisible: visible }),
+      setWelcomePhase: (active) => set({ isWelcomePhase: active }),
       updateReaderSettings: (settings) =>
         set((state) => ({ readerSettings: { ...state.readerSettings, ...settings } })),
       updateAppSettings: (settings) =>

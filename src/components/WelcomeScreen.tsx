@@ -9,32 +9,25 @@ import Image from 'next/image';
 import placeholderData from '@/lib/placeholder-images.json';
 
 export default function WelcomeScreen() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [stage, setStage] = useState(0); // 0: Enter, 1: Loading, 2: Exit
-  const { setGlobalUIVisible } = useUIStore();
+  const { setGlobalUIVisible, setWelcomePhase } = useUIStore();
   
   const chibiData = placeholderData.placeholderImages.find(img => img.id === 'welcome-chibi');
 
   useEffect(() => {
-    // Session-based check to prevent repeat animations
-    const hasBeenShown = sessionStorage.getItem('noir_welcome_sequence');
-    
-    if (hasBeenShown) {
-      setVisible(false);
-      setGlobalUIVisible(true);
-      return;
-    }
-
+    // Show welcome screen and hide UI components immediately
     setVisible(true);
+    setWelcomePhase(true);
     setGlobalUIVisible(false);
 
-    // Timeline Sequence
+    // Sequence Timeline
     const timer1 = setTimeout(() => setStage(1), 800);
     const timer2 = setTimeout(() => setStage(2), 3500);
     const timer3 = setTimeout(() => {
       setVisible(false);
       setGlobalUIVisible(true);
-      sessionStorage.setItem('noir_welcome_sequence', 'true');
+      setWelcomePhase(false);
     }, 4500);
 
     return () => {
@@ -42,7 +35,7 @@ export default function WelcomeScreen() {
       clearTimeout(timer2);
       clearTimeout(timer3);
     };
-  }, [setGlobalUIVisible]);
+  }, [setGlobalUIVisible, setWelcomePhase]);
 
   if (!visible) return null;
 
@@ -52,7 +45,8 @@ export default function WelcomeScreen() {
         initial={{ opacity: 1 }}
         animate={{ opacity: stage === 2 ? 0 : 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#020205] overflow-hidden"
+        transition={{ duration: 1, ease: "easeInOut" }}
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#020205] overflow-hidden will-change-transform"
       >
         {/* Dynamic Background Matrix */}
         <div className="absolute inset-0 bg-gradient-to-b from-accent/10 via-transparent to-transparent pointer-events-none" />
