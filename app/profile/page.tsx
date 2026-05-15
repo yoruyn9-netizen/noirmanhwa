@@ -9,11 +9,12 @@ import ProfileEditor from '@/components/profile/ProfileEditor';
 import BorderSelector from '@/components/profile/BorderSelector';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
-  Edit3, LayoutGrid, ShieldAlert
+  Edit3, LayoutGrid, Crown, Star
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -30,6 +31,15 @@ function ProfilePage() {
   const isOwner = user.role === 'owner';
   const isAdmin = user.role === 'admin';
 
+  const getRoleBadge = () => {
+    if (isOwner) return { label: 'SUPREME OWNER', color: 'bg-yellow-500 shadow-yellow-500/20' };
+    if (isAdmin) return { label: 'SYSTEM MODERATOR', color: 'bg-purple-600 shadow-purple-500/20' };
+    if (user.isPremium) return { label: 'PREMIUM NODE', color: 'bg-accent shadow-accent/20' };
+    return { label: 'VERIFIED USER', color: 'bg-white/10 shadow-none' };
+  };
+
+  const badge = getRoleBadge();
+
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
       {/* Profile Card */}
@@ -37,12 +47,14 @@ function ProfilePage() {
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-accent/5 rounded-full blur-[100px]" />
         
         <div className="relative z-10 flex flex-col items-center md:flex-row md:items-start gap-10">
-          <AvatarDisplay 
-            src={user.photoURL} 
-            name={user.displayName} 
-            size="xl" 
-            borderId={user.equippedBorder}
-          />
+          <div className="relative">
+             <AvatarDisplay 
+                src={user.photoURL} 
+                name={user.displayName} 
+                size="xl" 
+                borderId={user.equippedBorder}
+              />
+          </div>
           
           <div className="flex-1 text-center md:text-left space-y-5">
             <div className="space-y-1">
@@ -50,11 +62,9 @@ function ProfilePage() {
                 <h1 className="text-4xl font-black tracking-tighter uppercase text-glow leading-none">
                   {user.displayName || 'Anonymous User'}
                 </h1>
-                {isOwner ? (
-                  <span className="px-4 py-1 bg-yellow-500 text-black text-[9px] font-black rounded-lg shadow-xl shadow-yellow-500/20">SUPREME OWNER</span>
-                ) : user.isPremium && (
-                  <span className="px-4 py-1 bg-accent text-white text-[9px] font-black rounded-lg">PREMIUM NODE</span>
-                )}
+                <span className={cn("px-4 py-1 text-black text-[9px] font-black rounded-lg shadow-xl transition-all", badge.color)}>
+                  {badge.label}
+                </span>
               </div>
               <p className="text-[10px] font-black text-accent uppercase tracking-[0.5em] opacity-80">Security Protocol: Verified</p>
             </div>

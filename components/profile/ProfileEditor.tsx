@@ -36,7 +36,7 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
     if (!file || !user) return;
 
     setIsUploading(true);
-    setUploadProgress(10); // Start progress
+    setUploadProgress(10); 
 
     try {
       // 1. Compression Matrix

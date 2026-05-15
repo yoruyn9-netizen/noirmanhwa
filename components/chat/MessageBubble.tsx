@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { ChatMessage } from '@/types/chat';
 import { cn } from '@/lib/utils';
-import { Crown, Sparkles, Reply, Zap } from 'lucide-react';
+import { Crown, Sparkles, Reply, ShieldCheck, Zap } from 'lucide-react';
 import AvatarDisplay from '../profile/AvatarDisplay';
 
 interface MessageBubbleProps {
@@ -18,8 +18,6 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message, isMe, onUserClick, onReplyClick }: MessageBubbleProps) {
   const isOwner = message.isOwner;
-  // Note: For now, we manually check role display since message object only has isOwner
-  // In a full implementation, we'd fetch the user profile or pass the role from Firestore
   
   const timestamp = message.timestamp?.toDate 
     ? formatDistanceToNow(message.timestamp.toDate(), { addSuffix: true }) 

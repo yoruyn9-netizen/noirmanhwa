@@ -12,19 +12,10 @@ interface AvatarBorderOverlayProps {
 
 /**
  * PNG Border Overlay Engine
- * Uses scale transformation to perfectly wrap the circular avatar.
+ * Uses scale transformation to perfectly wrap the circular avatar nodes.
  */
 export default function AvatarBorderOverlay({ borderUrl, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderUrl) return null;
-
-  // Map sizes to absolute pixel ranges to ensure perfect alignment
-  const sizeMap = {
-    sm: 'w-10 h-10',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16',
-    xl: 'w-28 h-24', // Adjusted for profile page
-    huge: 'w-36 h-36'
-  };
 
   return (
     <div className={cn(
@@ -36,7 +27,7 @@ export default function AvatarBorderOverlay({ borderUrl, size = 'md', className 
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.25]" // Scaling up to cover the circular avatar edges
+          "scale-[1.25]" // Scaling up to cover the circular avatar edges perfectly
         )}
         style={{
           width: '100%',

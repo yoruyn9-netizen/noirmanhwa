@@ -67,7 +67,7 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
 
   return (
     <div className={cn(
-      "relative flex items-center justify-center select-none",
+      "relative flex items-center justify-center select-none shadow-2xl",
       sizeClasses[size],
       className
     )}>

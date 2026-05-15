@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from './profile/AvatarDisplay';
 import { useRouter } from 'next/navigation';
-import { Bell, Edit3, LogIn, X, User } from 'lucide-react';
+import { Bell, Edit3, LogIn, X, User, Crown, ShieldCheck, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { subscribeToNotifications } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
@@ -27,10 +27,10 @@ export default function HeaderProfile() {
   }, []);
 
   const getRoleDisplay = (role?: string, isPremium?: boolean) => {
-    if (role === 'owner') return { text: 'Supreme Authority', color: 'text-yellow-500' };
-    if (role === 'admin') return { text: 'System Moderator', color: 'text-purple-500' };
-    if (isPremium) return { text: 'Premium Node', color: 'text-pink-500' };
-    return { text: 'Verified Node', color: 'text-neutral-600' };
+    if (role === 'owner') return { text: 'Supreme Authority', color: 'text-yellow-500', icon: Crown };
+    if (role === 'admin') return { text: 'System Moderator', color: 'text-purple-500', icon: ShieldCheck };
+    if (isPremium) return { text: 'Premium Node', color: 'text-pink-500', icon: Zap };
+    return { text: 'Verified Node', color: 'text-neutral-600', icon: User };
   };
 
   const roleInfo = getRoleDisplay(user?.role, user?.isPremium);
