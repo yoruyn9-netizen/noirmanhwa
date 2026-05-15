@@ -125,25 +125,13 @@
   }
 
   @keyframes shimmer-sweep {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    0% { transform: translateX(0%) translateY(0%) rotate(0deg); }
+    100% { transform: translateX(400%) translateY(0%) rotate(0deg); }
   }
 
   .animate-shimmer-sweep {
     position: relative;
     overflow: hidden;
-  }
-
-  .animate-shimmer-sweep::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.05), transparent);
-    animation: shimmer-sweep 3s infinite;
-    pointer-events: none;
   }
 
   .owner-glow {
