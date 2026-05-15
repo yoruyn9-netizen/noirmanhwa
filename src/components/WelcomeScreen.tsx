@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -5,11 +6,22 @@ import { Sparkles } from 'lucide-react';
 import { useUIStore } from '@/store/ui';
 
 export default function WelcomeScreen() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
   const { setGlobalUIVisible } = useUIStore();
 
   useEffect(() => {
+    // Check if welcome has been shown in this session
+    const hasBeenShown = sessionStorage.getItem('noir_welcome_shown');
+    
+    if (hasBeenShown) {
+      setVisible(false);
+      setGlobalUIVisible(true);
+      return;
+    }
+
+    // First time in session
+    setVisible(true);
     setGlobalUIVisible(false);
 
     const timer = setTimeout(() => {
@@ -17,6 +29,7 @@ export default function WelcomeScreen() {
       setTimeout(() => {
         setVisible(false);
         setGlobalUIVisible(true);
+        sessionStorage.setItem('noir_welcome_shown', 'true');
       }, 800);
     }, 2500);
 

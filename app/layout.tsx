@@ -2,6 +2,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import BottomNav from '@/components/BottomNav';
+import BottomSheet from '@/components/BottomSheet';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
@@ -41,6 +42,7 @@ export default function RootLayout({
               {children}
             </main>
             <BottomNav />
+            <BottomSheet />
             <Toaster />
           </FirebaseClientProvider>
         </QueryProvider>
