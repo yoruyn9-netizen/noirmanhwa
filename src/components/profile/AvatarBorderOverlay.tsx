@@ -1,40 +1,52 @@
-
 "use client";
 
 import React from 'react';
-import { getBorderById } from '@/lib/borders';
 import { cn } from '@/lib/utils';
 
 interface AvatarBorderOverlayProps {
-  borderId?: string;
+  borderId: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
   className?: string;
 }
 
-export default function AvatarBorderOverlay({ borderId = 'none', size = 'md', className }: AvatarBorderOverlayProps) {
-  if (borderId === 'none') return null;
+// System Static Border Map
+const borderMap: Record<string, string> = {
+  'ink-master': 'https://files.catbox.moe/11w4o6.jpg',
+  'cyber-core': 'https://files.catbox.moe/547ajf.jpg',
+  'celestial-dream': 'https://files.catbox.moe/i37jwr.jpg',
+  'stellar-compass': 'https://files.catbox.moe/celsgv.jpg'
+};
 
-  const border = getBorderById(borderId);
-  
-  const sizeMap = {
-    sm: 'p-[2px] rounded-lg border-2',
-    md: 'p-[3px] rounded-xl border-2',
-    lg: 'p-1 rounded-2xl border-[3px]',
-    xl: 'p-1.5 rounded-[2.8rem] border-4',
-    huge: 'p-2 rounded-[3.5rem] border-[6px]'
-  };
+/**
+ * PNG Border Overlay Engine
+ * Uses scale transformation to perfectly wrap the circular avatar nodes.
+ */
+export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
+  if (!borderId || borderId === 'none') return null;
+
+  // Note: For dynamic borders uploaded by owner, the borderId will be the Firestore doc ID.
+  // We handle static defaults here, and fetch dynamic ones via effect in parent if needed.
+  // For this MVP, we assume borderId is either static key or a direct URL if custom.
+  const src = borderMap[borderId] || borderId;
 
   return (
     <div className={cn(
-      "absolute inset-0 pointer-events-none z-10",
-      sizeMap[size],
-      border.cssClass,
+      "absolute inset-0 pointer-events-none z-20 flex items-center justify-center",
       className
-    )} style={{ color: border.color }}>
-      {/* Visual embellishments for high-tier borders */}
-      {border.tier === 'legend' && (
-        <div className="absolute -top-1 -left-1 w-4 h-4 bg-purple-500 rounded-full blur-md animate-pulse" />
-      )}
+    )}>
+      <img 
+        src={src} 
+        alt="Avatar Border" 
+        className={cn(
+          "object-contain max-w-none transition-transform duration-700",
+          "scale-[1.25]" 
+        )}
+        style={{
+          width: '100%',
+          height: '100%'
+        }}
+        draggable={false}
+      />
     </div>
   );
 }

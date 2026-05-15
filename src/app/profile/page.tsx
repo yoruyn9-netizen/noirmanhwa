@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -7,18 +6,19 @@ import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from '@/components/profile/AvatarDisplay';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 import BorderSelector from '@/components/profile/BorderSelector';
-import UserManagement from '@/components/admin/UserManagement';
-import ReportDashboard from '@/components/owner/ReportDashboard';
-import NotificationManager from '@/components/admin/NotificationManager';
-import BorderManager from '@/components/admin/BorderManager';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
-  Edit3, Users, LayoutGrid, Bell, AlertTriangle, Image as ImageIcon
+  Edit3, LayoutGrid, Crown, Star
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
+/**
+ * High-Fidelity Profile Matrix
+ * Integrates Cloudinary-powered editing and dynamic border selection.
+ */
 function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { toast } = useToast();
@@ -32,6 +32,16 @@ function ProfilePage() {
   if (!user) return null;
 
   const isOwner = user.role === 'owner';
+  const isAdmin = user.role === 'admin';
+
+  const getRoleBadge = () => {
+    if (isOwner) return { label: 'SUPREME OWNER', color: 'bg-yellow-500 shadow-yellow-500/20' };
+    if (isAdmin) return { label: 'SYSTEM MODERATOR', color: 'bg-purple-600 shadow-purple-500/20' };
+    if (user.isPremium) return { label: 'PREMIUM NODE', color: 'bg-accent shadow-accent/20' };
+    return { label: 'VERIFIED USER', color: 'bg-white/10 shadow-none' };
+  };
+
+  const badge = getRoleBadge();
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
@@ -40,12 +50,14 @@ function ProfilePage() {
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-accent/5 rounded-full blur-[100px]" />
         
         <div className="relative z-10 flex flex-col items-center md:flex-row md:items-start gap-10">
-          <AvatarDisplay 
-            src={user.photoURL} 
-            name={user.displayName} 
-            size="xl" 
-            borderId={user.equippedBorder}
-          />
+          <div className="relative">
+             <AvatarDisplay 
+                src={user.photoURL} 
+                name={user.displayName} 
+                size="xl" 
+                borderId={user.equippedBorder}
+              />
+          </div>
           
           <div className="flex-1 text-center md:text-left space-y-5">
             <div className="space-y-1">
@@ -53,11 +65,9 @@ function ProfilePage() {
                 <h1 className="text-4xl font-black tracking-tighter uppercase text-glow leading-none">
                   {user.displayName || 'Anonymous User'}
                 </h1>
-                {isOwner ? (
-                  <span className="px-4 py-1 bg-yellow-500 text-black text-[9px] font-black rounded-lg shadow-xl shadow-yellow-500/20">OWNER</span>
-                ) : user.isPremium && (
-                  <span className="px-4 py-1 bg-accent text-white text-[9px] font-black rounded-lg">PREMIUM</span>
-                )}
+                <span className={cn("px-4 py-1 text-black text-[9px] font-black rounded-lg shadow-xl transition-all", badge.color)}>
+                  {badge.label}
+                </span>
               </div>
               <p className="text-[10px] font-black text-accent uppercase tracking-[0.5em] opacity-80">Security Protocol: Verified</p>
             </div>
@@ -66,9 +76,23 @@ function ProfilePage() {
               {user.bio || "No data entry detected for this synchronization node."}
             </p>
             
-            <button onClick={() => setIsEditorOpen(true)} className="px-10 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 hover:border-accent/40 transition-all flex items-center gap-3 mx-auto md:mx-0">
-              <Edit3 className="w-3.5 h-3.5 text-accent" /> Recalibrate Identity
-            </button>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <button 
+                onClick={() => setIsEditorOpen(true)} 
+                className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-accent hover:border-accent/40 transition-all flex items-center gap-3"
+              >
+                <Edit3 className="w-3.5 h-3.5" /> Calibrate Identity
+              </button>
+              
+              {(isOwner || isAdmin) && (
+                <Link 
+                  href="/admin"
+                  className="px-8 py-3 bg-yellow-500 text-black rounded-2xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl shadow-yellow-500/10"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" /> Command Terminal
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -86,46 +110,6 @@ function ProfilePage() {
           </div>
         ))}
       </div>
-
-      {/* Admin Central Console */}
-      {isOwner && (
-        <section className="space-y-8 px-2">
-          <div className="flex items-center gap-4 px-6 py-2 bg-yellow-500/5 border-l-4 border-yellow-500 rounded-r-xl w-fit">
-             <LayoutGrid className="w-4 h-4 text-yellow-500" />
-             <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-yellow-500">System Command Terminal</h3>
-          </div>
-
-          <Tabs defaultValue="users" className="space-y-8">
-            <TabsList className="bg-[#0a0a0f]/60 border border-white/5 p-1.5 rounded-3xl h-auto w-full md:w-fit flex overflow-x-auto hide-scrollbar">
-              <TabsTrigger value="users" className="flex-1 md:px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-white data-[state=active]:text-black">
-                <Users className="w-3.5 h-3.5 mr-2" /> Users
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex-1 md:px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-accent data-[state=active]:text-white">
-                <Bell className="w-3.5 h-3.5 mr-2" /> Broadcasts
-              </TabsTrigger>
-              <TabsTrigger value="borders" className="flex-1 md:px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                <ImageIcon className="w-3.5 h-3.5 mr-2" /> Borders
-              </TabsTrigger>
-              <TabsTrigger value="reports" className="flex-1 md:px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-red-600 data-[state=active]:text-white">
-                <AlertTriangle className="w-3.5 h-3.5 mr-2" /> Anomalies
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="users" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <UserManagement />
-            </TabsContent>
-            <TabsContent value="notifications" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <NotificationManager />
-            </TabsContent>
-            <TabsContent value="borders" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <BorderManager />
-            </TabsContent>
-            <TabsContent value="reports" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <ReportDashboard />
-            </TabsContent>
-          </Tabs>
-        </section>
-      )}
 
       {/* Equipment Hub */}
       <section className="px-2">
@@ -149,7 +133,7 @@ function ProfilePage() {
       </div>
 
       <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[4rem] p-0 overflow-y-auto">
+        <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[4rem] p-0 overflow-hidden">
           <ProfileEditor onClose={() => setIsEditorOpen(false)} />
         </SheetContent>
       </Sheet>

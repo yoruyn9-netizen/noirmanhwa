@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { updateUserProfile } from '@/lib/firestore';
-import { uploadProfileImage } from '@/lib/imageUpload';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { useToast } from '@/hooks/use-toast';
 import { 
   User, Save, Loader2, X, Edit3, AlignLeft, Camera, Check 
@@ -13,9 +12,10 @@ import {
 import { cn } from '@/lib/utils';
 import AvatarDisplay from './AvatarDisplay';
 import { Progress } from '@/components/ui/progress';
+import imageCompression from 'browser-image-compression';
 
 interface ProfileEditorProps {
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export default function ProfileEditor({ onClose }: ProfileEditorProps) {
@@ -34,20 +34,31 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File Too Large", description: "Maximum size is 5MB." });
-      return;
-    }
-
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10); 
+
     try {
-      const url = await uploadProfileImage(user.uid, file, (p) => setUploadProgress(p));
+      // Image Optimization Protocol
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+      setUploadProgress(30);
+      const compressedFile = await imageCompression(file, options);
+      
+      // Cloudinary Synchronization
+      setUploadProgress(60);
+      const url = await uploadToCloudinary(compressedFile, 'avatars');
+      
+      // Firestore Metadata Update
+      setUploadProgress(90);
       await updateUserProfile(user.uid, { photoURL: url });
       updateUserInStore({ photoURL: url });
-      toast({ title: "Avatar Synchronized", description: "Visual identity updated." });
+      
+      toast({ title: "Avatar Synchronized", description: "Identity node updated successfully." });
     } catch (err) {
-      toast({ variant: "destructive", title: "Uplink Failed", description: "Could not upload image." });
+      toast({ variant: "destructive", title: "Sync Error", description: "Cloudinary uplink failed." });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -62,81 +73,71 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
       const updateData = { displayName: name, bio: bio };
       await updateUserProfile(user.uid, updateData);
       updateUserInStore(updateData);
-      toast({ title: "Node Updated", description: "Identity data synchronized successfully." });
-      setTimeout(onClose, 500);
+      toast({ title: "Node Updated", description: "Sub-routine logs saved." });
+      if (onClose) setTimeout(onClose, 500);
     } catch (err) {
-      toast({ variant: "destructive", title: "Sync Failed", description: "Could not update user node." });
+      toast({ variant: "destructive", title: "Sync Failed", description: "Database communication restricted." });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-10 space-y-10">
-      <header className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-xl font-black uppercase tracking-tighter text-glow flex items-center gap-3">
-            <Edit3 className="w-5 h-5 text-accent" /> Recalibration
-          </h2>
-          <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest">Adjusting identity parameters</p>
+    <div className="space-y-10">
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative group">
+          <AvatarDisplay src={user?.photoURL} name={user?.displayName} size="xl" borderId={user?.equippedBorder} />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="absolute -bottom-1 -right-1 w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center border-4 border-[#020205] shadow-xl hover:scale-110 transition-all disabled:opacity-50"
+          >
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
         </div>
-        <button onClick={onClose} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-      </header>
-
-      <div className="space-y-8">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative group">
-            <AvatarDisplay src={user?.photoURL} name={user?.displayName} size="xl" borderId={user?.equippedBorder} />
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="absolute -bottom-2 -right-2 w-10 h-10 bg-accent text-white rounded-2xl flex items-center justify-center border-4 border-[#0a0a0f] shadow-xl hover:scale-110 transition-all disabled:opacity-50"
-            >
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-          </div>
-          
-          {isUploading && (
-            <div className="w-full max-w-[200px] space-y-2">
-              <div className="flex justify-between text-[7px] font-black text-accent uppercase tracking-widest">
-                <span>Transmitting Data</span>
-                <span>{Math.round(uploadProgress)}%</span>
-              </div>
-              <Progress value={uploadProgress} className="h-1 bg-white/5" />
+        
+        {isUploading && (
+          <div className="w-full max-w-[200px] space-y-2">
+            <div className="flex justify-between text-[7px] font-black text-accent uppercase tracking-widest">
+              <span>Transmitting Data Node</span>
+              <span>{uploadProgress}%</span>
             </div>
-          )}
+            <Progress value={uploadProgress} className="h-1 bg-white/5" />
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-[9px] font-black uppercase tracking-widest text-accent flex items-center gap-2 ml-1">
+            <User className="w-3 h-3" /> Public Signature
+          </label>
+          <input 
+            type="text" value={name} onChange={e => setName(e.target.value)} maxLength={30}
+            className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl px-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-bold text-[11px] uppercase"
+          />
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <label className="text-[9px] font-black uppercase tracking-widest text-accent flex items-center gap-2"><User className="w-3 h-3" /> Signature</label>
-            <input 
-              type="text" value={name} onChange={e => setName(e.target.value)} maxLength={30}
-              className="w-full bg-[#050508] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-bold text-[11px]"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-[9px] font-black uppercase tracking-widest text-accent flex items-center gap-2"><AlignLeft className="w-3 h-3" /> Sub-Routine</label>
-            <textarea 
-              value={bio} onChange={e => setBio(e.target.value)} maxLength={150} rows={3}
-              className="w-full bg-[#050508] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-medium text-[11px] resize-none"
-            />
-          </div>
+        <div className="space-y-2">
+          <label className="text-[9px] font-black uppercase tracking-widest text-accent flex items-center gap-2 ml-1">
+            <AlignLeft className="w-3 h-3" /> Identity Bio
+          </label>
+          <textarea 
+            value={bio} onChange={e => setBio(e.target.value)} maxLength={150} rows={3}
+            className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl px-5 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 font-medium text-[11px] resize-none"
+          />
         </div>
 
         <button
           onClick={handleSave}
           disabled={isSaving || !name.trim() || isUploading}
-          className="w-full py-5 bg-white text-black font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-accent hover:text-white transition-all disabled:opacity-20 flex items-center justify-center gap-3"
+          className="w-full py-4 bg-white text-black font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-accent hover:text-white transition-all disabled:opacity-20 flex items-center justify-center gap-3"
         >
-          {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-4 h-4" />}
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           SAVE IDENTITY NODE
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
