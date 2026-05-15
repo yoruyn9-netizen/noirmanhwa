@@ -2,55 +2,48 @@
 "use client";
 
 import React from 'react';
-import { getBorderById } from '@/lib/borders';
 import { cn } from '@/lib/utils';
 
 interface AvatarBorderOverlayProps {
-  borderId?: string;
+  borderUrl: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
   className?: string;
 }
 
-export default function AvatarBorderOverlay({ borderId = 'none', size = 'md', className }: AvatarBorderOverlayProps) {
-  if (borderId === 'none' || !borderId) return null;
+/**
+ * PNG Border Overlay Engine
+ * Uses scale transformation to perfectly wrap the circular avatar.
+ */
+export default function AvatarBorderOverlay({ borderUrl, size = 'md', className }: AvatarBorderOverlayProps) {
+  if (!borderUrl) return null;
 
-  const border = getBorderById(borderId);
-  
+  // Map sizes to absolute pixel ranges to ensure perfect alignment
   const sizeMap = {
-    sm: 'p-[2px] rounded-lg border-2',
-    md: 'p-[3px] rounded-xl border-2',
-    lg: 'p-1 rounded-2xl border-[3px]',
-    xl: 'p-1.5 rounded-[2.8rem] border-4',
-    huge: 'p-2 rounded-[3.5rem] border-[6px]'
+    sm: 'w-10 h-10',
+    md: 'w-12 h-12',
+    lg: 'w-16 h-16',
+    xl: 'w-28 h-24', // Adjusted for profile page
+    huge: 'w-36 h-36'
   };
-
-  // If it's a custom uploaded border, we render the image instead of CSS styles
-  if (borderId.startsWith('custom-')) {
-    return (
-      <div className={cn(
-        "absolute inset-0 pointer-events-none z-10",
-        className
-      )}>
-        <img 
-          src={border.imageUrl} 
-          alt="Border" 
-          className="w-full h-full object-contain"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className={cn(
-      "absolute inset-0 pointer-events-none z-10",
-      sizeMap[size],
-      border.cssClass,
+      "absolute inset-0 pointer-events-none z-20 flex items-center justify-center",
       className
-    )} style={{ color: border.color }}>
-      {/* High-Tier Visual Effects */}
-      {border.tier === 'legend' && (
-        <div className="absolute inset-0 rounded-[inherit] border-animate-glow opacity-40 bg-current blur-md -z-10" />
-      )}
+    )}>
+      <img 
+        src={borderUrl} 
+        alt="Avatar Border" 
+        className={cn(
+          "object-contain max-w-none transition-transform duration-700",
+          "scale-[1.25]" // Scaling up to cover the circular avatar edges
+        )}
+        style={{
+          width: '100%',
+          height: '100%'
+        }}
+        draggable={false}
+      />
     </div>
   );
 }

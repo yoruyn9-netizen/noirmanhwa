@@ -5,7 +5,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { updateUserProfile } from '@/lib/firestore';
-import { uploadProfileImage } from '@/lib/imageUpload';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { useToast } from '@/hooks/use-toast';
 import { 
   User, Save, Loader2, X, Edit3, AlignLeft, Camera, Check 
@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import AvatarDisplay from './AvatarDisplay';
 import { Progress } from '@/components/ui/progress';
+import imageCompression from 'browser-image-compression';
 
 interface ProfileEditorProps {
   onClose: () => void;
@@ -34,20 +35,31 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File Too Large", description: "Maximum size is 5MB." });
-      return;
-    }
-
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10); // Start progress
+
     try {
-      const url = await uploadProfileImage(user.uid, file, (p) => setUploadProgress(p));
+      // 1. Compression Matrix
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+      setUploadProgress(30);
+      const compressedFile = await imageCompression(file, options);
+      
+      // 2. Cloudinary Uplink
+      setUploadProgress(60);
+      const url = await uploadToCloudinary(compressedFile, 'avatars');
+      
+      // 3. Firestore Sync
+      setUploadProgress(90);
       await updateUserProfile(user.uid, { photoURL: url });
       updateUserInStore({ photoURL: url });
-      toast({ title: "Avatar Synchronized", description: "Visual identity updated." });
+      
+      toast({ title: "Visual Node Updated", description: "Your identity avatar has been synchronized." });
     } catch (err) {
-      toast({ variant: "destructive", title: "Uplink Failed", description: "Could not upload image." });
+      toast({ variant: "destructive", title: "Uplink Failure", description: "Cloudinary synchronization failed." });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -62,10 +74,10 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
       const updateData = { displayName: name, bio: bio };
       await updateUserProfile(user.uid, updateData);
       updateUserInStore(updateData);
-      toast({ title: "Node Updated", description: "Identity data synchronized successfully." });
+      toast({ title: "Identity Log Saved", description: "System parameters updated successfully." });
       setTimeout(onClose, 500);
     } catch (err) {
-      toast({ variant: "destructive", title: "Sync Failed", description: "Could not update user node." });
+      toast({ variant: "destructive", title: "Sync Failed", description: "Database communication timeout." });
     } finally {
       setIsSaving(false);
     }
@@ -104,7 +116,7 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
             <div className="w-full space-y-2">
               <div className="flex justify-between text-[8px] font-black text-accent uppercase tracking-widest">
                 <span>Transmitting Data Node</span>
-                <span>{Math.round(uploadProgress)}%</span>
+                <span>{uploadProgress}%</span>
               </div>
               <Progress value={uploadProgress} className="h-1 bg-white/5" />
             </div>
@@ -145,6 +157,6 @@ export default function ProfileEditor({ onClose }: ProfileEditorProps) {
           SAVE IDENTITY NODE
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

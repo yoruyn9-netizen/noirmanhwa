@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -74,82 +75,98 @@
 
   .text-glow { text-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
 
-  /* MLBB Avatar Border Animations */
-  .border-animate-rotate {
-    animation: border-rotate 4s linear infinite;
-    will-change: transform;
-  }
-  
-  .border-animate-glow {
-    animation: border-glow 2s ease-in-out infinite;
-  }
-  
-  .border-animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    background-size: 200% 100%;
-    animation: border-shimmer 2s infinite;
-  }
-  
-  .border-animate-pulse {
-    animation: border-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .border-gradient-legend {
-    border-image: linear-gradient(45deg, #f43f5e, #a855f7, #3b82f6) 1;
-  }
-
-  @keyframes border-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes border-glow {
-    0%, 100% { filter: drop-shadow(0 0 2px currentColor); opacity: 0.8; }
-    50% { filter: drop-shadow(0 0 10px currentColor); opacity: 1; }
-  }
-
-  @keyframes border-shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
-  @keyframes border-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.7; }
-  }
-
-  /* Owner Chat Special Effects */
-  @keyframes crown-glow {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8)); }
-    50% { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1)); }
-  }
-
-  @keyframes shimmer-sweep {
-    0% { transform: translateX(0%) translateY(0%) rotate(0deg); }
-    100% { transform: translateX(400%) translateY(0%) rotate(0deg); }
-  }
-
-  .animate-shimmer-sweep {
+  /* Three-Body Loader Animation */
+  .three-body {
+    --uib-size: 35px;
+    --uib-speed: 0.8s;
+    --uib-color: #a855f7;
     position: relative;
-    overflow: hidden;
+    display: inline-block;
+    height: var(--uib-size);
+    width: var(--uib-size);
+    animation: spin78236 calc(var(--uib-speed) * 2.5) infinite linear;
   }
 
-  .owner-glow {
-    animation: crown-glow 2s ease-in-out infinite;
+  .three-body__dot {
+    position: absolute;
+    height: 100%;
+    width: 30%;
   }
-}
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: rgba(10, 10, 15, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px 8px 28px 8px;
-  z-index: 1000;
+  .three-body__dot:after {
+    content: '';
+    position: absolute;
+    height: 0%;
+    width: 100%;
+    padding-bottom: 100%;
+    background-color: var(--uib-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--uib-color);
+  }
+
+  .three-body__dot:nth-child(1) {
+    bottom: 5%;
+    left: 0;
+    transform: rotate(60deg);
+    transform-origin: 50% 85%;
+  }
+
+  .three-body__dot:nth-child(1)::after {
+    bottom: 0;
+    left: 0;
+    animation: wobble1 var(--uib-speed) infinite ease-in-out;
+    animation-delay: calc(var(--uib-speed) * -0.3);
+  }
+
+  .three-body__dot:nth-child(2) {
+    bottom: 5%;
+    right: 0;
+    transform: rotate(-60deg);
+    transform-origin: 50% 85%;
+  }
+
+  .three-body__dot:nth-child(2)::after {
+    bottom: 0;
+    left: 0;
+    animation: wobble1 var(--uib-speed) infinite calc(var(--uib-speed) * -0.15) ease-in-out;
+  }
+
+  .three-body__dot:nth-child(3) {
+    bottom: -5%;
+    left: 0;
+    transform: translateX(116.666%);
+  }
+
+  .three-body__dot:nth-child(3)::after {
+    top: 0;
+    left: 0;
+    animation: wobble2 var(--uib-speed) infinite ease-in-out;
+  }
+
+  @keyframes spin78236 {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes wobble1 {
+    0%, 100% {
+      transform: translateY(0%) scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(-66%) scale(0.65);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes wobble2 {
+    0%, 100% {
+      transform: translateY(0%) scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(66%) scale(0.65);
+      opacity: 0.8;
+    }
+  }
 }

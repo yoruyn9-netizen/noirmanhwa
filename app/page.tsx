@@ -8,7 +8,8 @@ import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
 import MangaGrid from '@/components/manga/MangaGrid';
 import GlobalChat from '@/components/chat/GlobalChat';
 import HeaderProfile from '@/components/HeaderProfile';
-import { Loader2, WifiOff } from 'lucide-react';
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
+import { WifiOff } from 'lucide-react';
 
 export default function Home() {
   const [trending, setTrending] = useState<Manga[]>([]);
@@ -33,11 +34,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-4">
-        <div className="relative">
-          <Loader2 className="w-10 h-10 text-accent animate-spin" />
-          <div className="absolute inset-0 blur-2xl bg-accent/20 animate-pulse" />
-        </div>
+      <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6">
+        <ThreeBodyLoader />
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Syncing Matrix</p>
       </div>
     );
@@ -49,7 +47,7 @@ export default function Home() {
       <header className="flex items-center justify-between pt-6 px-1">
         <HeaderProfile />
         <div className="text-right hidden sm:block">
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Manhwa Node: Alpha-42</p>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Node: Alpha-42</p>
         </div>
       </header>
 
@@ -75,7 +73,7 @@ export default function Home() {
           <section className="space-y-10">
             <div className="space-y-2 px-1">
               <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Real-Time Feed</h2>
-              <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Node: Asura & Flame Scans</p>
+              <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Matrix</p>
             </div>
             <MangaGrid />
           </section>
