@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -17,10 +16,8 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui';
 import { useAuthStore } from '@/store/authStore';
 
-// 🔒 NAVBAR LOCKED - UPDATED FOR ADAPTIVE TRANSPARENCY & HIDE SYSTEM
 /**
  * Bottom Navigation component with adaptive transparency and global hide protocol.
- * Floating pill-shaped bar that reacts to the system's "Sheet" states.
  */
 const navItems = [
   { href: '/', icon: Home, label: 'HOME' },
@@ -33,15 +30,19 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { isGlobalUIVisible, isOpen, checkAuth: syncStore } = useUIStore();
+  const { isGlobalUIVisible, isOpen } = useUIStore();
   const { user, checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Navbar is hidden if global visibility is off OR if any panel is open (e.g. Filters, Profile Editor)
-  const isVisible = isGlobalUIVisible && !isOpen;
+  // HIDE LOGIC: Navbar is hidden if:
+  // 1. Global visibility is manually toggled off
+  // 2. A side-panel/sheet is open
+  // 3. User is in the full-screen chat terminal (/chat)
+  const isChatPage = pathname === '/chat';
+  const isVisible = isGlobalUIVisible && !isOpen && !isChatPage;
 
   return (
     <nav className={cn(
@@ -50,7 +51,6 @@ export default function BottomNav() {
     )}>
       <div className="bg-[#0a0a0f]/60 backdrop-blur-2xl border border-white/5 rounded-full p-1 flex items-center gap-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] pointer-events-auto ring-1 ring-white/5 max-w-full overflow-hidden">
         {navItems.map(({ href, icon: Icon, label }) => {
-          // Identity Logic for Profile vs Login
           let targetHref = href;
           let TargetIcon = Icon;
           let targetLabel = label;
@@ -70,7 +70,7 @@ export default function BottomNav() {
               className={cn(
                 "relative flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-full transition-all duration-500 group whitespace-nowrap",
                 isActive 
-                  ? "bg-white/10 text-white shadow-[inset_0_0_15px_rgba(255,255,255,0.02)]" 
+                  ? "bg-white/10 text-white" 
                   : "text-neutral-500 hover:text-neutral-400"
               )}
             >
@@ -86,9 +86,8 @@ export default function BottomNav() {
                 </span>
               )}
 
-              {/* Glowing bar at bottom of pill item */}
               {isActive && (
-                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-0.5 bg-accent rounded-full animate-in zoom-in duration-700 shadow-[0_0_8px_rgba(139,92,246,0.6)] will-change-transform" />
+                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-0.5 bg-accent rounded-full animate-in zoom-in duration-700 shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
               )}
             </Link>
           );

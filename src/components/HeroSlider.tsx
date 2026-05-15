@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -15,8 +14,7 @@ interface HeroSliderProps {
 }
 
 /**
- * Ultra-minimalist Hero Slider.
- * Panoramic aspect ratio with focus on title and essential system data.
+ * Ultra-minimalist Hero Slider with Enhanced Narrative Banners.
  */
 export default function HeroSlider({ trending }: HeroSliderProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
@@ -52,59 +50,70 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
           {slides.map((manga) => (
             <Link 
               key={manga.id} 
-              href={`/series/${manga.id}`}
-              className="flex-[0_0_100%] min-w-0 relative aspect-[16/7] sm:aspect-[21/7] cursor-pointer"
+              href={`/manga/${manga.id}?source=${(manga as any).source || 'asura'}`}
+              className="flex-[0_0_100%] min-w-0 relative aspect-[16/8] sm:aspect-[21/8] cursor-pointer"
             >
               <MangaImage 
-                src={getCoverUrl(manga, 'original')} 
-                alt={getMangaTitle(manga)} 
+                src={(manga as any).cover || getCoverUrl(manga, 'original')} 
+                alt={manga.title || getMangaTitle(manga)} 
                 className="w-full h-full object-cover brightness-[0.4] transition-all duration-[3000ms] group-hover:scale-105"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-transparent opacity-80" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#020205]/40 via-transparent to-transparent" />
               
-              <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-2.5 h-2.5 text-accent animate-pulse" />
-                  <span className="text-[6px] font-black uppercase tracking-[0.4em] text-accent opacity-80">Recommended Node</span>
+              {/* High-Fidelity Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-transparent opacity-90" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#020205]/60 via-transparent to-transparent" />
+              
+              {/* Narrative Banner Content */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-full flex items-center gap-2">
+                    <Activity className="w-3 h-3 text-accent animate-pulse" />
+                    <span className="text-[7px] font-black uppercase tracking-[0.4em] text-accent">Node Active</span>
+                  </div>
+                  <span className="text-[7px] font-bold text-white/40 uppercase tracking-widest">Global Discovery Matrix</span>
                 </div>
                 
-                <h1 className="text-sm sm:text-2xl font-black uppercase tracking-tighter text-white text-glow truncate max-w-[80%]">
-                  {getMangaTitle(manga)}
+                <h1 className="text-xl sm:text-4xl font-black uppercase tracking-tighter text-white text-glow leading-tight max-w-[90%] sm:max-w-[70%]">
+                  {manga.title || getMangaTitle(manga)}
                 </h1>
+
+                <div className="flex items-center gap-4">
+                  <div className="h-0.5 w-12 bg-accent rounded-full" />
+                  <span className="text-[8px] font-black text-white/60 uppercase tracking-[0.3em]">Access Protocol Ready</span>
+                </div>
               </div>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Subtle Indicators */}
-      <div className="absolute bottom-4 right-8 flex gap-1.5 z-20">
+      {/* Modern Indicators */}
+      <div className="absolute bottom-6 right-12 flex gap-2 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => emblaApi?.scrollTo(index)}
             className={cn(
-              "h-1 transition-all duration-500 rounded-full",
+              "h-1 transition-all duration-500 rounded-full shadow-lg",
               selectedIndex === index 
-                ? "w-6 bg-accent" 
-                : "w-1 bg-white/10"
+                ? "w-8 bg-accent shadow-accent/40" 
+                : "w-2 bg-white/10"
             )}
           />
         ))}
       </div>
 
-      {/* Invisible navigation hit areas for manual control */}
+      {/* Manual Navigation Areas */}
       <button 
         onClick={(e) => { e.preventDefault(); emblaApi?.scrollPrev(); }}
-        className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center text-white/0 hover:text-white/20 transition-all sm:flex hidden"
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center text-white/20 hover:text-white transition-all hidden sm:flex bg-black/20 backdrop-blur-md rounded-2xl border border-white/5 opacity-0 group-hover:opacity-100"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
       <button 
         onClick={(e) => { e.preventDefault(); emblaApi?.scrollNext(); }}
-        className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-white/0 hover:text-white/20 transition-all sm:flex hidden"
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center text-white/20 hover:text-white transition-all hidden sm:flex bg-black/20 backdrop-blur-md rounded-2xl border border-white/5 opacity-0 group-hover:opacity-100"
       >
         <ChevronRight className="w-6 h-6" />
       </button>

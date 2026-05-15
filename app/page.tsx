@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -7,6 +6,7 @@ import HeroSlider from '@/components/HeroSlider';
 import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
 import MangaGrid from '@/components/manga/MangaGrid';
 import GlobalChat from '@/components/chat/GlobalChat';
+import HeaderProfile from '@/components/HeaderProfile';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -15,7 +15,6 @@ export default function Home() {
 
   useEffect(() => {
     async function init() {
-      console.log('📡 [System]: Initializing Real-Time Signal Discovery...');
       try {
         const data = await fetchMangaList();
         setTrending(data || []);
@@ -39,7 +38,15 @@ export default function Home() {
 
   return (
     <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden animate-in fade-in duration-1000">
-      <section className="w-full pt-4">
+      {/* Top Header Section */}
+      <header className="flex items-center justify-between pt-6 px-1">
+        <HeaderProfile />
+        <div className="text-right hidden sm:block">
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Manhwa Node: Alpha-42</p>
+        </div>
+      </header>
+
+      <section className="w-full">
         <HeroSlider trending={trending as any} />
       </section>
 
