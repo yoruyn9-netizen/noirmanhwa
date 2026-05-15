@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SafeImageProps {
-  src: string;
+  src?: string;
   alt: string;
   className?: string;
   fallbackText?: string;
@@ -20,7 +20,8 @@ export default function SafeImage({ src, alt, className, fallbackText, onError }
   const [internalError, setInternalError] = useState(false);
   
   // Always route external MangaDex content through the proxy
-  const proxiedUrl = (src.includes('mangadex.org') || src.includes('mangadex.network'))
+  // Added safety check for 'src' to prevent "Cannot read properties of undefined"
+  const proxiedUrl = (src && (src.includes('mangadex.org') || src.includes('mangadex.network')))
     ? `/api/proxy-image?url=${encodeURIComponent(src)}` 
     : src;
 
