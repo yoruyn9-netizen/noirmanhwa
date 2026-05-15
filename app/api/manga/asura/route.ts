@@ -4,11 +4,12 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 /**
- * Direct Asura Scans Discovery Logic
- * Hardened with high-fidelity headers to bypass stricter WAF protection.
+ * Hardened Asura Scans Discovery Logic
+ * Uses high-fidelity browser headers and stealth parameters.
  */
 export async function getAsuraData() {
   try {
+    // Standardizing on the latest functional API endpoint
     const endpoint = 'https://asuracomic.net/api/series?cursor=0&limit=50';
     
     const response = await fetch(endpoint, {
@@ -25,10 +26,13 @@ export async function getAsuraData() {
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Site': 'same-origin'
       },
-      next: { revalidate: 3600 }
+      next: { revalidate: 1800 }
     });
 
-    if (!response.ok) throw new Error(`Source Node Status: ${response.status}`);
+    if (!response.ok) {
+      console.warn(`[ASURA]: Source node responded with ${response.status}`);
+      return { success: false, data: [] };
+    }
 
     const data = await response.json();
     const list = Array.isArray(data) ? data : (data.series || data.data || []);
@@ -45,11 +49,11 @@ export async function getAsuraData() {
         status: item.status?.toLowerCase() || 'ongoing',
         type: 'MANHWA',
         source: 'asura',
-        genres: item.genres?.map((g: any) => g.name || g) || []
+        genres: Array.isArray(item.genres) ? item.genres.map((g: any) => g.name || g) : []
       }))
     };
   } catch (error) {
-    console.error('❌ [ASURA PROXY]:', error);
+    console.error('❌ [ASURA PROXY ERROR]:', error);
     return { success: false, data: [] };
   }
 }
