@@ -83,7 +83,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
   return (
     <section className={cn(
       "relative flex flex-col",
-      previewMode ? "mt-24 px-4 pb-20" : "h-full overflow-hidden"
+      previewMode ? "mt-24 px-4 pb-20" : "h-full overflow-hidden flex-1"
     )}>
       <div className={cn(
         "flex flex-col w-full mx-auto",
@@ -114,11 +114,11 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
 
         <div className={cn(
           "flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 overflow-hidden shadow-2xl relative",
-          previewMode ? "h-[450px] rounded-[2.5rem]" : "flex-1 h-[calc(100vh-160px)]"
+          previewMode ? "h-[450px] rounded-[2.5rem]" : "flex-1 rounded-[2.5rem] mb-6"
         )}>
           <div 
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar overscroll-contain"
+            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar overscroll-contain"
           >
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
@@ -142,7 +142,6 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
             )}
           </div>
 
-          {/* Reply Preview Bar */}
           <AnimatePresence>
             {replyTarget && (
               <motion.div

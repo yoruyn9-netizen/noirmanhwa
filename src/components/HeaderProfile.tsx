@@ -62,7 +62,7 @@ export default function HeaderProfile() {
                   <span className="text-[9px] font-black uppercase tracking-widest text-accent">Broadcasting Center</span>
                   <button onClick={() => setShowNotifs(false)}><X className="w-3 h-3 text-neutral-700" /></button>
                 </div>
-                <div className="max-h-64 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+                <div className="max-h-64 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                   {notifications.length === 0 ? (
                     <p className="text-[8px] font-black text-neutral-600 uppercase text-center py-4">No active signals</p>
                   ) : (
@@ -110,22 +110,38 @@ export default function HeaderProfile() {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute top-full left-0 mt-3 w-56 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-[150] overflow-hidden"
+                className="absolute top-full left-0 mt-3 w-64 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-[150] overflow-hidden"
               >
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-5">
                   <div className="flex items-center justify-between">
                     <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500">Identity Protocol</span>
                     <button onClick={() => setShowPopup(false)}><X className="w-3 h-3 text-neutral-700" /></button>
                   </div>
 
                   {user ? (
-                    <button 
-                      onClick={() => { router.push('/profile'); setShowPopup(false); }}
-                      className="w-full flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-accent group transition-all"
-                    >
-                      <Edit3 className="w-4 h-4 text-white" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Edit Profile</span>
-                    </button>
+                    <div className="space-y-4">
+                      {/* Identity Header in Popup */}
+                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5">
+                        <AvatarDisplay 
+                          src={user.photoURL} 
+                          name={user.displayName} 
+                          size="md" 
+                          borderId={user.equippedBorder}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-white uppercase truncate">{user.displayName}</p>
+                          <p className={cn("text-[7px] font-bold uppercase tracking-widest", roleInfo.color)}>{roleInfo.text}</p>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => { router.push('/profile'); setShowPopup(false); }}
+                        className="w-full flex items-center gap-3 p-3 bg-accent text-white rounded-xl hover:brightness-110 transition-all shadow-lg shadow-accent/20"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Edit Profile</span>
+                      </button>
+                    </div>
                   ) : (
                     <button 
                       onClick={() => { router.push('/login'); setShowPopup(false); }}

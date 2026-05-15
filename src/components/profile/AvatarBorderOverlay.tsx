@@ -9,12 +9,12 @@ interface AvatarBorderOverlayProps {
   className?: string;
 }
 
-// System Static Border Map - High Fidelity Nodes
+// Direct High-Fidelity PNG Assets (ImgBB Direct Links)
 const borderMap: Record<string, string> = {
-  'ink-master': 'https://ibb.co.com/DgDsKgVh',
-  'cyber-core': 'https://ibb.co.com/JR5FhyDW',
-  'celestial-dream': 'https://ibb.co.com/n85NZRVB',
-  'stellar-compass': 'https://ibb.co.com/LdzzJtRW'
+  'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
+  'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
+  'celestial-dream': 'https://i.ibb.co.com/n85NZRVB/c3d098ec-c12d-4ece-b742-adc657357290-20260516-032528-0000.png',
+  'stellar-compass': 'https://i.ibb.co.com/LdzzJtRW/823e8e96-4d93-49dc-be69-36c49b67a1b8-20260516-032451-0000.png'
 };
 
 /**
@@ -24,7 +24,6 @@ const borderMap: Record<string, string> = {
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
 
-  // Resolve source: check static map or assume dynamic URL/ID
   const src = borderMap[borderId] || borderId;
 
   return (
@@ -37,13 +36,16 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.28]" // Optimized scale for perfect circle wrapping
+          "scale-[1.28]" 
         )}
         style={{
           width: '100%',
           height: '100%'
         }}
         draggable={false}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
       />
     </div>
   );
