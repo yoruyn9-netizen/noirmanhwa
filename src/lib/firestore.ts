@@ -13,10 +13,11 @@ import {
   limit,
   onSnapshot,
   where,
-  getDocs
+  getDocs,
+  arrayUnion
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-import { UserProfile } from '@/types/user';
+import { UserProfile, ReadingHistoryItem } from '@/types/user';
 import { ChatMessage } from '@/types/chat';
 import { Report } from '@/types/report';
 
@@ -67,6 +68,22 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
   if (!uid) return;
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
+};
+
+export const syncHistoryToFirestore = async (uid: string, item: ReadingHistoryItem) => {
+  if (!uid) return;
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const currentHistory = (snap.data().readingHistory || []) as ReadingHistoryItem[];
+  // Remove existing entry for this manga if it exists
+  const filtered = currentHistory.filter(h => h.mangaId !== item.mangaId);
+  
+  await updateDoc(userRef, {
+    readingHistory: [item, ...filtered].slice(0, 20),
+    "stats.totalChaptersRead": (snap.data().stats?.totalChaptersRead || 0) + 1
+  });
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {

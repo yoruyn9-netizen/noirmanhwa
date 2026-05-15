@@ -7,10 +7,10 @@ import { useAuthStore } from '@/store/authStore';
 import { subscribeToChat, sendChatMessage } from '@/lib/firestore';
 import { ChatMessage } from '@/types/chat';
 import MessageBubble from './MessageBubble';
+import UserProfileModal from './UserProfileModal';
 import { 
   Send, 
   MessageSquare, 
-  Lock, 
   Maximize2,
   Loader2
 } from 'lucide-react';
@@ -29,6 +29,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +74,6 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
     <section className={previewMode ? "mt-24 px-4 pb-20" : "h-full flex flex-col"}>
       <div className={previewMode ? "max-w-4xl mx-auto space-y-6" : "flex-1 flex flex-col max-w-5xl mx-auto w-full"}>
         
-        {/* Header */}
         <div className="flex items-center justify-between px-2 py-4">
           <div className="flex items-center gap-3">
             <div className="relative p-2.5 bg-accent/5 rounded-xl border border-accent/10">
@@ -96,12 +96,10 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
           )}
         </div>
 
-        {/* Container */}
         <div className={previewMode 
           ? "h-[450px] flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative" 
           : "flex-1 flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border-x border-white/5 overflow-hidden"
         }>
-          {/* Message Stream */}
           <div 
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-6 space-y-4 hide-scrollbar"
@@ -116,13 +114,13 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                 <MessageBubble 
                   key={msg.id} 
                   message={msg} 
-                  isMe={user?.uid === msg.senderId} 
+                  isMe={user?.uid === msg.senderId}
+                  onUserClick={setSelectedUserId}
                 />
               ))
             )}
           </div>
 
-          {/* Footer Input or Login Prompt */}
           <div className="p-6 bg-white/5 border-t border-white/5">
             {!user ? (
               <div className="flex items-center justify-between">
@@ -157,6 +155,12 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
           </div>
         </div>
       </div>
+
+      <UserProfileModal 
+        userId={selectedUserId} 
+        isOpen={!!selectedUserId} 
+        onClose={() => setSelectedUserId(null)} 
+      />
     </section>
   );
 }

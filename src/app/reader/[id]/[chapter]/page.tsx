@@ -2,13 +2,14 @@
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
-import { getChapterServer, fetchAllChapters } from '@/lib/mangaDexChapter';
+import { getChapterServer } from '@/lib/mangaDexChapter';
 import { MangaSource } from '@/types/manga';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ImagePage from '@/components/reader/ImagePage';
 import { AlertTriangle, ArrowLeft, Settings, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { updateReadingHistory } from '@/lib/library';
+import { useUIStore } from '@/store/ui';
+import { syncHistoryToFirestore } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
 
 export default function ReaderDynamicPage({ params }: { params: Promise<{ id: string; chapter: string }> }) {
@@ -16,10 +17,10 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { addToHistory: updateLocalHistory } = useUIStore();
   const source = (searchParams.get('source') as MangaSource) || 'mangadex';
   
   const [images, setImages] = useState<string[]>([]);
-  const [chapterNum, setChapterNum] = useState('?');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showUI, setShowUI] = useState(true);
@@ -37,9 +38,25 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
         
         setImages(imgs);
         
-        // Track History
+        // SYNC NARRATIVE HISTORY
+        const historyItem = {
+          mangaId,
+          chapterId,
+          chapterNum: chapter.chapter || 'X',
+          title: mangaId.replace(/-/g, ' ').toUpperCase(),
+          lastRead: new Date().toISOString(),
+          progress: 0
+        };
+
+        // 1. Local Persistence (Zustand)
+        updateLocalHistory(historyItem);
+
+        // 2. Remote Synchronization (Firestore)
         if (user) {
-          updateReadingHistory(user.uid, mangaId, chapterId, "X");
+          syncHistoryToFirestore(user.uid, {
+            ...historyItem,
+            lastRead: serverTimestamp() as any
+          });
         }
       } catch (err) {
         setError(true);
@@ -48,7 +65,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
       }
     };
     load();
-  }, [chapterId, mangaId, user]);
+  }, [chapterId, mangaId, user, updateLocalHistory]);
 
   if (loading) return (
     <div className="fixed inset-0 bg-[#020205] flex flex-col items-center justify-center space-y-6">
@@ -97,3 +114,6 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
     </div>
   );
 }
+
+// Added missing import for firestore helper
+import { serverTimestamp } from 'firebase/firestore';
