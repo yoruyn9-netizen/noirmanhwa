@@ -14,7 +14,8 @@ import {
   onSnapshot,
   where,
   getDocs,
-  arrayUnion
+  arrayUnion,
+  deleteDoc
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { UserProfile, ReadingHistoryItem } from '@/types/user';
@@ -40,6 +41,7 @@ export const syncUserToFirestore = async (user: any) => {
       role: user.role || 'user',
       isPremium: false,
       isBanned: false,
+      equippedBorder: 'none',
       joinedAt: serverTimestamp(),
       lastActive: serverTimestamp(),
       updatedAt: new Date().toISOString(),
@@ -70,22 +72,6 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
   await updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
 };
 
-export const syncHistoryToFirestore = async (uid: string, item: ReadingHistoryItem) => {
-  if (!uid) return;
-  const userRef = doc(db, 'users', uid);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
-
-  const currentHistory = (snap.data().readingHistory || []) as ReadingHistoryItem[];
-  // Remove existing entry for this manga if it exists
-  const filtered = currentHistory.filter(h => h.mangaId !== item.mangaId);
-  
-  await updateDoc(userRef, {
-    readingHistory: [item, ...filtered].slice(0, 20),
-    "stats.totalChaptersRead": (snap.data().stats?.totalChaptersRead || 0) + 1
-  });
-};
-
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   const usersRef = collection(db, 'users');
   const snap = await getDocs(usersRef);
@@ -97,15 +83,10 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
  */
 export const sendChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
   const chatRef = collection(db, 'chat_messages');
-  const payload = {
+  await addDoc(chatRef, {
     ...msg,
-    replyTo: msg.replyTo || null,
-    replyToUser: msg.replyToUser || null,
-    replyToText: msg.replyToText || null,
-    mangaMention: msg.mangaMention || null,
     timestamp: serverTimestamp()
-  };
-  await addDoc(chatRef, payload);
+  });
 };
 
 export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => {
@@ -125,6 +106,40 @@ export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => 
 };
 
 /**
+ * NOTIFICATION SYSTEM
+ */
+export const sendNotification = async (title: string, message: string) => {
+  const notifRef = collection(db, 'notifications');
+  await addDoc(notifRef, {
+    title,
+    message,
+    timestamp: serverTimestamp(),
+    active: true
+  });
+};
+
+export const subscribeToNotifications = (callback: (notifs: any[]) => void) => {
+  const q = query(collection(db, 'notifications'), orderBy('timestamp', 'desc'), limit(10));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  });
+};
+
+/**
+ * BORDER SYSTEM
+ */
+export const addCustomBorder = async (name: string, imageUrl: string, tier: string, ownerId: string) => {
+  const borderRef = collection(db, 'custom_borders');
+  await addDoc(borderRef, { name, imageUrl, tier, createdBy: ownerId, timestamp: serverTimestamp() });
+};
+
+export const subscribeToCustomBorders = (callback: (borders: any[]) => void) => {
+  return onSnapshot(collection(db, 'custom_borders'), (snap) => {
+    callback(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  });
+};
+
+/**
  * REPORTS SYSTEM
  */
 export const submitReport = async (report: Omit<Report, 'id' | 'timestamp' | 'status'>) => {
@@ -139,11 +154,7 @@ export const submitReport = async (report: Omit<Report, 'id' | 'timestamp' | 'st
 export const subscribeToReports = (callback: (reports: Report[]) => void) => {
   const q = query(collection(db, 'reports'), orderBy('timestamp', 'desc'));
   return onSnapshot(q, (snap) => {
-    const reports = snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Report));
-    callback(reports);
+    callback(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Report)));
   });
 };
 

@@ -9,9 +9,10 @@
         "displayName": { "type": "string" },
         "bio": { "type": "string" },
         "photoURL": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "owner"] },
+        "role": { "type": "string", "enum": ["user", "admin", "owner"] },
         "isPremium": { "type": "boolean" },
         "isBanned": { "type": "boolean" },
+        "equippedBorder": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
@@ -28,13 +29,29 @@
         "isOwner": { "type": "boolean" },
         "replyTo": { "type": "string" },
         "replyToUser": { "type": "string" },
-        "mangaMention": {
-          "type": "object",
-          "properties": {
-            "mangaId": { "type": "string" },
-            "title": { "type": "string" }
-          }
-        }
+        "replyToText": { "type": "string" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System-wide owner announcements",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "active": { "type": "boolean" }
+      }
+    },
+    "CustomBorder": {
+      "title": "CustomBorder",
+      "description": "Owner-uploaded avatar borders",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "tier": { "type": "string" },
+        "createdBy": { "type": "string" }
       }
     },
     "Report": {
@@ -63,6 +80,14 @@
     "/chat_messages/{messageId}": {
       "schema": "#/backend/entities/ChatMessage",
       "description": "Global chat stream"
+    },
+    "/notifications/{notifId}": {
+      "schema": "#/backend/entities/Notification",
+      "description": "Global announcements"
+    },
+    "/custom_borders/{borderId}": {
+      "schema": "#/backend/entities/CustomBorder",
+      "description": "Available avatar frames"
     },
     "/reports/{reportId}": {
       "schema": "#/backend/entities/Report",
