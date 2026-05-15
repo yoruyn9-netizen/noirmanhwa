@@ -15,15 +15,15 @@ interface AvatarDisplayProps {
 
 /**
  * Enhanced Avatar Display Node
- * Features deep integration with the PNG Border Engine.
+ * Features deep integration with the PNG Border Engine and circular geometry.
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
-    sm: 'w-8 h-8 rounded-lg',
-    md: 'w-10 h-10 rounded-xl',
-    lg: 'w-14 h-14 rounded-2xl',
-    xl: 'w-24 h-24 rounded-[2.5rem]',
-    huge: 'w-32 h-32 rounded-[3rem]'
+    sm: 'w-8 h-8 rounded-full',
+    md: 'w-10 h-10 rounded-full',
+    lg: 'w-14 h-14 rounded-full',
+    xl: 'w-24 h-24 rounded-full',
+    huge: 'w-32 h-32 rounded-full'
   };
 
   const initials = name ? name.substring(0, 2).toUpperCase() : '?';
@@ -38,7 +38,7 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
       {borderId && <AvatarBorderOverlay borderId={borderId} size={size} />}
 
       <div className={cn(
-        "w-full h-full rounded-[inherit] overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5",
+        "w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5",
         "relative z-10" // Content is below the border overlay
       )}>
         {src ? (

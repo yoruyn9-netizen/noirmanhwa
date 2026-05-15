@@ -9,12 +9,12 @@ interface AvatarBorderOverlayProps {
   className?: string;
 }
 
-// System Static Border Map
+// System Static Border Map - High Fidelity Nodes
 const borderMap: Record<string, string> = {
-  'ink-master': 'https://files.catbox.moe/11w4o6.jpg',
-  'cyber-core': 'https://files.catbox.moe/547ajf.jpg',
-  'celestial-dream': 'https://files.catbox.moe/i37jwr.jpg',
-  'stellar-compass': 'https://files.catbox.moe/celsgv.jpg'
+  'ink-master': 'https://ibb.co.com/DgDsKgVh',
+  'cyber-core': 'https://ibb.co.com/JR5FhyDW',
+  'celestial-dream': 'https://ibb.co.com/n85NZRVB',
+  'stellar-compass': 'https://ibb.co.com/LdzzJtRW'
 };
 
 /**
@@ -24,9 +24,7 @@ const borderMap: Record<string, string> = {
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
 
-  // Note: For dynamic borders uploaded by owner, the borderId will be the Firestore doc ID.
-  // We handle static defaults here, and fetch dynamic ones via effect in parent if needed.
-  // For this MVP, we assume borderId is either static key or a direct URL if custom.
+  // Resolve source: check static map or assume dynamic URL/ID
   const src = borderMap[borderId] || borderId;
 
   return (
@@ -39,7 +37,7 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.25]" 
+          "scale-[1.28]" // Optimized scale for perfect circle wrapping
         )}
         style={{
           width: '100%',

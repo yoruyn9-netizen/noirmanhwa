@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -19,6 +18,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface GlobalChatProps {
   previewMode?: boolean;
@@ -45,10 +45,10 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
   }, []);
 
   useEffect(() => {
-    if (scrollRef.current && !previewMode) {
+    if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, previewMode]);
+  }, [messages, loading]);
 
   const handleSend = async () => {
     if (!user || !inputText.trim()) return;
@@ -81,8 +81,14 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
   const displayedMessages = previewMode ? messages.slice(-5) : messages;
 
   return (
-    <section className={previewMode ? "mt-24 px-4 pb-20" : "h-full flex flex-col"}>
-      <div className={previewMode ? "max-w-4xl mx-auto space-y-6" : "flex-1 flex flex-col max-w-5xl mx-auto w-full"}>
+    <section className={cn(
+      "relative flex flex-col",
+      previewMode ? "mt-24 px-4 pb-20" : "h-full overflow-hidden"
+    )}>
+      <div className={cn(
+        "flex flex-col w-full mx-auto",
+        previewMode ? "max-w-4xl space-y-6" : "flex-1 max-w-5xl"
+      )}>
         
         <div className="flex items-center justify-between px-2 py-4">
           <div className="flex items-center gap-3">
@@ -101,23 +107,27 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
               className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all text-[9px] font-black uppercase tracking-widest"
             >
               <Maximize2 className="w-3 h-3" />
-              Full View
+              Full Terminal
             </button>
           )}
         </div>
 
-        <div className={previewMode 
-          ? "h-[450px] flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative" 
-          : "flex-1 flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border-x border-white/5 overflow-hidden"
-        }>
+        <div className={cn(
+          "flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 overflow-hidden shadow-2xl relative",
+          previewMode ? "h-[450px] rounded-[2.5rem]" : "flex-1 h-[calc(100vh-160px)]"
+        )}>
           <div 
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar"
+            className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar overscroll-contain"
           >
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
                 <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                <span className="text-[9px] font-black uppercase tracking-widest">Loading Conversation</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Synchronizing Logs</span>
+              </div>
+            ) : displayedMessages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
+                 <p className="text-[10px] font-black uppercase tracking-widest">Signal Void: Start a conversation</p>
               </div>
             ) : (
               displayedMessages.map((msg) => (
@@ -157,7 +167,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
             )}
           </AnimatePresence>
 
-          <div className="p-6 bg-white/5 border-t border-white/5 relative z-10">
+          <div className="p-6 bg-white/5 border-t border-white/5 relative z-10 shrink-0">
             {!user ? (
               <div className="flex items-center justify-between">
                 <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Sign in to participate in the chat</p>
@@ -176,8 +186,8 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
                       handleSend();
                     }
                   }}
-                  placeholder={replyTarget ? "Type your reply..." : "Type your message..."}
-                  className="w-full bg-[#050508] border border-white/5 rounded-2xl pl-6 pr-16 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-medium placeholder:text-neutral-700 min-h-[56px] max-h-32 resize-none"
+                  placeholder={replyTarget ? "Type your reply..." : "Broadcast your message..."}
+                  className="w-full bg-[#050508] border border-white/5 rounded-2xl pl-6 pr-16 py-4 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-medium placeholder:text-neutral-800 min-h-[56px] max-h-32 resize-none"
                 />
                 <button 
                   onClick={handleSend}
