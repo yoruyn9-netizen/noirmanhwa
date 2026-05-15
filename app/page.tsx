@@ -6,6 +6,7 @@ import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import HeroSlider from '@/components/HeroSlider';
 import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
 import MangaGrid from '@/components/manga/MangaGrid';
+import GlobalChat from '@/components/chat/GlobalChat';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -39,7 +40,6 @@ export default function Home() {
   return (
     <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden animate-in fade-in duration-1000">
       <section className="w-full pt-4">
-        {/* Note: HeroSlider expects MangaDex structure, adjusted to accept our unified Manga type */}
         <HeroSlider trending={trending as any} />
       </section>
 
@@ -53,6 +53,10 @@ export default function Home() {
           <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Node: Asura & Flame Scans</p>
         </div>
         <MangaGrid />
+      </section>
+
+      <section>
+        <GlobalChat previewMode={true} />
       </section>
     </div>
   );

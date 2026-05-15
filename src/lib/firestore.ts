@@ -52,7 +52,6 @@ export const syncUserToFirestore = async (user: any) => {
       }
     });
   } else {
-    // Update last active
     await updateDoc(userRef, { lastActive: serverTimestamp() });
   }
 };
