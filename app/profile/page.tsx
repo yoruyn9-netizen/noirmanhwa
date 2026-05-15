@@ -16,6 +16,10 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+/**
+ * High-Fidelity Profile Matrix
+ * Integrates Cloudinary-powered editing and dynamic border selection.
+ */
 function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { toast } = useToast();
