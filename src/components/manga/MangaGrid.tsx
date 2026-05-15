@@ -5,7 +5,7 @@ import { mangaApi } from '@/lib/mangaApi';
 import { Manga } from '@/types/manga';
 import MangaCard, { MangaCardSkeleton } from './MangaCard';
 import { RefreshCw, Zap, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 /**
  * Noir Discovery Grid - PURE REAL DATA VERSION

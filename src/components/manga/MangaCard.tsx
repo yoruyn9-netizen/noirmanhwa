@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,7 +5,7 @@ import Link from 'next/link';
 import { Manga } from '@/types/manga';
 import SafeImage from '@/components/SafeImage';
 import { motion } from 'framer-motion';
-import { Star, Clock, Zap, ExternalLink } from 'lucide-react';
+import { Star, ExternalLink } from 'lucide-react';
 import { cn, truncateTitle } from '@/lib/utils';
 import FlagBadge from '../ui/FlagBadge';
 
@@ -111,5 +110,23 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
         </div>
       </Link>
     </motion.div>
+  );
+}
+
+/**
+ * High-fidelity loading skeleton for the MangaCard component.
+ */
+export function MangaCardSkeleton() {
+  return (
+    <div className="w-full h-full animate-pulse">
+      <div className="aspect-[2/3] w-full bg-white/5 rounded-[2rem] border border-white/5 mb-4" />
+      <div className="space-y-2 px-1">
+        <div className="h-3 w-3/4 bg-white/10 rounded-full" />
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-1/3 bg-white/5 rounded-full" />
+          <div className="h-2 w-1/4 bg-white/5 rounded-full" />
+        </div>
+      </div>
+    </div>
   );
 }
