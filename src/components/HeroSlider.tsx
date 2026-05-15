@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -57,7 +58,7 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
               <MangaImage 
                 src={getCoverUrl(manga, 'original')} 
                 alt={getMangaTitle(manga)} 
-                className="w-full h-full object-cover brightness-[0.4] transition-transform duration-[4000ms] group-hover:scale-105"
+                className="w-full h-full object-cover brightness-[0.4] transition-all duration-[3000ms] group-hover:scale-105"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-transparent opacity-80" />

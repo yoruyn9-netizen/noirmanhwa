@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -63,7 +64,7 @@ export default function BottomNav() {
               key={label}
               href={targetHref}
               className={cn(
-                "relative flex items-center gap-2.5 px-5 py-3 rounded-full transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group",
+                "relative flex items-center gap-2.5 px-5 py-3 rounded-full transition-all duration-700 group",
                 isActive 
                   ? "bg-purple-600/20 text-purple-400 shadow-[inset_0_0_20px_rgba(168,85,247,0.1)]" 
                   : "text-neutral-600 hover:text-neutral-400"

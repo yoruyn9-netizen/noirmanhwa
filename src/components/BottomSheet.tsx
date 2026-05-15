@@ -32,7 +32,7 @@ export default function BottomSheet() {
       <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] animate-in fade-in duration-500" onClick={closePanel} />
       <div 
         ref={sheetRef}
-        className="fixed bottom-0 left-0 right-0 z-[70] bg-[#050508] rounded-t-[2.5rem] border-t border-white/5 shadow-[0_-20px_60px_rgba(0,0,0,1)] animate-in slide-in-from-bottom duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] max-w-2xl mx-auto pb-safe-area-inset-bottom"
+        className="fixed bottom-0 left-0 right-0 z-[70] bg-[#050508] rounded-t-[2.5rem] border-t border-white/5 shadow-[0_-20px_60px_rgba(0,0,0,1)] animate-in slide-in-from-bottom duration-700 max-w-2xl mx-auto pb-safe-area-inset-bottom"
       >
         <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mt-4 mb-2" onClick={closePanel} />
         
