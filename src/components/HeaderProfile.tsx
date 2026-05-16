@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -120,14 +121,22 @@ export default function HeaderProfile() {
 
                   {user ? (
                     <div className="space-y-4">
-                      {/* Identity Header in Popup */}
-                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5">
-                        <AvatarDisplay 
-                          src={user.photoURL} 
-                          name={user.displayName} 
-                          size="md" 
-                          borderId={user.equippedBorder}
-                        />
+                      {/* Identity Header in Popup - Optimized for Border/Badge Stacking */}
+                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 relative">
+                        <div className="relative">
+                          <AvatarDisplay 
+                            src={user.photoURL} 
+                            name={user.displayName} 
+                            size="md" 
+                            borderId={user.equippedBorder}
+                          />
+                          {/* AUTHORITY BADGE - FORCED TO TOP (z-30) */}
+                          {(user.isPremium || user.role !== 'user') && (
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-[30] animate-in zoom-in duration-300">
+                              <Zap className="w-3 h-3 text-black fill-current" />
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0">
                           <p className="text-[10px] font-black text-white uppercase truncate">{user.displayName}</p>
                           <p className={cn("text-[7px] font-bold uppercase tracking-widest", roleInfo.color)}>{roleInfo.text}</p>

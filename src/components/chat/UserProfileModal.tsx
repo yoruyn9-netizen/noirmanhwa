@@ -17,8 +17,7 @@ import {
   BookOpen, 
   Clock,
   ExternalLink,
-  Loader2,
-  Trash2
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -39,7 +38,7 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
   if (!isOpen) return null;
 
   const isModerator = currentUser?.role === 'owner' || currentUser?.role === 'admin';
-  const canManage = isModerator && profile?.role !== 'owner'; // Admins can't ban owner
+  const canManage = isModerator && profile?.role !== 'owner'; 
 
   return (
     <AnimatePresence>
@@ -74,7 +73,6 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
             </div>
           ) : (
             <>
-              {/* Header Visual */}
               <div className="h-32 bg-gradient-to-br from-accent/20 via-purple-900/10 to-transparent relative">
                 <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-black/40 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all z-20">
                   <X className="w-4 h-4 text-white" />
@@ -82,9 +80,8 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
               </div>
 
               <div className="px-8 pb-10 -mt-16 relative z-10 space-y-8">
-                {/* Avatar & Name */}
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="relative">
+                  <div className="relative group">
                     <AvatarDisplay 
                       src={profile.photoURL} 
                       name={profile.displayName} 
@@ -92,9 +89,10 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                       borderId={profile.equippedBorder} 
                       className="border-4 border-[#0a0a0f]" 
                     />
-                    {profile.isPremium && (
-                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-xl">
-                        <Zap className="w-3.5 h-3.5 fill-current" />
+                    {/* AUTHORITY BADGE - FORCED TO TOP (z-30) */}
+                    {(profile.isPremium || profile.role !== 'user') && (
+                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-[30] animate-in zoom-in duration-500">
+                        <Zap className="w-4 h-4 fill-current" />
                       </div>
                     )}
                   </div>
@@ -118,7 +116,6 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                   </p>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/5 rounded-2xl">
                   <button 
                     onClick={() => setActiveTab('history')}
@@ -140,7 +137,6 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                   </button>
                 </div>
 
-                {/* Tab Content */}
                 <div className="min-h-[200px]">
                   {activeTab === 'history' ? (
                     <div className="space-y-3">
@@ -185,7 +181,6 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                   )}
                 </div>
 
-                {/* Admin Actions */}
                 {canManage && (
                    <div className="pt-8 border-t border-white/5 space-y-4">
                       <p className="text-[8px] font-black text-red-500/60 uppercase tracking-[0.3em] text-center">Protocol Moderation</p>
