@@ -33,15 +33,25 @@ export const syncUserToFirestore = async (user: any) => {
   const snap = await getDoc(userRef);
   
   if (!snap.exists()) {
+    // Determine if user is owner
+    const isOwner = user.role === 'owner';
+    
+    // For owners, grant all borders; for regular users, start with empty array
+    const ownedBorders = isOwner 
+      ? ['ink-master', 'cyber-core', 'celestial-dream', 'stellar-compass']
+      : [];
+
     await setDoc(userRef, {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
+      bannerURL: null,
       role: user.role || 'user',
-      isPremium: false,
+      isPremium: user.isPremium || false,
       isBanned: false,
       equippedBorder: 'none',
+      ownedBorders: ownedBorders,
       joinedAt: serverTimestamp(),
       lastActive: serverTimestamp(),
       updatedAt: new Date().toISOString(),

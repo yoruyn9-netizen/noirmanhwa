@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Hardened Asura Scans Discovery Logic
  * Uses high-fidelity browser headers and stealth parameters.
+ * THROWS ERROR on failure instead of returning empty array.
  */
 export async function getAsuraData() {
   try {
@@ -30,35 +31,47 @@ export async function getAsuraData() {
     });
 
     if (!response.ok) {
-      console.warn(`[ASURA]: Source node responded with ${response.status}`);
-      return { success: false, data: [] };
+      throw new Error(`Asura API Error: ${response.status}`);
     }
 
     const data = await response.json();
     const list = Array.isArray(data) ? data : (data.series || data.data || []);
     
-    if (list.length === 0) return { success: false, data: [] };
+    if (list.length === 0) {
+      throw new Error('No series data from Asura');
+    }
 
     return {
       success: true,
       source: 'asura',
       data: list.map((item: any) => ({
         id: item.slug || item.id,
-        title: item.title || 'Signal Lost',
+        title: (item.title || 'Signal Lost').toUpperCase().substring(0, 50),
         cover: item.thumbnail?.url || item.cover?.url || item.image || '',
         status: item.status?.toLowerCase() || 'ongoing',
         type: 'MANHWA',
         source: 'asura',
-        genres: Array.isArray(item.genres) ? item.genres.map((g: any) => g.name || g) : []
+        genres: Array.isArray(item.genres) ? item.genres.map((g: any) => g.name || g) : [],
+        updatedAt: item.updatedAt || item.last_chapter_at
       }))
     };
   } catch (error) {
     console.error('❌ [ASURA PROXY ERROR]:', error);
-    return { success: false, data: [] };
+    throw error;
   }
 }
 
 export async function GET() {
-  const result = await getAsuraData();
-  return NextResponse.json(result, { status: result.success ? 200 : 503 });
+  try {
+    const result = await getAsuraData();
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: any) {
+    console.error('❌ [ASURA GET ERROR]:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to fetch Asura data',
+      data: []
+    }, { status: 503 });
+  }
 }
+

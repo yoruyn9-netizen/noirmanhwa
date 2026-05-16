@@ -20,7 +20,8 @@ const borderMap: Record<string, string> = {
 
 /**
  * Avatar Border Overlay Engine
- * Layered at z-40 to sit between Avatar (z-10) and Badge (z-50).
+ * STRICT Z-LAYER: z-20 (above avatar z-10, below badge z-50)
+ * Allows circular border to render perfectly without clipping
  */
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
@@ -33,17 +34,18 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
   return (
     <div 
       className={cn(
-        "absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible",
+        "absolute inset-0 pointer-events-none flex items-center justify-center",
+        "overflow-visible", // CRITICAL: Allow border to extend beyond parent
         className
       )}
-      style={{ zIndex: 40 }}
+      style={{ zIndex: 20 }}
     >
       <img 
         src={src} 
         alt="Identity Frame" 
         className={cn(
           "object-contain max-w-none transition-all duration-700 select-none",
-          "scale-[1.28]" // Perfectly wraps the circular avatar clip
+          "scale-[1.15]" // Perfect circular wrap around avatar
         )}
         style={{
           width: '100%',

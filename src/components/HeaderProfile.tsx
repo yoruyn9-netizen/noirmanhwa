@@ -120,7 +120,18 @@ export default function HeaderProfile() {
                   </div>
 
                   {user ? (
-                    <div className="flex flex-col items-center gap-5">
+                    <div className="flex flex-col items-center gap-5 w-full">
+                      {/* Banner Preview */}
+                      {user.bannerURL && (
+                        <div className="w-full h-24 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border border-white/5 -mx-6 -mt-6 mb-2">
+                          <img 
+                            src={user.bannerURL} 
+                            alt="profile banner" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+
                       <div className="relative inline-block overflow-visible">
                         <AvatarDisplay 
                           src={user.photoURL} 
@@ -129,7 +140,7 @@ export default function HeaderProfile() {
                           borderId={user.equippedBorder}
                         />
                         {(user.role !== 'user' || user.isPremium) && (
-                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-[100] border-2 border-[#0a0a0f]">
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-50 border-2 border-[#0a0a0f]">
                             {user.role === 'owner' ? <Crown className="w-3.5 h-3.5 text-black" /> : <Zap className="w-3.5 h-3.5 text-black" />}
                           </div>
                         )}

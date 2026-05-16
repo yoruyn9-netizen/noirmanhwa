@@ -18,6 +18,7 @@ export interface Manga {
 
 /**
  * Fetches the composite discovery stream from the hardened matrix.
+ * Throws error instead of returning empty array - never use fallback data.
  */
 export async function fetchMangaList(params?: any): Promise<Manga[]> {
   try {
@@ -28,24 +29,22 @@ export async function fetchMangaList(params?: any): Promise<Manga[]> {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.warn('📡 [Uplink Warning]:', errorData.error);
-      // If the API returned partial data despite the error, use it
-      if (errorData.data && errorData.data.length > 0) return errorData.data;
-      throw new Error(errorData.error || `Neural Link Error: ${response.status}`);
+      console.error('❌ [API ERROR]:', errorData.error || `HTTP ${response.status}`);
+      throw new Error(errorData.error || `API Error: ${response.status}`);
     }
 
     const result = await response.json();
     
-    if (!result.success && (!result.data || result.data.length === 0)) {
-      throw new Error(result.error || 'Signal Acquisition Failed');
+    if (!result.success || !result.data || result.data.length === 0) {
+      throw new Error(result.error || 'No manga data available');
     }
 
-    console.log(`✅ [SIGNAL ESTABLISHED]: ${result.data?.length || 0} real titles loaded.`);
-    return result.data || [];
+    console.log(`✅ [SIGNAL ESTABLISHED]: ${result.data.length} real titles loaded.`);
+    return result.data;
   } catch (error) {
     console.error('❌ [API]: Uplink synchronization failure.', error);
-    // Return empty array instead of crashing UI if possible
-    return [];
+    // THROW error, never return fallback data
+    throw error;
   }
 }
 
@@ -57,12 +56,18 @@ export async function fetchChapters(mangaId: string, source: string): Promise<an
   try {
     const endpoint = source === 'asura' 
       ? `/api/asura?path=/series/${mangaId}/chapters`
-      : `/api/flame?path=/posts/${mangaId}`; // Simplified for Flame
+      : `/api/flame?path=/posts/${mangaId}`;
 
     const res = await fetch(endpoint);
-    if (!res.ok) return [];
+    if (!res.ok) {
+      throw new Error(`Failed to fetch chapters from ${source}: ${res.status}`);
+    }
     
     const data = await res.json();
+    if (!data.chapters && !Array.isArray(data)) {
+      throw new Error(`Invalid chapter data from ${source}`);
+    }
+    
     const list = data.chapters || (Array.isArray(data) ? data : []);
     
     return list.map((ch: any) => ({
@@ -72,8 +77,8 @@ export async function fetchChapters(mangaId: string, source: string): Promise<an
       source: source
     })).sort((a: any, b: any) => parseFloat(b.number) - parseFloat(a.number));
   } catch (err) {
-    console.error(`❌ [Chapters]: Node ${mangaId} unreachable.`);
-    return [];
+    console.error(`❌ [Chapters]: Node ${mangaId} unreachable.`, err);
+    throw err;
   }
 }
 

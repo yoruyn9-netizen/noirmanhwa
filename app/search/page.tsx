@@ -34,33 +34,39 @@ function SearchPageContent() {
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchResults = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchMangaList();
-        let filtered = res;
+  const fetchResults = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetchMangaList();
+      let filtered = res;
 
-        if (query) {
-          filtered = filtered.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
-        }
-
-        if (selectedStatus.length > 0) {
-          filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
-        }
-
-        setResults(filtered);
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setLoading(false);
+      if (query) {
+        filtered = filtered.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
       }
-    };
 
+      if (selectedStatus.length > 0) {
+        filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
+      }
+
+      setResults(filtered);
+    } catch (error: any) {
+      console.error("Search error:", error);
+      setError(error.message || 'Failed to fetch manga data. Please try again.');
+      setResults([]);
+    } finally {
+      setLoading(false);
+      setRetrying(false);
+    }
+  };
+
+  useEffect(() => {
     const timer = setTimeout(fetchResults, 400);
     return () => clearTimeout(timer);
   }, [query, selectedStatus]);
@@ -83,6 +89,11 @@ function SearchPageContent() {
     } else {
       closePanel();
     }
+  };
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    await fetchResults();
   };
 
   return (
@@ -150,6 +161,21 @@ function SearchPageContent() {
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <ThreeBodyLoader />
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Searching...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 glass rounded-[3rem] border-dashed mx-2 p-8">
+           <AlertCircle className="w-12 h-12 text-red-500 opacity-60" />
+           <div className="space-y-3">
+             <h3 className="text-base font-black uppercase tracking-tight text-red-500">Search Error</h3>
+             <p className="text-muted-foreground font-medium text-[11px] opacity-50">{error}</p>
+           </div>
+           <button 
+             onClick={handleRetry}
+             disabled={retrying}
+             className="px-6 py-3 bg-accent text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+           >
+             {retrying ? 'Retrying...' : 'Try Again'}
+           </button>
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed mx-2">

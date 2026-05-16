@@ -15,7 +15,11 @@ interface AvatarDisplayProps {
 
 /**
  * Enhanced Avatar Node
- * Enforces strict layering: Avatar (z-10) < Border (z-40) < Badges (z-50)
+ * STRICT Z-LAYER ENFORCING:
+ * - Avatar Base: z-10
+ * - Border Overlay: z-20 (must be visible over avatar but below badge)
+ * - Badge (handled by parent): z-50 minimum
+ * Parent MUST have overflow-visible to prevent badge clipping
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
@@ -30,14 +34,15 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
 
   return (
     <div className={cn(
-      "relative flex items-center justify-center select-none overflow-visible shrink-0",
+      "relative flex items-center justify-center select-none",
+      "overflow-visible shrink-0", // CRITICAL: Must allow badge overflow
       sizeMap[size],
       className
     )}>
-      {/* Border Overlay - Middle Layer (z-40) */}
+      {/* Border Overlay - Layer 20 (below badge z-50) */}
       <AvatarBorderOverlay borderId={borderId} size={size} />
 
-      {/* Avatar Image Node - Base Layer (z-10) */}
+      {/* Avatar Image Node - Base Layer 10 */}
       <div 
         className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
         style={{ zIndex: 10 }}

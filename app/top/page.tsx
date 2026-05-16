@@ -16,27 +16,33 @@ import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 export default function TopListPage() {
   const [mangas, setMangas] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('trending');
 
   useEffect(() => {
     const fetchTop = async () => {
       setLoading(true);
+      setError(null);
       try {
         const data = await fetchMangaList();
-        // Dynamic sorting based on tab protocols
+        if (!data || data.length === 0) {
+          throw new Error('No manga data available');
+        }
+        // Dynamic sorting based on tab protocols - NO DUMMY RATINGS
         let sorted = [...data];
         if (activeTab === 'trending') {
           sorted = sorted.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
         } else if (activeTab === 'rated') {
-          sorted = sorted.map((m, i) => ({ ...m, rating: m.rating || (9.8 - (i * 0.05)).toFixed(1) }));
-          sorted = sorted.sort((a, b) => Number(b.rating) - Number(a.rating));
+          sorted = sorted.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
         } else {
           sorted = sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
         }
         
         setMangas(sorted);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[Ranking Sync Error]:', err);
+        setError(err.message || 'Failed to load manga data');
+        setMangas([]);
       } finally {
         setLoading(false);
       }
@@ -101,6 +107,37 @@ export default function TopListPage() {
                   <div className="absolute inset-0 blur-2xl bg-accent/20 animate-pulse" />
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">LOADING</p>
+              </motion.div>
+            ) : error ? (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center py-40 space-y-8"
+              >
+                <Trophy className="w-16 h-16 text-red-500 opacity-30" />
+                <div className="text-center space-y-3">
+                  <h3 className="text-lg font-black uppercase tracking-tighter text-red-500">Signal Lost</h3>
+                  <p className="text-[11px] text-neutral-400 font-medium">{error}</p>
+                </div>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-accent text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all"
+                >
+                  Retry Sync
+                </button>
+              </motion.div>
+            ) : mangas.length === 0 ? (
+              <motion.div 
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center py-40 space-y-6"
+              >
+                <Trophy className="w-16 h-16 text-accent opacity-30" />
+                <p className="text-[11px] text-neutral-400 font-medium">No manga available</p>
               </motion.div>
             ) : (
               <motion.div 

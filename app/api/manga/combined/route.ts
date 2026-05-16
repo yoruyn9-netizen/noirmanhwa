@@ -2,59 +2,78 @@
 import { NextResponse } from 'next/server';
 import { getAsuraData } from '../asura/route';
 import { getFlameData } from '../flame/route';
+import { getMangaDexData } from '../../mangadex/route';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Aggregated Discovery Matrix
- * Merges signals from Asura and Flame scans with an emergency fallback protocol.
+ * Merges signals from MangaDex, Asura, and Flame with proper error handling.
  */
 export async function GET() {
-  try {
-    const [asura, flame] = await Promise.all([
-      getAsuraData(),
-      getFlameData()
-    ]);
+  const results: any[] = [];
+  const errors: string[] = [];
+  const sources: Record<string, number> = {};
 
-    let allManga = [...(asura.data || []), ...(flame.data || [])];
-    
-    // Sort by title uniqueness to provide a better mix
-    allManga = allManga.sort(() => Math.random() - 0.5);
+  // Fetch all sources in parallel with error handling
+  const [asuraResult, flameResult, mangadexResult] = await Promise.allSettled([
+    getAsuraData(),
+    getFlameData(),
+    getMangaDexData()
+  ]);
 
-    const sources = {
-      asura: asura.data?.length || 0,
-      flame: flame.data?.length || 0
-    };
+  // Process MangaDex
+  if (mangadexResult.status === 'fulfilled' && mangadexResult.value?.data) {
+    results.push(...mangadexResult.value.data);
+    sources.mangadex = mangadexResult.value.data.length;
+  } else if (mangadexResult.status === 'rejected') {
+    errors.push(`MangaDex: ${mangadexResult.reason?.message || 'Unknown error'}`);
+  }
 
-    // EMERGENCY PROTOCOL: If all real-time nodes fail, provide backup signals
-    if (allManga.length === 0) {
-      console.warn('⚠️ [MATRIX]: All primary nodes unreachable. Deploying emergency backup signals.');
-      const backupSignals = [
-        { id: 'solo-leveling', title: 'SOLO LEVELING', cover: 'https://picsum.photos/seed/solo/400/600', status: 'completed', source: 'asura', genres: ['Action', 'Fantasy'] },
-        { id: 'omniscient-reader', title: 'OMNISCIENT READER', cover: 'https://picsum.photos/seed/orv/400/600', status: 'ongoing', source: 'flame', genres: ['System', 'Fantasy'] },
-        { id: 'return-mount-hua', title: 'RETURN OF MOUNT HUA', cover: 'https://picsum.photos/seed/hua/400/600', status: 'ongoing', source: 'asura', genres: ['Martial Arts'] }
-      ];
-      return NextResponse.json({
-        success: true,
-        data: backupSignals,
-        sources: { backup: backupSignals.length },
-        error: 'Running on emergency backup signals'
-      });
-    }
+  // Process Asura
+  if (asuraResult.status === 'fulfilled' && asuraResult.value?.data) {
+    results.push(...asuraResult.value.data);
+    sources.asura = asuraResult.value.data.length;
+  } else if (asuraResult.status === 'rejected') {
+    errors.push(`Asura: ${asuraResult.reason?.message || 'Unknown error'}`);
+  }
 
-    return NextResponse.json({
-      success: true,
-      data: allManga,
-      sources,
-      total: allManga.length,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('❌ [COMBINED CRASH]:', error);
+  // Process Flame
+  if (flameResult.status === 'fulfilled' && flameResult.value?.data) {
+    results.push(...flameResult.value.data);
+    sources.flame = flameResult.value.data.length;
+  } else if (flameResult.status === 'rejected') {
+    errors.push(`Flame: ${flameResult.reason?.message || 'Unknown error'}`);
+  }
+
+  // Remove duplicates based on ID + source combo
+  const uniqueMap = new Map();
+  const allManga = results.filter(manga => {
+    const key = `${manga.id}-${manga.source}`;
+    if (uniqueMap.has(key)) return false;
+    uniqueMap.set(key, true);
+    return true;
+  });
+
+  // Shuffle for better variety
+  allManga.sort(() => Math.random() - 0.5);
+
+  if (allManga.length === 0) {
     return NextResponse.json({
       success: false,
-      error: 'Neural Link Fatal Crash',
-      data: []
-    }, { status: 500 });
+      error: `All sources failed: ${errors.join(', ')}`,
+      data: [],
+      sources,
+      timestamp: new Date().toISOString()
+    }, { status: 503 });
   }
+
+  return NextResponse.json({
+    success: true,
+    data: allManga.slice(0, 100), // Limit to 100 for performance
+    sources,
+    total: allManga.length,
+    errors: errors.length > 0 ? errors : undefined,
+    timestamp: new Date().toISOString()
+  }, { status: 200 });
 }

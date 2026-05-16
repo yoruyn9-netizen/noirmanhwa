@@ -6,10 +6,11 @@ import RequireAuth from '@/components/auth/RequireAuth';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from '@/components/profile/AvatarDisplay';
 import ProfileEditor from '@/components/profile/ProfileEditor';
-import BorderSelector from '@/components/profile/BorderSelector';
+import BannerEditor from '@/components/profile/BannerEditor';
+import BorderGalleryModal from '@/components/profile/BorderGalleryModal';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
-  Edit3, LayoutGrid, Crown, Star
+  Edit3, LayoutGrid, Crown, Star, Grid3X3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -18,12 +19,13 @@ import { cn } from '@/lib/utils';
 
 /**
  * High-Fidelity Profile Matrix
- * Integrates Cloudinary-powered editing and dynamic border selection.
+ * Integrates Cloudinary-powered banner editing, border selection, and avatar customization.
  */
 function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { toast } = useToast();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isBorderGalleryOpen, setIsBorderGalleryOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -46,12 +48,20 @@ function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
+      {/* Banner Section */}
+      <section className="space-y-3 px-2">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-black tracking-tighter uppercase text-glow">Profile Banner</h2>
+        </div>
+        <BannerEditor bannerURL={user.bannerURL} displayName={user.displayName} />
+      </section>
+
       {/* Profile Card */}
-      <div className="relative p-10 bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] overflow-hidden group">
+      <div className="relative p-10 bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] overflow-hidden group px-2 md:px-10">
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-accent/5 rounded-full blur-[100px]" />
         
         <div className="relative z-10 flex flex-col items-center md:flex-row md:items-start gap-10">
-          <div className="relative">
+          <div className="relative overflow-visible">
              <AvatarDisplay 
                 src={user.photoURL} 
                 name={user.displayName} 
@@ -85,6 +95,13 @@ function ProfilePage() {
                 <Edit3 className="w-3.5 h-3.5" /> Calibrate Identity
               </button>
               
+              <button
+                onClick={() => setIsBorderGalleryOpen(true)}
+                className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-accent/20 hover:border-accent/40 transition-all flex items-center gap-3"
+              >
+                <Grid3X3 className="w-3.5 h-3.5" /> Avatar Frames
+              </button>
+              
               {(isOwner || isAdmin) && (
                 <Link 
                   href="/admin"
@@ -112,11 +129,6 @@ function ProfilePage() {
         ))}
       </div>
 
-      {/* Equipment Hub */}
-      <section className="px-2">
-        <BorderSelector />
-      </section>
-
       {/* Footer Command */}
       <div className="px-2">
         <button onClick={handleLogout} className="w-full flex items-center justify-between p-8 bg-red-600/5 border border-red-600/10 rounded-[2.5rem] group hover:bg-red-600 transition-all shadow-xl">
@@ -133,11 +145,14 @@ function ProfilePage() {
         </button>
       </div>
 
+      {/* Modals */}
       <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[4rem] p-0 overflow-hidden">
           <ProfileEditor onClose={() => setIsEditorOpen(false)} />
         </SheetContent>
       </Sheet>
+
+      <BorderGalleryModal isOpen={isBorderGalleryOpen} onClose={() => setIsBorderGalleryOpen(false)} />
     </div>
   );
 }
