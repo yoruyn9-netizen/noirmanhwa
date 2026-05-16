@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -45,25 +46,28 @@
 
 @layer utilities {
   .text-glow { text-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+  .text-glow-intense { text-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+  
   .shinigami-card {
     @apply relative overflow-hidden rounded-2xl bg-[#0a0a0f]/60 border border-white/5 transition-all duration-500 hover:border-accent/40 hover:-translate-y-1;
   }
+  
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* Custom Scrollbar for Chat */
+  /* Custom Premium Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.02);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(139, 92, 246, 0.2);
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.4);
   }
 
   /* Three-Body Loader Animation */

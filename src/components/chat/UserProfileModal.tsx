@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -16,12 +17,12 @@ import {
   BookOpen, 
   Clock,
   ExternalLink,
-  Loader2
+  Loader2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import AvatarBorderOverlay from '../profile/AvatarBorderOverlay';
 
 interface UserProfileModalProps {
   userId: string;
@@ -42,12 +43,12 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+          className="absolute inset-0 bg-black/90 backdrop-blur-xl" 
           onClick={onClose} 
         />
         
@@ -60,61 +61,52 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
           {loading ? (
             <div className="h-[500px] flex flex-col items-center justify-center space-y-4 opacity-40">
               <Loader2 className="w-8 h-8 animate-spin text-accent" />
-              <span className="text-[9px] font-black uppercase tracking-widest">Retrieving Identity Node</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white">Retrieving Node</span>
             </div>
           ) : !profile ? (
             <div className="h-[400px] flex flex-col items-center justify-center p-10 text-center space-y-6">
               <ShieldAlert className="w-12 h-12 text-red-500/20" />
               <div className="space-y-1">
-                <h3 className="text-sm font-black uppercase">Node Data Lost</h3>
-                <p className="text-[9px] font-black text-neutral-600">The requested profile could not be localized.</p>
+                <h3 className="text-sm font-black uppercase">Identity Lost</h3>
+                <p className="text-[9px] font-black text-neutral-600">The requested profile node could not be localized.</p>
               </div>
               <button onClick={onClose} className="px-10 py-3 bg-white/5 rounded-xl text-[9px] font-black">CLOSE</button>
             </div>
           ) : (
             <>
-              <div className="h-32 bg-gradient-to-br from-accent/20 via-purple-900/10 to-transparent relative">
-                <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-black/40 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all z-20">
-                  <X className="w-4 h-4 text-white" />
+              {/* Banner Layer */}
+              <div className="h-32 bg-white/[0.02] relative overflow-hidden">
+                {profile.bannerURL ? (
+                  <img src={profile.bannerURL} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-transparent" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] to-transparent opacity-80" />
+                <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 backdrop-blur-md rounded-2xl hover:bg-white/10 transition-all z-20">
+                  <X className="w-5 h-5 text-white" />
                 </button>
               </div>
 
               <div className="px-8 pb-10 -mt-16 relative z-10 space-y-8">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  {/* IDENTITY MATRIX: Avatar + Border + Badge */}
+                <div className="flex flex-col items-center text-center space-y-5">
                   <div className="relative inline-block overflow-visible">
-                    {/* AVATAR BASE (z-10) */}
-                    <div className="relative z-10">
-                      <AvatarDisplay 
-                        src={profile.photoURL} 
-                        name={profile.displayName} 
-                        size="huge" 
-                      />
-                    </div>
-                    
-                    {/* BORDER OVERLAY (z-40) - Higher priority for visibility */}
-                    {profile.equippedBorder && profile.equippedBorder !== 'none' && (
-                      <AvatarBorderOverlay 
-                        borderId={profile.equippedBorder} 
-                        size="huge" 
-                        className="z-40" 
-                      />
-                    )}
-                    
-                    {/* AUTHORITY BADGE (z-50) - Frontmost Layer */}
+                    <AvatarDisplay 
+                      src={profile.photoURL} 
+                      name={profile.displayName} 
+                      size="huge" 
+                      borderId={profile.equippedBorder}
+                      className="border-8 border-[#0a0a0f]"
+                    />
                     {(profile.isPremium || profile.role !== 'user') && (
-                      <div 
-                        className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl animate-in zoom-in duration-300 flex items-center justify-center ring-4 ring-[#0a0a0f]"
-                        style={{ zIndex: 50 }}
-                      >
+                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-50 ring-4 ring-[#0a0a0f]">
                         <Zap className="w-5 h-5 fill-current" />
                       </div>
                     )}
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-center gap-3">
-                      <h2 className="text-2xl font-black uppercase tracking-tighter text-glow">{profile.displayName || 'Anonymous'}</h2>
+                      <h2 className="text-2xl font-black uppercase tracking-tighter text-glow text-white">{profile.displayName || 'Anonymous'}</h2>
                       <RoleBadge role={profile.role} />
                     </div>
                     <div className="flex items-center justify-center gap-4 text-[8px] font-black text-neutral-600 uppercase tracking-widest">
@@ -126,7 +118,7 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground max-w-sm italic opacity-60">
+                  <p className="text-[11px] text-neutral-400 max-w-sm italic opacity-80 bg-white/5 p-4 rounded-2xl border border-white/5">
                     {profile.bio || "No synchronization bio detected."}
                   </p>
                 </div>
@@ -148,31 +140,31 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                       activeTab === 'stats' ? "bg-accent text-white shadow-lg" : "text-neutral-500 hover:text-white"
                     )}
                   >
-                    <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                    <BarChart3 className="w-3.5 h-3.5" /> Stats
                   </button>
                 </div>
 
-                <div className="min-h-[200px]">
+                <div className="min-h-[220px]">
                   {activeTab === 'history' ? (
                     <div className="space-y-3">
                       {!profile.readingHistory || profile.readingHistory.length === 0 ? (
-                        <div className="py-10 text-center opacity-40">
-                           <p className="text-[9px] font-black uppercase tracking-widest">No reading activity logs</p>
+                        <div className="py-12 text-center opacity-30">
+                           <p className="text-[10px] font-black uppercase tracking-widest">No reading activity logs</p>
                         </div>
                       ) : (
                         profile.readingHistory.slice(0, 5).map((item) => (
                           <div key={item.mangaId} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-accent/40 transition-all">
                              <div className="flex items-center gap-4 min-w-0">
-                               <div className="w-8 h-12 rounded-lg bg-neutral-900 overflow-hidden flex-shrink-0">
+                               <div className="w-10 h-14 rounded-xl bg-neutral-900 overflow-hidden flex-shrink-0">
                                  {item.cover && <img src={item.cover} className="w-full h-full object-cover" alt="" />}
                                </div>
                                <div className="min-w-0">
-                                 <p className="text-[10px] font-black text-white truncate uppercase">{item.title}</p>
-                                 <p className="text-[8px] font-bold text-accent uppercase tracking-widest">Chapter {item.lastChapter}</p>
+                                 <p className="text-[11px] font-black text-white truncate uppercase">{item.title}</p>
+                                 <p className="text-[8px] font-black text-accent uppercase tracking-widest">Chapter {item.lastChapter}</p>
                                </div>
                              </div>
-                             <Link href={`/manga/${item.mangaId}`} className="p-2 bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                               <ExternalLink className="w-3.5 h-3.5 text-accent" />
+                             <Link href={`/manga/${item.mangaId}`} className="p-2.5 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
+                               <ExternalLink className="w-4 h-4 text-accent" />
                              </Link>
                           </div>
                         ))
@@ -186,10 +178,10 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                         { icon: Clock, label: 'READ TIME', value: `${profile.stats?.totalReadingTime || 0}H` },
                         { icon: ShieldAlert, label: 'REPORTS', value: 0 },
                       ].map((stat, i) => (
-                        <div key={i} className="p-5 bg-white/5 rounded-2xl border border-white/5 text-center space-y-1">
-                          <stat.icon className="w-4 h-4 text-accent mx-auto mb-2 opacity-40" />
+                        <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 text-center space-y-1 shadow-lg">
+                          <stat.icon className="w-5 h-5 text-accent mx-auto mb-2 opacity-40" />
                           <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">{stat.label}</p>
-                          <p className="text-lg font-black text-white">{stat.value}</p>
+                          <p className="text-xl font-black text-white">{stat.value}</p>
                         </div>
                       ))}
                     </div>
@@ -197,15 +189,15 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                 </div>
 
                 {canManage && (
-                   <div className="pt-8 border-t border-white/5 space-y-4">
-                      <p className="text-[8px] font-black text-red-500/60 uppercase tracking-[0.3em] text-center">Protocol Moderation</p>
-                      <div className="flex gap-3">
+                   <div className="pt-10 border-t border-white/5 space-y-4">
+                      <p className="text-[8px] font-black text-red-500/60 uppercase tracking-[0.4em] text-center">Security Protocol: Moderator Access</p>
+                      <div className="flex gap-4">
                         <button 
                           onClick={() => setPremium(profile.uid, !!profile.isPremium)}
                           disabled={isProcessing}
                           className={cn(
-                            "flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
-                            profile.isPremium ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-yellow-500 text-black shadow-xl"
+                            "flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-xl",
+                            profile.isPremium ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-yellow-500 text-black hover:brightness-110"
                           )}
                         >
                           {profile.isPremium ? 'REVOKE PREMIUM' : 'GRANT PREMIUM'}
@@ -214,11 +206,11 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                           onClick={() => banUser(profile.uid, !!profile.isBanned)}
                           disabled={isProcessing}
                           className={cn(
-                            "flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
-                            profile.isBanned ? "bg-green-500 text-black" : "bg-red-500 text-white shadow-xl"
+                            "flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-xl",
+                            profile.isBanned ? "bg-green-500 text-black" : "bg-red-500 text-white hover:bg-red-600"
                           )}
                         >
-                          {profile.isBanned ? 'REINSTATE NODE' : 'TERMINATE NODE'}
+                          {profile.isBanned ? 'REINSTATE NODE' : 'TERMINATE ACCESS'}
                         </button>
                       </div>
                    </div>

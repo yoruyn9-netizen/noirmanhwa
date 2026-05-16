@@ -5,17 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from './profile/AvatarDisplay';
 import { useRouter } from 'next/navigation';
-import { Bell, Edit3, LogIn, X, User, Crown, ShieldCheck, Zap } from 'lucide-react';
+import { Bell, Edit3, LogIn, X, User, Crown, ShieldCheck, Zap, Camera, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { subscribeToNotifications } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
-
-const borderMap: Record<string, string> = {
-  'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
-  'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
-  'celestial-dream': 'https://i.ibb.co.com/n85NZRVB/c3d098ec-c12d-4ece-b742-adc657357290-20260516-032528-0000.png',
-  'stellar-compass': 'https://i.ibb.co.com/LdzzJtRW/823e8e96-4d93-49dc-be69-36c49b67a1b8-20260516-032451-0000.png'
-};
 
 export default function HeaderProfile() {
   const { user } = useAuthStore();
@@ -118,76 +111,76 @@ export default function HeaderProfile() {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute top-full left-0 mt-3 w-64 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-[150] overflow-hidden"
+                className="absolute top-full left-0 mt-3 w-72 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl z-[150] overflow-hidden"
               >
-                <div className="p-4 space-y-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500">Identity Protocol</span>
-                    <button onClick={() => setShowPopup(false)}><X className="w-3 h-3 text-neutral-700" /></button>
-                  </div>
+                {user ? (
+                  <div className="flex flex-col">
+                    {/* Compact Banner */}
+                    <div className="h-24 w-full relative bg-white/[0.02]">
+                       {user.bannerURL ? (
+                         <img src={user.bannerURL} className="w-full h-full object-cover" alt="" />
+                       ) : (
+                         <div className="w-full h-full bg-gradient-to-br from-accent/10 to-transparent" />
+                       )}
+                       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] to-transparent" />
+                    </div>
 
-                  {user ? (
-                    <div className="space-y-4">
-                      {/* Identity Header in Popup - Strict Manual Stacking */}
-                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 relative overflow-visible">
-                        <div className="relative inline-block">
-                          {/* BASE AVATAR (z-10) */}
-                          <div className="relative z-10">
-                            <AvatarDisplay 
+                    <div className="px-6 pb-6 -mt-8 space-y-5">
+                      <div className="flex items-end justify-between">
+                         <div className="relative inline-block">
+                           <AvatarDisplay 
                               src={user.photoURL} 
                               name={user.displayName} 
-                              size="md" 
+                              size="lg" 
+                              borderId={user.equippedBorder}
+                              className="ring-4 ring-[#0a0a0f]"
                             />
-                          </div>
-                          
-                          {/* BORDER OVERLAY (z-10 absolute) */}
-                          {user.equippedBorder && borderMap[user.equippedBorder] && (
-                            <img 
-                              src={borderMap[user.equippedBorder]} 
-                              alt="Border"
-                              className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" 
-                              style={{ transform: 'scale(1.28)' }}
-                              draggable={false}
-                            />
-                          )}
+                            {(user.isPremium || user.role !== 'user') && (
+                              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-50">
+                                <Zap className="w-3.5 h-3.5 text-black fill-current" />
+                              </div>
+                            )}
+                         </div>
+                         <button 
+                           onClick={() => setShowPopup(false)}
+                           className="p-2 hover:bg-white/5 rounded-xl mb-2"
+                         >
+                           <X className="w-4 h-4 text-neutral-600" />
+                         </button>
+                      </div>
 
-                          {/* AUTHORITY BADGE (z-50) */}
-                          {(user.isPremium || user.role !== 'user') && (
-                            <div 
-                              className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300"
-                              style={{ zIndex: 50 }}
-                            >
-                              <Zap className="w-3.5 h-3.5 text-black fill-current" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-black text-white uppercase truncate">{user.displayName}</p>
-                          <p className={cn("text-[7px] font-bold uppercase tracking-widest", roleInfo.color)}>{roleInfo.text}</p>
-                        </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-white uppercase truncate">{user.displayName}</p>
+                        <p className={cn("text-[8px] font-black uppercase tracking-widest", roleInfo.color)}>{roleInfo.text}</p>
                       </div>
 
                       <button 
                         onClick={() => { router.push('/profile'); setShowPopup(false); }}
-                        className="w-full flex items-center gap-3 p-3 bg-accent text-white rounded-xl hover:brightness-110 transition-all shadow-lg shadow-accent/20"
+                        className="w-full flex items-center justify-center gap-3 py-3.5 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
                       >
                         <Edit3 className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Edit Profile</span>
+                        Enter Profile
                       </button>
                     </div>
-                  ) : (
+                  </div>
+                ) : (
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Identity Protocol</span>
+                      <button onClick={() => setShowPopup(false)}><X className="w-3 h-3 text-neutral-700" /></button>
+                    </div>
                     <button 
                       onClick={() => { router.push('/login'); setShowPopup(false); }}
-                      className="w-full flex items-center gap-3 p-3 bg-accent rounded-xl hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
+                      className="w-full flex items-center gap-4 p-4 bg-accent rounded-2xl hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
                     >
-                      <LogIn className="w-4 h-4 text-white" />
+                      <LogIn className="w-5 h-5 text-white" />
                       <div className="text-left">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white block">Sign In</span>
-                        <span className="text-[6px] font-bold text-white/60 uppercase tracking-widest leading-none">Access Matrix</span>
+                        <span className="text-[11px] font-black uppercase tracking-widest text-white block">Sign In</span>
+                        <span className="text-[7px] font-bold text-white/60 uppercase tracking-widest leading-none">Access Matrix</span>
                       </div>
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </motion.div>
             </>
           )}

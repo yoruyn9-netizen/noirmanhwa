@@ -24,11 +24,13 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  bannerURL: string | null;
   bio?: string;
   role: UserRole;
   isPremium?: boolean;
   isBanned?: boolean;
   equippedBorder?: string | null;
+  ownedBorders?: string[];
   updatedAt?: string;
   joinedAt?: any; // Firestore Timestamp
   lastActive?: any; // Firestore Timestamp
