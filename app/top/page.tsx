@@ -66,7 +66,7 @@ export default function TopListPage() {
         
         <div className="space-y-1">
           <h1 className="text-xl font-black tracking-tighter uppercase text-glow leading-none">The Leaderboard</h1>
-          <p className="text-[7px] font-black text-neutral-600 uppercase tracking-[0.4em] opacity-60">Synchronizing Global Narrative Ranks</p>
+          <p className="text-[7px] font-black text-neutral-600 uppercase tracking-0.4em opacity-60">Synchronizing Global Narrative Ranks</p>
         </div>
       </header>
 
@@ -100,7 +100,7 @@ export default function TopListPage() {
                   <ThreeBodyLoader />
                   <div className="absolute inset-0 blur-2xl bg-accent/20 animate-pulse" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Recalibrating Matrix</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">LOADING</p>
               </motion.div>
             ) : (
               <motion.div 

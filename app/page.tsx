@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -36,7 +35,7 @@ export default function Home() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6">
         <ThreeBodyLoader />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Syncing Matrix</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">LOADING</p>
       </div>
     );
   }
