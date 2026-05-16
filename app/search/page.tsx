@@ -90,10 +90,10 @@ function SearchPageContent() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
       <div className="space-y-1 ml-1">
         <h1 className="text-xl font-black tracking-tighter flex items-center gap-3 uppercase text-glow">
-          <SearchIconLucide className="w-5 h-5 text-accent" /> Search Matrix
+          <SearchIconLucide className="w-5 h-5 text-accent" /> Search Manga
         </h1>
         <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-40 ml-1">
-          Scan titles across all nodes
+          Find your next favorite title
         </p>
       </div>
 
@@ -150,13 +150,13 @@ function SearchPageContent() {
       {loading && results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <Loader2 className="w-8 h-8 text-accent animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Syncing Matrix...</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Searching...</p>
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed mx-2">
            <AlertCircle className="w-12 h-12 text-accent opacity-20" />
            <div className="space-y-2">
-             <h3 className="text-base font-black uppercase tracking-tight">No Signals Found</h3>
+             <h3 className="text-base font-black uppercase tracking-tight">No Results Found</h3>
              <p className="text-muted-foreground font-medium text-[11px] opacity-50">Try adjusting your search query.</p>
            </div>
         </div>
