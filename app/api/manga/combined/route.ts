@@ -7,51 +7,53 @@ export const dynamic = 'force-dynamic';
 async function trySource(name: string, fn: () => Promise<any>) {
   try {
     const result = await fn();
-    if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
-      return result;
+    if (!result || !Array.isArray(result.data)) {
+      console.warn(`❌ [COMBINED] ${name} returned invalid payload.`, { result });
+      return { data: [] };
     }
-    throw new Error(`${name} returned no valid data`);
+
+    if (result.data.length === 0) {
+      console.warn(`⚠️ [COMBINED] ${name} returned empty data array.`);
+      return { data: [] };
+    }
+
+    return { data: result.data };
   } catch (error: any) {
     const message = error?.message || 'Unknown error';
-    console.warn(`❌ [COMBINED] ${name} fallback error:`, message);
-    return { error: message };
+    console.warn(`❌ [COMBINED] ${name} request failed:`, message);
+    return { data: [] };
   }
 }
 
-/**
- * Aggregated Discovery Matrix
- * Merges signals from MangaDex, Asura, and Flame with proper error handling.
- */
 export async function GET() {
+  const sources = [
+    { name: 'MangaDex', fn: getMangaDexData },
+    { name: 'Asura', fn: getAsuraData },
+    { name: 'Flame', fn: getFlameData }
+  ];
+
+  const settled = await Promise.allSettled(sources.map((source) => trySource(source.name, source.fn)));
+
   const results: any[] = [];
   const errors: string[] = [];
-  const sources: Record<string, number> = {};
+  const counts: Record<string, number> = {};
 
-  const mangadexResult = await trySource('MangaDex', getMangaDexData);
-  if (mangadexResult?.data?.length) {
-    results.push(...mangadexResult.data);
-    sources.mangadex = mangadexResult.data.length;
-  } else {
-    errors.push(`MangaDex: ${mangadexResult.error}`);
-  }
+  settled.forEach((entry, index) => {
+    const source = sources[index];
 
-  const asuraResult = await trySource('Asura', getAsuraData);
-  if (asuraResult?.data?.length) {
-    results.push(...asuraResult.data);
-    sources.asura = asuraResult.data.length;
-  } else {
-    errors.push(`Asura: ${asuraResult.error}`);
-  }
+    if (entry.status === 'fulfilled') {
+      const data = entry.value?.data || [];
+      if (data.length > 0) {
+        results.push(...data);
+        counts[source.name.toLowerCase()] = data.length;
+      }
+    } else {
+      errors.push(`${source.name}: ${entry.reason?.message || 'unknown failure'}`);
+      console.warn(`❌ [COMBINED] ${source.name} failed`, entry.reason);
+    }
+  });
 
-  const flameResult = await trySource('Flame', getFlameData);
-  if (flameResult?.data?.length) {
-    results.push(...flameResult.data);
-    sources.flame = flameResult.data.length;
-  } else {
-    errors.push(`Flame: ${flameResult.error}`);
-  }
-
-  const uniqueMap = new Map();
+  const uniqueMap = new Map<string, boolean>();
   const allManga = results.filter((manga) => {
     const key = `${manga.id}-${manga.source}`;
     if (uniqueMap.has(key)) return false;
@@ -62,13 +64,13 @@ export async function GET() {
   allManga.sort(() => Math.random() - 0.5);
 
   if (allManga.length === 0) {
-    console.warn('⚠️ [COMBINED] All discovery sources failed.', { errors, sources });
+    console.warn('⚠️ [COMBINED] No source returned usable data.', { counts, errors });
     return NextResponse.json(
       {
         success: false,
-        error: `All sources failed: ${errors.join(' | ')}`,
         data: [],
-        sources,
+        sources: counts,
+        errors: errors.length > 0 ? errors : ['No sources returned valid data'],
         timestamp: new Date().toISOString()
       },
       { status: 200 }
@@ -79,7 +81,7 @@ export async function GET() {
     {
       success: true,
       data: allManga.slice(0, 100),
-      sources,
+      sources: counts,
       total: allManga.length,
       errors: errors.length > 0 ? errors : undefined,
       timestamp: new Date().toISOString()
