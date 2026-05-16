@@ -130,7 +130,7 @@ export default function HeaderProfile() {
                             size="md" 
                             borderId={user.equippedBorder}
                           />
-                          {/* AUTHORITY BADGE - LAPISAN PALING DEPAN (z-30) */}
+                          {/* AUTHORITY BADGE - FORCED FOREGROUND (z-30) */}
                           {(user.isPremium || user.role !== 'user') && (
                             <div 
                               className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300"

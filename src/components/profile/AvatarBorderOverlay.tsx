@@ -10,7 +10,7 @@ interface AvatarBorderOverlayProps {
   className?: string;
 }
 
-// Hierarki Aset PNG Berkualitas Tinggi (ImgBB Direct Links)
+// Direct PNG High-Fidelity Links
 const borderMap: Record<string, string> = {
   'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
   'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
@@ -18,10 +18,6 @@ const borderMap: Record<string, string> = {
   'stellar-compass': 'https://i.ibb.co.com/LdzzJtRW/823e8e96-4d93-49dc-be69-36c49b67a1b8-20260516-032451-0000.png'
 };
 
-/**
- * Mesin Overlay Border PNG
- * Menggunakan z-index 20 untuk berada di antara avatar dan badge.
- */
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
 
@@ -40,7 +36,7 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.28]" 
+          "scale-[1.28]" // Perfectly wraps the circular avatar clip
         )}
         style={{
           width: '100%',

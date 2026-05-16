@@ -14,8 +14,9 @@ interface AvatarDisplayProps {
 }
 
 /**
- * Node Tampilan Avatar yang Ditingkatkan
- * Mendukung sistem layering otomatis untuk Border (z-20) dan Avatar (z-10).
+ * Enhanced Avatar Node
+ * Strictly enforces layering: Avatar (z-10) < Border (z-20).
+ * External badges should be z-30.
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
@@ -30,14 +31,16 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
 
   return (
     <div className={cn(
-      "relative flex items-center justify-center select-none shadow-2xl overflow-visible",
+      "relative flex items-center justify-center select-none overflow-visible",
       sizeMap[size],
       className
     )}>
-      {/* PNG Border - Lapisan Tengah (z-20) */}
-      {borderId && <AvatarBorderOverlay borderId={borderId} size={size} />}
+      {/* PNG Border Overlay - Layer 2 (z-20) */}
+      {borderId && borderId !== 'none' && (
+        <AvatarBorderOverlay borderId={borderId} size={size} />
+      )}
 
-      {/* Kontainer Avatar - Lapisan Belakang (z-10) */}
+      {/* Avatar Image Container - Layer 1 (z-10) */}
       <div 
         className={cn(
           "w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
@@ -48,7 +51,7 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
           <img 
             src={src} 
             alt={name || "Avatar"} 
-            className="w-full h-full object-cover transition-opacity duration-500" 
+            className="w-full h-full object-cover" 
           />
         ) : (
           <div className="bg-accent/10 w-full h-full flex items-center justify-center">

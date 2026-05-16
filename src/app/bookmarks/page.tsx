@@ -1,15 +1,30 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUIStore } from '@/store/ui';
 import SafeImage from '@/components/SafeImage';
-import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import { Bookmark, Play, Clock, ArrowRight, Zap, BookOpen } from 'lucide-react';
 import Link from 'next/link';
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
 export default function BookmarksPage() {
   const { bookmarks, readingHistory } = useUIStore();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6">
+        <ThreeBodyLoader />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Syncing Archive</p>
+      </div>
+    );
+  }
 
   // Categorize manga
   const activeReading = bookmarks.filter(b => readingHistory.some(h => h.mangaId === b.id));
@@ -17,13 +32,13 @@ export default function BookmarksPage() {
 
   const renderMangaItem = (manga: any, isHistory: boolean) => {
     const historyEntry = readingHistory.find(h => h.mangaId === manga.id);
-    const coverUrl = getCoverUrl(manga, '256');
-    const title = getMangaTitle(manga);
+    const coverUrl = manga.cover;
+    const title = manga.title;
 
     return (
       <Link 
         key={manga.id} 
-        href={`/series/${manga.id}`}
+        href={`/manga/${manga.id}?source=${manga.source}`}
         className="group flex items-center gap-4 p-3 bg-[#0a0a0f]/40 backdrop-blur-md border border-white/5 rounded-2xl hover:border-accent/40 transition-all duration-500 shadow-xl"
       >
         <div className="relative w-16 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-white/10">
@@ -50,7 +65,7 @@ export default function BookmarksPage() {
             
             <div className="flex items-center gap-3">
                <span className="text-[7px] font-black text-neutral-600 uppercase tracking-widest flex items-center gap-1">
-                <Clock className="w-2 h-2" /> {manga.attributes.status}
+                <Clock className="w-2 h-2" /> {manga.status || 'Ongoing'}
               </span>
             </div>
           </div>
