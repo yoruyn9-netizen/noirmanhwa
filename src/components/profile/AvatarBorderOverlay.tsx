@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -20,15 +21,17 @@ const borderMap: Record<string, string> = {
 /**
  * PNG Border Overlay Engine
  * Uses scale transformation to perfectly wrap the circular avatar nodes.
+ * Z-index is strictly set to 20 to sit between avatar (10) and badge (30).
  */
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
 
+  // Attempt to resolve custom URL if borderId is not a preset key
   const src = borderMap[borderId] || borderId;
 
   return (
     <div className={cn(
-      "absolute inset-0 pointer-events-none z-20 flex items-center justify-center",
+      "absolute inset-0 pointer-events-none z-20 flex items-center justify-center overflow-visible",
       className
     )}>
       <img 
@@ -36,7 +39,7 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.28]" 
+          "scale-[1.28]" // Universal auto-fit scaling for all circular nodes
         )}
         style={{
           width: '100%',

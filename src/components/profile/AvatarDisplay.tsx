@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -16,6 +17,7 @@ interface AvatarDisplayProps {
 /**
  * Enhanced Avatar Display Node
  * Features deep integration with the PNG Border Engine and circular geometry.
+ * Uses overflow-visible to prevent clipping of scaled borders.
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
@@ -34,7 +36,7 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
       sizeMap[size],
       className
     )}>
-      {/* PNG Border Overlay Protocol */}
+      {/* PNG Border Overlay Protocol - Strictly Layered at z-20 */}
       {borderId && <AvatarBorderOverlay borderId={borderId} size={size} />}
 
       <div className={cn(
