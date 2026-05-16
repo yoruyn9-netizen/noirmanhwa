@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -15,8 +16,8 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 /**
- * High-Fidelity Profile Matrix
- * Optimized for visual identity and ownership management.
+ * User Profile Page
+ * Optimized for clarity and visual identity.
  */
 function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -25,7 +26,7 @@ function ProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    toast({ title: "Session Terminated", description: "Identity node disconnected." });
+    toast({ title: "Logged Out", description: "You have been securely signed out." });
   };
 
   if (!user) return null;
@@ -34,10 +35,10 @@ function ProfilePage() {
   const isAdmin = user.role === 'admin';
 
   const getRoleBadge = () => {
-    if (isOwner) return { label: 'SUPREME OWNER', color: 'bg-yellow-500 shadow-yellow-500/20' };
-    if (isAdmin) return { label: 'SYSTEM MODERATOR', color: 'bg-purple-600 shadow-purple-500/20' };
-    if (user.isPremium) return { label: 'PREMIUM NODE', color: 'bg-accent shadow-accent/20' };
-    return { label: 'VERIFIED USER', color: 'bg-white/10 shadow-none' };
+    if (isOwner) return { label: 'OWNER', color: 'bg-yellow-500 shadow-yellow-500/20' };
+    if (isAdmin) return { label: 'ADMIN', color: 'bg-purple-600 shadow-purple-500/20' };
+    if (user.isPremium) return { label: 'PREMIUM', color: 'bg-accent shadow-accent/20' };
+    return { label: 'USER', color: 'bg-white/10 shadow-none' };
   };
 
   const badge = getRoleBadge();
@@ -81,11 +82,11 @@ function ProfilePage() {
                   {badge.label}
                 </span>
               </div>
-              <p className="text-[10px] font-black text-accent uppercase tracking-[0.5em] opacity-80">Security Protocol: Active Node</p>
+              <p className="text-[10px] font-black text-accent uppercase tracking-[0.5em] opacity-80">Account Status: Active</p>
             </div>
             
             <p className="text-[12px] text-neutral-400 font-medium leading-relaxed max-w-lg opacity-60 italic">
-              {user.bio || "No data entry detected for this synchronization node."}
+              {user.bio || "No biography available."}
             </p>
             
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
@@ -93,7 +94,7 @@ function ProfilePage() {
                 onClick={() => setIsEditorOpen(true)} 
                 className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-accent hover:border-accent/40 transition-all flex items-center gap-3"
               >
-                <Edit3 className="w-3.5 h-3.5" /> Calibrate Node
+                <Edit3 className="w-3.5 h-3.5" /> Edit Profile
               </button>
               
               {(isOwner || isAdmin) && (
@@ -101,7 +102,7 @@ function ProfilePage() {
                   href="/admin"
                   className="px-8 py-3 bg-yellow-500 text-black rounded-2xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" /> Master Command
+                  <LayoutGrid className="w-3.5 h-3.5" /> Admin Dashboard
                 </Link>
               )}
             </div>
@@ -113,7 +114,7 @@ function ProfilePage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
           { icon: Zap, label: 'ENERGY', val: user.isPremium || isOwner ? 'MAX' : '99%' },
-          { icon: Globe, label: 'REGION', val: 'Global Matrix' },
+          { icon: Globe, label: 'REGION', val: 'Global' },
           { icon: ShieldCheck, label: 'STATUS', val: user.role.toUpperCase() },
         ].map((stat, i) => (
           <div key={i} className="p-8 bg-[#0a0a0f]/60 border border-white/5 rounded-[2.5rem] text-center space-y-1 shadow-2xl backdrop-blur-xl">
@@ -124,7 +125,7 @@ function ProfilePage() {
         ))}
       </div>
 
-      {/* Termination Sector */}
+      {/* Logout Actions */}
       <div className="pt-10">
         <button onClick={handleLogout} className="w-full flex items-center justify-between p-8 bg-red-600/5 border border-red-600/10 rounded-[3rem] group hover:bg-red-600 transition-all shadow-xl">
           <div className="flex items-center gap-6">
@@ -132,8 +133,8 @@ function ProfilePage() {
               <LogOut className="w-6 h-6 text-red-500 group-hover:text-white" />
             </div>
             <div className="text-left space-y-1">
-              <p className="text-[12px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Terminate Session</p>
-              <p className="text-[8px] text-neutral-600 group-hover:text-white/60 font-black uppercase tracking-widest">Securely end global synchronization</p>
+              <p className="text-[12px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Logout</p>
+              <p className="text-[8px] text-neutral-600 group-hover:text-white/60 font-black uppercase tracking-widest">Sign out of your account</p>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-neutral-800 group-hover:text-white group-hover:translate-x-2 transition-all" />
