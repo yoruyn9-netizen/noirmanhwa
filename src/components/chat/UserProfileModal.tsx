@@ -85,7 +85,13 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                 {/* Avatar & Name */}
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="relative">
-                    <AvatarDisplay src={profile.photoURL} name={profile.displayName} size="huge" className="border-4 border-[#0a0a0f]" />
+                    <AvatarDisplay 
+                      src={profile.photoURL} 
+                      name={profile.displayName} 
+                      size="huge" 
+                      borderId={profile.equippedBorder} 
+                      className="border-4 border-[#0a0a0f]" 
+                    />
                     {profile.isPremium && (
                       <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-xl">
                         <Zap className="w-3.5 h-3.5 fill-current" />

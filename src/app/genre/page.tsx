@@ -4,7 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { mangaApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { LayoutGrid, Loader2, Sparkles, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronRight } from 'lucide-react';
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
 export default function GenrePage() {
   const [genres, setGenres] = useState<any[]>([]);
@@ -28,11 +29,8 @@ export default function GenrePage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
-        <div className="relative">
-          <Loader2 className="w-8 h-8 text-accent animate-spin" />
-          <div className="absolute inset-0 blur-xl bg-accent/20 animate-pulse" />
-        </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Loading Categories</p>
+        <ThreeBodyLoader />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Loading Categories</p>
       </div>
     );
   }

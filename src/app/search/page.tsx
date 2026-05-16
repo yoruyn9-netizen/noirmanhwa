@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, use } from 'react';
@@ -6,7 +7,6 @@ import MangaCard from '@/components/manga/MangaCard';
 import { 
   Search as SearchIcon, 
   SlidersHorizontal, 
-  Loader2, 
   SearchIcon as SearchIconLucide, 
   AlertCircle,
   RotateCcw,
@@ -25,6 +25,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; genre?: string }>;
@@ -53,7 +54,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const [genres, setGenres] = useState<any[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(params.genre ? [params.genre] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(params.genre ? ['en'] : []); // Default to en if genre selected as mint might not support it
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(params.genre ? ['en'] : []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -97,7 +98,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
     fetchResults();
     
-    // Update URL without full reload
     const url = new URL(window.location.href);
     if (debouncedQuery) url.searchParams.set('q', debouncedQuery);
     else url.searchParams.delete('q');
@@ -116,7 +116,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
   const toggleLanguage = (lang: string) => {
     setSelectedLanguages(prev => 
-      prev.includes(lang) ? prev.filter(l => l !== lang) : [lang] // Single source selection for clarity
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [lang]
     );
   };
 
@@ -195,7 +195,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
               <ScrollArea className="flex-1 pr-4">
                 <div className="space-y-10 pb-20">
-                  {/* Language Section */}
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
                       <Languages className="w-3.5 h-3.5" /> Subtitle Language
@@ -218,7 +217,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                     </div>
                   </section>
 
-                  {/* Status Section */}
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
                       <Filter className="w-3.5 h-3.5" /> Status
@@ -227,7 +225,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                       {STATUS_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
-                          onClick={() => toggleStatus(status.value)}
+                          onClick={() => toggleStatus(opt.value)}
                           className={cn(
                             "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500",
                             selectedStatus.includes(opt.value) 
@@ -241,7 +239,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                     </div>
                   </section>
 
-                  {/* Genre Section */}
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
                       <Tags className="w-3.5 h-3.5" /> Genres
@@ -281,8 +278,8 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
       {loading && results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
-          <Loader2 className="w-8 h-8 text-accent animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Searching...</p>
+          <ThreeBodyLoader />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent animate-pulse">Syncing Matrix...</p>
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed">
