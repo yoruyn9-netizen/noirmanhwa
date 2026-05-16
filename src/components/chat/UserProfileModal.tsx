@@ -81,18 +81,21 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
 
               <div className="px-8 pb-10 -mt-16 relative z-10 space-y-8">
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="relative group">
+                  <div className="relative group overflow-visible">
                     <AvatarDisplay 
                       src={profile.photoURL} 
                       name={profile.displayName} 
                       size="huge" 
                       borderId={profile.equippedBorder} 
-                      className="border-4 border-[#0a0a0f]" 
                     />
-                    {/* AUTHORITY BADGE - FORCED TO TOP (z-30) */}
+                    
+                    {/* AUTHORITY BADGE - LAPISAN PALING DEPAN (z-30) */}
                     {(profile.isPremium || profile.role !== 'user') && (
-                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-[30] animate-in zoom-in duration-500">
-                        <Zap className="w-4 h-4 fill-current" />
+                      <div 
+                        className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl animate-in zoom-in duration-500 flex items-center justify-center"
+                        style={{ zIndex: 30 }}
+                      >
+                        <Zap className="w-5 h-5 fill-current" />
                       </div>
                     )}
                   </div>

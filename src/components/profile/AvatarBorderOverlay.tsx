@@ -10,7 +10,7 @@ interface AvatarBorderOverlayProps {
   className?: string;
 }
 
-// Direct High-Fidelity PNG Assets (ImgBB Direct Links)
+// Hierarki Aset PNG Berkualitas Tinggi (ImgBB Direct Links)
 const borderMap: Record<string, string> = {
   'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
   'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
@@ -19,27 +19,28 @@ const borderMap: Record<string, string> = {
 };
 
 /**
- * PNG Border Overlay Engine
- * Uses scale transformation to perfectly wrap the circular avatar nodes.
- * Z-index is strictly set to 20 to sit between avatar (10) and badge (30).
+ * Mesin Overlay Border PNG
+ * Menggunakan z-index 20 untuk berada di antara avatar dan badge.
  */
 export default function AvatarBorderOverlay({ borderId, size = 'md', className }: AvatarBorderOverlayProps) {
   if (!borderId || borderId === 'none') return null;
 
-  // Attempt to resolve custom URL if borderId is not a preset key
   const src = borderMap[borderId] || borderId;
 
   return (
-    <div className={cn(
-      "absolute inset-0 pointer-events-none z-20 flex items-center justify-center overflow-visible",
-      className
-    )}>
+    <div 
+      className={cn(
+        "absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible",
+        className
+      )}
+      style={{ zIndex: 20 }}
+    >
       <img 
         src={src} 
         alt="Avatar Border" 
         className={cn(
           "object-contain max-w-none transition-transform duration-700",
-          "scale-[1.28]" // Universal auto-fit scaling for all circular nodes
+          "scale-[1.28]" 
         )}
         style={{
           width: '100%',

@@ -122,7 +122,7 @@ export default function HeaderProfile() {
                   {user ? (
                     <div className="space-y-4">
                       {/* Identity Header in Popup - Optimized for Border/Badge Stacking */}
-                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 relative">
+                      <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 relative overflow-visible">
                         <div className="relative">
                           <AvatarDisplay 
                             src={user.photoURL} 
@@ -130,10 +130,13 @@ export default function HeaderProfile() {
                             size="md" 
                             borderId={user.equippedBorder}
                           />
-                          {/* AUTHORITY BADGE - FORCED TO TOP (z-30) */}
+                          {/* AUTHORITY BADGE - LAPISAN PALING DEPAN (z-30) */}
                           {(user.isPremium || user.role !== 'user') && (
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-[30] animate-in zoom-in duration-300">
-                              <Zap className="w-3 h-3 text-black fill-current" />
+                            <div 
+                              className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300"
+                              style={{ zIndex: 30 }}
+                            >
+                              <Zap className="w-3.5 h-3.5 text-black fill-current" />
                             </div>
                           )}
                         </div>

@@ -2,7 +2,6 @@
 "use client";
 
 import React from 'react';
-import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AvatarBorderOverlay from './AvatarBorderOverlay';
 
@@ -15,17 +14,16 @@ interface AvatarDisplayProps {
 }
 
 /**
- * Enhanced Avatar Display Node
- * Features deep integration with the PNG Border Engine and circular geometry.
- * Uses overflow-visible to prevent clipping of scaled borders.
+ * Node Tampilan Avatar yang Ditingkatkan
+ * Mendukung sistem layering otomatis untuk Border (z-20) dan Avatar (z-10).
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
-    sm: 'w-8 h-8 rounded-full',
-    md: 'w-10 h-10 rounded-full',
-    lg: 'w-14 h-14 rounded-full',
-    xl: 'w-24 h-24 rounded-full',
-    huge: 'w-32 h-32 rounded-full'
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10',
+    lg: 'w-14 h-14',
+    xl: 'w-24 h-24',
+    huge: 'w-32 h-32'
   };
 
   const initials = name ? name.substring(0, 2).toUpperCase() : '?';
@@ -36,13 +34,16 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
       sizeMap[size],
       className
     )}>
-      {/* PNG Border Overlay Protocol - Strictly Layered at z-20 */}
+      {/* PNG Border - Lapisan Tengah (z-20) */}
       {borderId && <AvatarBorderOverlay borderId={borderId} size={size} />}
 
-      <div className={cn(
-        "w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5",
-        "relative z-10" // Content is below the border overlay
-      )}>
+      {/* Kontainer Avatar - Lapisan Belakang (z-10) */}
+      <div 
+        className={cn(
+          "w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
+        )}
+        style={{ zIndex: 10 }}
+      >
         {src ? (
           <img 
             src={src} 
