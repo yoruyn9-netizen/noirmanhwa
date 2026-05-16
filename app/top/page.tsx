@@ -1,13 +1,13 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import MangaCard from '@/components/manga/MangaCard';
-import { Trophy, Loader2, Sparkles, Medal, TrendingUp, BarChart3, Star } from 'lucide-react';
+import { Trophy, Sparkles, Medal, TrendingUp, BarChart3, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
 /**
  * High-Fidelity Leaderboard Terminal
@@ -97,7 +97,7 @@ export default function TopListPage() {
                 className="flex flex-col items-center justify-center py-40 space-y-6"
               >
                 <div className="relative">
-                  <Loader2 className="w-10 h-10 text-accent animate-spin" />
+                  <ThreeBodyLoader />
                   <div className="absolute inset-0 blur-2xl bg-accent/20 animate-pulse" />
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Recalibrating Matrix</p>

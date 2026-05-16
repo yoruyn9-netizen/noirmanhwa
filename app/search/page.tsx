@@ -5,10 +5,8 @@ import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import MangaCard from '@/components/manga/MangaCard';
 import { 
   Search as SearchIcon, 
-  Loader2, 
   SearchIcon as SearchIconLucide, 
   AlertCircle,
-  RotateCcw,
   Filter
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -21,6 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
 const STATUS_OPTIONS = [
   { label: 'Ongoing', value: 'ongoing' },
@@ -149,7 +148,7 @@ function SearchPageContent() {
 
       {loading && results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
-          <Loader2 className="w-8 h-8 text-accent animate-spin" />
+          <ThreeBodyLoader />
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Searching...</p>
         </div>
       ) : results.length === 0 ? (
