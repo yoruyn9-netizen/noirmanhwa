@@ -1,10 +1,22 @@
 
 import { NextResponse } from 'next/server';
-import { getAsuraData } from '../asura/route';
-import { getFlameData } from '../flame/route';
-import { getMangaDexData } from '../../mangadex/route';
+import { getAsuraData, getFlameData, getMangaDexData } from '../source-utils';
 
 export const dynamic = 'force-dynamic';
+
+async function trySource(name: string, fn: () => Promise<any>) {
+  try {
+    const result = await fn();
+    if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
+      return result;
+    }
+    throw new Error(`${name} returned no valid data`);
+  } catch (error: any) {
+    const message = error?.message || 'Unknown error';
+    console.warn(`❌ [COMBINED] ${name} fallback error:`, message);
+    return { error: message };
+  }
+}
 
 /**
  * Aggregated Discovery Matrix
@@ -15,65 +27,63 @@ export async function GET() {
   const errors: string[] = [];
   const sources: Record<string, number> = {};
 
-  // Fetch all sources in parallel with error handling
-  const [asuraResult, flameResult, mangadexResult] = await Promise.allSettled([
-    getAsuraData(),
-    getFlameData(),
-    getMangaDexData()
-  ]);
-
-  // Process MangaDex
-  if (mangadexResult.status === 'fulfilled' && mangadexResult.value?.data) {
-    results.push(...mangadexResult.value.data);
-    sources.mangadex = mangadexResult.value.data.length;
-  } else if (mangadexResult.status === 'rejected') {
-    errors.push(`MangaDex: ${mangadexResult.reason?.message || 'Unknown error'}`);
+  const mangadexResult = await trySource('MangaDex', getMangaDexData);
+  if (mangadexResult?.data?.length) {
+    results.push(...mangadexResult.data);
+    sources.mangadex = mangadexResult.data.length;
+  } else {
+    errors.push(`MangaDex: ${mangadexResult.error}`);
   }
 
-  // Process Asura
-  if (asuraResult.status === 'fulfilled' && asuraResult.value?.data) {
-    results.push(...asuraResult.value.data);
-    sources.asura = asuraResult.value.data.length;
-  } else if (asuraResult.status === 'rejected') {
-    errors.push(`Asura: ${asuraResult.reason?.message || 'Unknown error'}`);
+  const asuraResult = await trySource('Asura', getAsuraData);
+  if (asuraResult?.data?.length) {
+    results.push(...asuraResult.data);
+    sources.asura = asuraResult.data.length;
+  } else {
+    errors.push(`Asura: ${asuraResult.error}`);
   }
 
-  // Process Flame
-  if (flameResult.status === 'fulfilled' && flameResult.value?.data) {
-    results.push(...flameResult.value.data);
-    sources.flame = flameResult.value.data.length;
-  } else if (flameResult.status === 'rejected') {
-    errors.push(`Flame: ${flameResult.reason?.message || 'Unknown error'}`);
+  const flameResult = await trySource('Flame', getFlameData);
+  if (flameResult?.data?.length) {
+    results.push(...flameResult.data);
+    sources.flame = flameResult.data.length;
+  } else {
+    errors.push(`Flame: ${flameResult.error}`);
   }
 
-  // Remove duplicates based on ID + source combo
   const uniqueMap = new Map();
-  const allManga = results.filter(manga => {
+  const allManga = results.filter((manga) => {
     const key = `${manga.id}-${manga.source}`;
     if (uniqueMap.has(key)) return false;
     uniqueMap.set(key, true);
     return true;
   });
 
-  // Shuffle for better variety
   allManga.sort(() => Math.random() - 0.5);
 
   if (allManga.length === 0) {
-    return NextResponse.json({
-      success: false,
-      error: `All sources failed: ${errors.join(', ')}`,
-      data: [],
-      sources,
-      timestamp: new Date().toISOString()
-    }, { status: 503 });
+    console.warn('⚠️ [COMBINED] All discovery sources failed.', { errors, sources });
+    return NextResponse.json(
+      {
+        success: false,
+        error: `All sources failed: ${errors.join(' | ')}`,
+        data: [],
+        sources,
+        timestamp: new Date().toISOString()
+      },
+      { status: 200 }
+    );
   }
 
-  return NextResponse.json({
-    success: true,
-    data: allManga.slice(0, 100), // Limit to 100 for performance
-    sources,
-    total: allManga.length,
-    errors: errors.length > 0 ? errors : undefined,
-    timestamp: new Date().toISOString()
-  }, { status: 200 });
+  return NextResponse.json(
+    {
+      success: true,
+      data: allManga.slice(0, 100),
+      sources,
+      total: allManga.length,
+      errors: errors.length > 0 ? errors : undefined,
+      timestamp: new Date().toISOString()
+    },
+    { status: 200 }
+  );
 }

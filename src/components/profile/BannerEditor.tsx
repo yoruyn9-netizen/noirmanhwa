@@ -86,10 +86,15 @@ export default function BannerEditor({ bannerURL, displayName }: BannerEditorPro
       }, 500);
     } catch (error: any) {
       console.error('Upload error:', error);
+      const message = String(error?.message || 'Failed to upload banner. Please try again.');
+      const description = message.includes('Failed to fetch') || message.includes('CORS') || message.includes('NetworkError')
+        ? 'Banner upload blocked by Cloudinary CORS settings. Add https://noirmanhwa.vercel.app and http://localhost:3000 to Cloudinary Upload CORS.'
+        : message;
+
       toast({
         variant: 'destructive',
         title: 'Upload Failed',
-        description: error.message || 'Failed to upload banner. Please try again.'
+        description
       });
     } finally {
       setUploading(false);
@@ -141,14 +146,14 @@ export default function BannerEditor({ bannerURL, displayName }: BannerEditorPro
   return (
     <div className="space-y-4">
       {/* Banner Display */}
-      <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border border-white/5 group">
+      <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border border-white/5 group">
         {preview ? (
           <motion.img
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             src={preview}
             alt="banner preview"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover max-w-full"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-800/50 to-gray-900/50">

@@ -62,11 +62,11 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
   if (!user) return null;
 
   // Get owned borders - for owners, auto-grant all
-  const ownedBorders = user.role === 'owner' 
-    ? SPECIAL_BORDERS.map(b => b.id)
+  const ownedBorders = user.role === 'owner'
+    ? SPECIAL_BORDERS.map((b) => b.id)
     : (user.ownedBorders || []);
 
-  const isOwned = (borderId: string) => ownedBorders.includes(borderId);
+  const hasOwnedBorder = (borderId: string) => ownedBorders.includes(borderId);
   const isEquipped = user.equippedBorder === selectedBorder?.id;
 
   const handleEquip = async () => {
@@ -111,9 +111,9 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-auto z-[1000] px-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           >
-            <div className="bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden">
+            <div className="relative w-full max-w-2xl mx-auto bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh]">
               {/* Header */}
               <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-accent/10 to-transparent">
                 <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
                             <span className="text-[9px] font-black text-accent uppercase tracking-widest">Currently Equipped</span>
                           </div>
                         )}
-                        {isOwned && !isEquipped && (
+                        {hasOwnedBorder(selectedBorder.id) && !isEquipped && (
                           <button
                             onClick={handleEquip}
                             disabled={loading === selectedBorder.id}
@@ -201,7 +201,7 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
                             )}
                           </button>
                         )}
-                        {!isOwned && (
+                        {!hasOwnedBorder(selectedBorder.id) && (
                           <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20 w-fit">
                             <Lock className="w-3 h-3 text-red-500" />
                             <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Locked</span>
@@ -218,9 +218,9 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
                     <Sparkles className="w-3 h-3 inline mr-2 text-accent" />
                     Available Frames ({ownedBorders.length} Owned)
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {SPECIAL_BORDERS.map((border) => {
-                      const owned = isOwned(border.id);
+                      const owned = hasOwnedBorder(border.id);
                       const active = selectedBorder?.id === border.id;
                       const equipped = user.equippedBorder === border.id;
 

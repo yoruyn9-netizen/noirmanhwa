@@ -8,22 +8,23 @@ import MangaGrid from '@/components/manga/MangaGrid';
 import GlobalChat from '@/components/chat/GlobalChat';
 import HeaderProfile from '@/components/HeaderProfile';
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { WifiOff } from 'lucide-react';
 
 export default function Home() {
   const [trending, setTrending] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
       try {
         const data = await fetchMangaList();
         setTrending(data || []);
-        setError(data.length === 0);
-      } catch (err) {
+        setError(data.length === 0 ? 'No data available. Please try again.' : null);
+      } catch (err: any) {
         console.error('❌ [Page]: Signal synchronization failure.', err);
-        setError(true);
+        setError(err?.message || 'Unable to retrieve content.');
       } finally {
         setLoading(false);
       }
@@ -41,47 +42,51 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden animate-in fade-in duration-1000">
-      {/* Top Header Section */}
-      <header className="flex items-center justify-between pt-6 px-1">
-        <HeaderProfile />
-        <div className="text-right hidden sm:block">
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Node: Alpha-42</p>
-        </div>
-      </header>
-
-      {error && trending.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center text-center space-y-6">
-          <WifiOff className="w-12 h-12 text-neutral-800" />
-          <div className="space-y-2">
-            <h2 className="text-xl font-black uppercase text-white">Total Signal Loss</h2>
-            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">Unable to establish link with discovery nodes.</p>
+    <ErrorBoundary fallback={<div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6"><WifiOff className="w-12 h-12 text-neutral-800" /><p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Something went wrong. Try refreshing.</p></div>}>
+      <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden animate-in fade-in duration-1000">
+        {/* Top Header Section */}
+        <header className="flex items-center justify-between pt-6 px-1">
+          <HeaderProfile />
+          <div className="text-right hidden sm:block">
+            <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Node: Alpha-42</p>
           </div>
-          <button onClick={() => window.location.reload()} className="px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl">Retry Uplink</button>
-        </div>
-      ) : (
-        <>
-          <section className="w-full">
-            <HeroSlider trending={trending} />
-          </section>
+        </header>
 
-          <section className="w-full">
-            <PopularManhwaCarousel />
-          </section>
-
-          <section className="space-y-10">
-            <div className="space-y-2 px-1">
-              <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Real-Time Feed</h2>
-              <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Matrix</p>
+        {error && trending.length === 0 ? (
+          <div className="py-20 flex flex-col items-center justify-center text-center space-y-6">
+            <WifiOff className="w-12 h-12 text-neutral-800" />
+            <div className="space-y-2 max-w-xl px-4">
+              <h2 className="text-xl font-black uppercase text-white">Total Signal Loss</h2>
+              <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest leading-relaxed">
+                {error}
+              </p>
             </div>
-            <MangaGrid />
-          </section>
+            <button onClick={() => window.location.reload()} className="px-10 py-4 bg-accent text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl">Retry Uplink</button>
+          </div>
+        ) : (
+          <>
+            <section className="w-full overflow-x-hidden">
+              <HeroSlider trending={trending} />
+            </section>
 
-          <section>
-            <GlobalChat previewMode={true} />
-          </section>
-        </>
-      )}
-    </div>
+            <section className="w-full overflow-x-hidden">
+              <PopularManhwaCarousel />
+            </section>
+
+            <section className="space-y-10 overflow-x-hidden">
+              <div className="space-y-2 px-1">
+                <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Real-Time Feed</h2>
+                <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Matrix</p>
+              </div>
+              <MangaGrid />
+            </section>
+
+            <section>
+              <GlobalChat previewMode={true} />
+            </section>
+          </>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -13,11 +13,13 @@ import {
 import { cn } from '@/lib/utils';
 import AvatarDisplay from '../profile/AvatarDisplay';
 import ThreeBodyLoader from '../ui/ThreeBodyLoader';
+import UserProfileModal from '@/components/UserProfileModal';
 
 export default function UserManagement() {
   const { user: currentUser } = useAuthStore();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -70,7 +72,11 @@ export default function UserManagement() {
       ) : (
         <div className="grid gap-3">
           {filtered.map((u) => (
-            <div key={u.uid} className="p-5 bg-[#0a0a0f]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex items-center justify-between group hover:border-accent/40 transition-all duration-500 shadow-xl">
+            <div
+              key={u.uid}
+              onClick={() => setSelectedUserId(u.uid)}
+              className="cursor-pointer p-5 bg-[#0a0a0f]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex items-center justify-between group hover:border-accent/40 transition-all duration-500 shadow-xl"
+            >
               <div className="flex items-center gap-5">
                 <AvatarDisplay src={u.photoURL} name={u.displayName} size="md" borderId={u.equippedBorder} />
                 <div className="space-y-1">
@@ -86,7 +92,10 @@ export default function UserManagement() {
               <div className="flex items-center gap-2">
                 {/* Role Toggle */}
                 <button
-                  onClick={() => handleUpdate(u.uid, { role: u.role === 'admin' ? 'user' : 'admin' }, "Role Updated")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleUpdate(u.uid, { role: u.role === 'admin' ? 'user' : 'admin' }, "Role Updated");
+                  }}
                   disabled={processing === u.uid}
                   className={cn(
                     "p-3 rounded-xl transition-all border",
@@ -99,7 +108,10 @@ export default function UserManagement() {
 
                 {/* Premium Toggle */}
                 <button
-                  onClick={() => handleUpdate(u.uid, { isPremium: !u.isPremium }, "Premium Status Updated")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleUpdate(u.uid, { isPremium: !u.isPremium }, "Premium Status Updated");
+                  }}
                   disabled={processing === u.uid}
                   className={cn(
                     "p-3 rounded-xl transition-all border",
@@ -112,7 +124,10 @@ export default function UserManagement() {
 
                 {/* Ban Toggle */}
                 <button
-                  onClick={() => handleUpdate(u.uid, { isBanned: !u.isBanned }, u.isBanned ? "Node Reinstated" : "Node Terminated")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleUpdate(u.uid, { isBanned: !u.isBanned }, u.isBanned ? "Node Reinstated" : "Node Terminated");
+                  }}
                   disabled={processing === u.uid}
                   className={cn(
                     "p-3 rounded-xl transition-all border",
@@ -127,6 +142,12 @@ export default function UserManagement() {
           ))}
         </div>
       )}
+
+      <UserProfileModal
+        userId={selectedUserId}
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+      />
     </div>
   );
 }

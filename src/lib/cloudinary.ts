@@ -27,6 +27,8 @@ export const uploadToCloudinary = async (file: File | Blob, folder: string = 'av
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
       {
         method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
         body: formData
       }
     );

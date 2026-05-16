@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { subscribeToChat, sendChatMessage } from '@/lib/firestore';
 import { ChatMessage } from '@/types/chat';
 import MessageBubble from './MessageBubble';
-import UserProfileModal from './UserProfileModal';
+import UserProfileModal from '@/components/UserProfileModal';
 import { 
   Send, 
   MessageSquare, 
