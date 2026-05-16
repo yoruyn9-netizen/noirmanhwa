@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -35,7 +36,7 @@ export default function Home() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6">
         <ThreeBodyLoader />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Syncing Matrix</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent animate-pulse">Syncing Library</p>
       </div>
     );
   }
@@ -46,7 +47,7 @@ export default function Home() {
       <header className="flex items-center justify-between pt-6 px-1">
         <HeaderProfile />
         <div className="text-right hidden sm:block">
-          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Node: Alpha-42</p>
+          <p className="text-[8px] font-black text-neutral-600 uppercase tracking-[0.5em]">Noir Terminal Alpha-42</p>
         </div>
       </header>
 
@@ -72,7 +73,7 @@ export default function Home() {
           <section className="space-y-10">
             <div className="space-y-2 px-1">
               <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Real-Time Feed</h2>
-              <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery Matrix</p>
+              <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Live Discovery</p>
             </div>
             <MangaGrid />
           </section>

@@ -10,6 +10,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { subscribeToNotifications } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
 
+const borderMap: Record<string, string> = {
+  'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
+  'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
+  'celestial-dream': 'https://i.ibb.co.com/n85NZRVB/c3d098ec-c12d-4ece-b742-adc657357290-20260516-032528-0000.png',
+  'stellar-compass': 'https://i.ibb.co.com/LdzzJtRW/823e8e96-4d93-49dc-be69-36c49b67a1b8-20260516-032451-0000.png'
+};
+
 export default function HeaderProfile() {
   const { user } = useAuthStore();
   const router = useRouter();
@@ -121,16 +128,30 @@ export default function HeaderProfile() {
 
                   {user ? (
                     <div className="space-y-4">
-                      {/* Identity Header in Popup - Optimized for Border/Badge Stacking */}
+                      {/* Identity Header in Popup - Strict Manual Stacking */}
                       <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 relative overflow-visible">
-                        <div className="relative">
-                          <AvatarDisplay 
-                            src={user.photoURL} 
-                            name={user.displayName} 
-                            size="md" 
-                            borderId={user.equippedBorder}
-                          />
-                          {/* AUTHORITY BADGE - FORCED FOREGROUND (z-50) */}
+                        <div className="relative inline-block">
+                          {/* BASE AVATAR (z-10) */}
+                          <div className="relative z-10">
+                            <AvatarDisplay 
+                              src={user.photoURL} 
+                              name={user.displayName} 
+                              size="md" 
+                            />
+                          </div>
+                          
+                          {/* BORDER OVERLAY (z-10 absolute) */}
+                          {user.equippedBorder && borderMap[user.equippedBorder] && (
+                            <img 
+                              src={borderMap[user.equippedBorder]} 
+                              alt="Border"
+                              className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" 
+                              style={{ transform: 'scale(1.28)' }}
+                              draggable={false}
+                            />
+                          )}
+
+                          {/* AUTHORITY BADGE (z-50) */}
                           {(user.isPremium || user.role !== 'user') && (
                             <div 
                               className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300"

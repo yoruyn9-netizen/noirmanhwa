@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState, use, Suspense } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import MangaCard from '@/components/manga/MangaCard';
 import { 
@@ -10,12 +10,11 @@ import {
   SearchIcon as SearchIconLucide, 
   AlertCircle,
   RotateCcw,
-  Filter,
   Languages,
   Tags
 } from 'lucide-react';
 import { Manga } from '@/types/manga';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -26,10 +25,6 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
-
-interface SearchPageProps {
-  searchParams: Promise<{ q?: string; genre?: string }>;
-}
 
 const STATUS_OPTIONS = [
   { label: 'Ongoing', value: 'ongoing' },
@@ -42,19 +37,19 @@ const LANGUAGE_OPTIONS = [
   { label: 'Indonesian Sub', value: 'id' },
 ];
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const params = use(searchParams);
+function SearchPageContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   
-  const [query, setQuery] = useState(params.q || '');
-  const [debouncedQuery, setDebouncedQuery] = useState(params.q || '');
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [genres, setGenres] = useState<any[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(params.genre ? [params.genre] : []);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(searchParams.get('genre') ? [searchParams.get('genre')!] : []);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(params.genre ? ['en'] : []);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -197,7 +192,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
                 <div className="space-y-10 pb-20">
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Languages className="w-3.5 h-3.5" /> Subtitle Language
+                      <SearchIconLucide className="w-3.5 h-3.5" /> Subtitle Language
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {LANGUAGE_OPTIONS.map((opt) => (
@@ -219,7 +214,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
                   <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/60 flex items-center gap-2">
-                      <Filter className="w-3.5 h-3.5" /> Status
+                      <SearchIconLucide className="w-3.5 h-3.5" /> Status
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {STATUS_OPTIONS.map((opt) => (
@@ -279,7 +274,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       {loading && results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <ThreeBodyLoader />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent animate-pulse">Syncing Matrix...</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent animate-pulse">Syncing Library...</p>
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed">
@@ -298,5 +293,13 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
