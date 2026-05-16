@@ -9,7 +9,7 @@ import ProfileEditor from '@/components/profile/ProfileEditor';
 import BorderGalleryModal from '@/components/profile/BorderGalleryModal';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
-  Edit3, LayoutGrid, Crown, Star, Grid
+  Edit3, LayoutGrid, Crown, Star, Grid, Box
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * High-Fidelity Profile Matrix
- * Optimized for narrative consistency and visual identity.
+ * Optimized for visual identity and ownership management.
  */
 function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -51,29 +51,37 @@ function ProfilePage() {
       <div className="relative p-10 bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] overflow-hidden group shadow-2xl">
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-accent/5 rounded-full blur-[100px]" />
         
-        <div className="relative z-10 flex flex-col items-center md:flex-row md:items-start gap-10">
-          <div className="relative group">
-             <AvatarDisplay 
+        <div className="relative z-10 flex flex-col items-center md:flex-row md:items-start gap-12">
+          <div className="flex flex-col items-center gap-6 shrink-0">
+            <div className="relative">
+              <AvatarDisplay 
                 src={user.photoURL} 
                 name={user.displayName} 
                 size="huge" 
                 borderId={user.equippedBorder}
               />
-              <button 
-                onClick={() => setIsGalleryOpen(true)}
-                className="absolute -bottom-2 -right-2 p-3 bg-accent text-white rounded-2xl shadow-xl hover:scale-110 transition-all border-4 border-[#0a0a0f] z-[60]"
-              >
-                <Grid className="w-5 h-5" />
-              </button>
+              {(user.isPremium || isOwner) && (
+                <div className="absolute -bottom-1 -right-1 p-2.5 bg-yellow-500 text-black rounded-full shadow-2xl z-50 ring-8 ring-[#020205]">
+                  <Zap className="w-5 h-5 fill-current" />
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => setIsGalleryOpen(true)}
+              className="flex items-center gap-3 px-6 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest text-accent hover:bg-accent hover:text-white transition-all shadow-xl shadow-accent/5"
+            >
+              <Grid className="w-3.5 h-3.5" /> Identity Specs
+            </button>
           </div>
           
           <div className="flex-1 text-center md:text-left space-y-6">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
                 <h1 className="text-4xl font-black tracking-tighter uppercase text-glow leading-none text-white">
-                  {user.displayName || 'Anonymous User'}
+                  {user.displayName || 'Anonymous'}
                 </h1>
-                <span className={cn("px-4 py-1 text-black text-[9px] font-black rounded-lg shadow-xl transition-all", badge.color)}>
+                <span className={cn("px-4 py-1 text-black text-[9px] font-black rounded-lg shadow-xl", badge.color)}>
                   {badge.label}
                 </span>
               </div>
@@ -89,7 +97,7 @@ function ProfilePage() {
                 onClick={() => setIsEditorOpen(true)} 
                 className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-accent hover:border-accent/40 transition-all flex items-center gap-3"
               >
-                <Edit3 className="w-3.5 h-3.5" /> Identity Specs
+                <Edit3 className="w-3.5 h-3.5" /> Calibrate Node
               </button>
               
               {(isOwner || isAdmin) && (
@@ -97,7 +105,7 @@ function ProfilePage() {
                   href="/admin"
                   className="px-8 py-3 bg-yellow-500 text-black rounded-2xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" /> Master Node
+                  <LayoutGrid className="w-3.5 h-3.5" /> Master Command
                 </Link>
               )}
             </div>
@@ -108,7 +116,7 @@ function ProfilePage() {
       {/* Stats Matrix */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
-          { icon: Zap, label: 'ENERGY', val: user.isPremium || isOwner ? 'MAX' : '99%' },
+          { icon: Box, label: 'ARTIFACTS', val: isOwner ? 'ALL' : (user.ownedBorders?.length || 0) },
           { icon: Globe, label: 'REGION', val: 'Global Matrix' },
           { icon: ShieldCheck, label: 'UPLINK', val: 'SECURE' },
         ].map((stat, i) => (
@@ -128,7 +136,7 @@ function ProfilePage() {
               <LogOut className="w-6 h-6 text-red-500 group-hover:text-white" />
             </div>
             <div className="text-left space-y-1">
-              <p className="text-[12px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Terminate Connection</p>
+              <p className="text-[12px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Terminate Session</p>
               <p className="text-[8px] text-neutral-600 group-hover:text-white/60 font-black uppercase tracking-widest">Securely end global synchronization</p>
             </div>
           </div>

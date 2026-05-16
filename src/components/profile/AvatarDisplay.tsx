@@ -15,8 +15,7 @@ interface AvatarDisplayProps {
 
 /**
  * Enhanced Avatar Node
- * Strictly enforces layering: Avatar (z-10) < Border (z-20).
- * External badges should be z-30.
+ * Enforces strict layering: Avatar (z-10) < Border (z-40) < Badges (z-50)
  */
 export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
   const sizeMap = {
@@ -31,27 +30,23 @@ export default function AvatarDisplay({ src, name, size = 'md', className, borde
 
   return (
     <div className={cn(
-      "relative flex items-center justify-center select-none overflow-visible",
+      "relative flex items-center justify-center select-none overflow-visible shrink-0",
       sizeMap[size],
       className
     )}>
-      {/* PNG Border Overlay - Layer 2 (z-20) */}
-      {borderId && borderId !== 'none' && (
-        <AvatarBorderOverlay borderId={borderId} size={size} />
-      )}
+      {/* Border Overlay - Middle Layer (z-40) */}
+      <AvatarBorderOverlay borderId={borderId} size={size} />
 
-      {/* Avatar Image Container - Layer 1 (z-10) */}
+      {/* Avatar Image Node - Base Layer (z-10) */}
       <div 
-        className={cn(
-          "w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
-        )}
+        className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
         style={{ zIndex: 10 }}
       >
         {src ? (
           <img 
             src={src} 
-            alt={name || "Avatar"} 
-            className="w-full h-full object-cover" 
+            alt={name || "User Avatar"} 
+            className="w-full h-full object-cover transition-opacity duration-500" 
           />
         ) : (
           <div className="bg-accent/10 w-full h-full flex items-center justify-center">

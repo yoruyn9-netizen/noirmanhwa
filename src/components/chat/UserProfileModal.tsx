@@ -18,7 +18,7 @@ import {
   Clock,
   ExternalLink,
   Loader2,
-  Image as ImageIcon
+  Crown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -82,7 +82,7 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                   <div className="w-full h-full bg-gradient-to-br from-accent/20 to-transparent" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] to-transparent opacity-80" />
-                <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 backdrop-blur-md rounded-2xl hover:bg-white/10 transition-all z-20">
+                <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 backdrop-blur-md rounded-2xl hover:bg-white/10 transition-all z-[100]">
                   <X className="w-5 h-5 text-white" />
                 </button>
               </div>
@@ -95,11 +95,11 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                       name={profile.displayName} 
                       size="huge" 
                       borderId={profile.equippedBorder}
-                      className="border-8 border-[#0a0a0f]"
+                      className="ring-[12px] ring-[#0a0a0f]"
                     />
                     {(profile.isPremium || profile.role !== 'user') && (
-                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-50 ring-4 ring-[#0a0a0f]">
-                        <Zap className="w-5 h-5 fill-current" />
+                      <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-[100] ring-4 ring-[#0a0a0f]">
+                        {profile.role === 'owner' ? <Crown className="w-5 h-5 fill-current" /> : <Zap className="w-5 h-5 fill-current" />}
                       </div>
                     )}
                   </div>
@@ -144,23 +144,23 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                   </button>
                 </div>
 
-                <div className="min-h-[220px]">
+                <div className="min-h-[160px]">
                   {activeTab === 'history' ? (
                     <div className="space-y-3">
                       {!profile.readingHistory || profile.readingHistory.length === 0 ? (
                         <div className="py-12 text-center opacity-30">
-                           <p className="text-[10px] font-black uppercase tracking-widest">No reading activity logs</p>
+                           <p className="text-[10px] font-black uppercase tracking-widest">No activity logs</p>
                         </div>
                       ) : (
-                        profile.readingHistory.slice(0, 5).map((item) => (
+                        profile.readingHistory.slice(0, 5).map((item: any) => (
                           <div key={item.mangaId} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-accent/40 transition-all">
                              <div className="flex items-center gap-4 min-w-0">
                                <div className="w-10 h-14 rounded-xl bg-neutral-900 overflow-hidden flex-shrink-0">
                                  {item.cover && <img src={item.cover} className="w-full h-full object-cover" alt="" />}
                                </div>
                                <div className="min-w-0">
-                                 <p className="text-[11px] font-black text-white truncate uppercase">{item.title}</p>
-                                 <p className="text-[8px] font-black text-accent uppercase tracking-widest">Chapter {item.lastChapter}</p>
+                                 <p className="text-[10px] font-black text-white truncate uppercase">{item.title}</p>
+                                 <p className="text-[7px] font-black text-accent uppercase tracking-widest">Chapter {item.lastChapter}</p>
                                </div>
                              </div>
                              <Link href={`/manga/${item.mangaId}`} className="p-2.5 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
