@@ -28,6 +28,8 @@ interface AuthState {
 const ADMIN_EMAIL = "jullyan382@gmail.com";
 const ADMIN_PASS = "YAN123";
 
+const ALL_BORDERS = ['ink-master', 'cyber-core', 'celestial-dream', 'stellar-compass', 'bronze-glow', 'silver-shimmer', 'gold-admin', 'legend-owner'];
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -46,12 +48,11 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         onAuthStateChanged(auth, async (fbUser) => {
           if (fbUser) {
-            // Fetch latest profile from Firestore for flags
             const profile = await getUserProfile(fbUser.uid);
             
             if (profile?.isBanned) {
               await signOut(auth);
-              set({ user: null, error: "ACCESS DENIED: Your account has been banned.", isLoading: false });
+              set({ user: null, error: "ACCESS DENIED: Banned.", isLoading: false });
               return;
             }
 
@@ -61,10 +62,13 @@ export const useAuthStore = create<AuthState>()(
               email: fbUser.email,
               displayName: profile?.displayName || fbUser.displayName,
               photoURL: profile?.photoURL || fbUser.photoURL,
+              bannerURL: profile?.bannerURL || null,
               bio: profile?.bio || "",
-              role: isOwner ? 'owner' : 'user',
-              isPremium: profile?.isPremium || false,
-              isBanned: false
+              role: isOwner ? 'owner' : (profile?.role || 'user'),
+              isPremium: profile?.isPremium || isOwner || false,
+              isBanned: false,
+              equippedBorder: profile?.equippedBorder || 'none',
+              ownedBorders: isOwner ? ALL_BORDERS : (profile?.ownedBorders || [])
             };
 
             set({ user: userData, isLoading: false });
@@ -85,7 +89,7 @@ export const useAuthStore = create<AuthState>()(
           const profile = await getUserProfile(result.user.uid);
           if (profile?.isBanned) {
             await signOut(auth);
-            throw new Error("ACCESS DENIED: Your account has been banned.");
+            throw new Error("ACCESS DENIED: Banned.");
           }
 
           const isOwner = result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -94,9 +98,12 @@ export const useAuthStore = create<AuthState>()(
             email: result.user.email,
             displayName: profile?.displayName || result.user.displayName,
             photoURL: profile?.photoURL || result.user.photoURL,
-            role: isOwner ? 'owner' : 'user',
-            isPremium: profile?.isPremium || false,
-            isBanned: false
+            bannerURL: profile?.bannerURL || null,
+            role: isOwner ? 'owner' : (profile?.role || 'user'),
+            isPremium: profile?.isPremium || isOwner || false,
+            isBanned: false,
+            equippedBorder: profile?.equippedBorder || 'none',
+            ownedBorders: isOwner ? ALL_BORDERS : (profile?.ownedBorders || [])
           };
 
           set({ user: userData, isLoading: false });
@@ -121,9 +128,12 @@ export const useAuthStore = create<AuthState>()(
               email: result.user.email,
               displayName: profile?.displayName || "Supreme Administrator",
               photoURL: profile?.photoURL || null,
+              bannerURL: profile?.bannerURL || null,
               role: 'owner',
               isPremium: true,
-              isBanned: false
+              isBanned: false,
+              equippedBorder: profile?.equippedBorder || 'none',
+              ownedBorders: ALL_BORDERS
             };
             set({ user: userData, isLoading: false });
             syncUserToFirestore(userData);
@@ -142,9 +152,12 @@ export const useAuthStore = create<AuthState>()(
                 email: result.user.email,
                 displayName: profile?.displayName || result.user.displayName || "User",
                 photoURL: profile?.photoURL || result.user.photoURL,
-                role: 'user',
+                bannerURL: profile?.bannerURL || null,
+                role: profile?.role || 'user',
                 isPremium: profile?.isPremium || false,
-                isBanned: false
+                isBanned: false,
+                equippedBorder: profile?.equippedBorder || 'none',
+                ownedBorders: profile?.ownedBorders || []
               },
               isLoading: false,
             });
@@ -161,7 +174,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'noirmanhwa-auth-v2',
+      name: 'noirmanhwa-auth-v3',
       partialize: (state) => ({ user: state.user }),
     }
   )

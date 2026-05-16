@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from './profile/AvatarDisplay';
 import { useRouter } from 'next/navigation';
-import { Bell, Edit3, LogIn, X, User, Crown, ShieldCheck, Zap, Camera, Image as ImageIcon } from 'lucide-react';
+import { Bell, Edit3, LogIn, X, User, Crown, ShieldCheck, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { subscribeToNotifications } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
@@ -111,76 +111,56 @@ export default function HeaderProfile() {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute top-full left-0 mt-3 w-72 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl z-[150] overflow-hidden"
+                className="absolute top-full left-0 mt-3 w-64 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl z-[150] overflow-hidden"
               >
-                {user ? (
-                  <div className="flex flex-col">
-                    {/* Compact Banner */}
-                    <div className="h-24 w-full relative bg-white/[0.02]">
-                       {user.bannerURL ? (
-                         <img src={user.bannerURL} className="w-full h-full object-cover" alt="" />
-                       ) : (
-                         <div className="w-full h-full bg-gradient-to-br from-accent/10 to-transparent" />
-                       )}
-                       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] to-transparent" />
-                    </div>
+                <div className="p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500">Identity Protocol</span>
+                    <button onClick={() => setShowPopup(false)}><X className="w-3 h-3 text-neutral-700" /></button>
+                  </div>
 
-                    <div className="px-6 pb-6 -mt-8 space-y-5">
-                      <div className="flex items-end justify-between">
-                         <div className="relative inline-block">
-                           <AvatarDisplay 
-                              src={user.photoURL} 
-                              name={user.displayName} 
-                              size="lg" 
-                              borderId={user.equippedBorder}
-                              className="ring-4 ring-[#0a0a0f]"
-                            />
-                            {(user.isPremium || user.role !== 'user') && (
-                              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-50">
-                                <Zap className="w-3.5 h-3.5 text-black fill-current" />
-                              </div>
-                            )}
-                         </div>
-                         <button 
-                           onClick={() => setShowPopup(false)}
-                           className="p-2 hover:bg-white/5 rounded-xl mb-2"
-                         >
-                           <X className="w-4 h-4 text-neutral-600" />
-                         </button>
+                  {user ? (
+                    <div className="flex flex-col items-center gap-5">
+                      <div className="relative inline-block overflow-visible">
+                        <AvatarDisplay 
+                          src={user.photoURL} 
+                          name={user.displayName} 
+                          size="lg" 
+                          borderId={user.equippedBorder}
+                        />
+                        {(user.role !== 'user' || user.isPremium) && (
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg z-[100] border-2 border-[#0a0a0f]">
+                            {user.role === 'owner' ? <Crown className="w-3.5 h-3.5 text-black" /> : <Zap className="w-3.5 h-3.5 text-black" />}
+                          </div>
+                        )}
                       </div>
-
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-white uppercase truncate">{user.displayName}</p>
-                        <p className={cn("text-[8px] font-black uppercase tracking-widest", roleInfo.color)}>{roleInfo.text}</p>
+                      
+                      <div className="text-center">
+                        <p className="text-sm font-black text-white uppercase truncate max-w-full">{user.displayName}</p>
+                        <p className={cn("text-[7px] font-black uppercase tracking-[0.3em] mt-1", roleInfo.color)}>{roleInfo.text}</p>
                       </div>
 
                       <button 
                         onClick={() => { router.push('/profile'); setShowPopup(false); }}
-                        className="w-full flex items-center justify-center gap-3 py-3.5 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
+                        className="w-full flex items-center justify-center gap-3 py-3.5 bg-accent text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
                       >
                         <Edit3 className="w-4 h-4" />
                         Enter Profile
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="p-6 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Identity Protocol</span>
-                      <button onClick={() => setShowPopup(false)}><X className="w-3 h-3 text-neutral-700" /></button>
-                    </div>
+                  ) : (
                     <button 
                       onClick={() => { router.push('/login'); setShowPopup(false); }}
                       className="w-full flex items-center gap-4 p-4 bg-accent rounded-2xl hover:brightness-110 shadow-lg shadow-accent/20 transition-all"
                     >
                       <LogIn className="w-5 h-5 text-white" />
                       <div className="text-left">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-white block">Sign In</span>
-                        <span className="text-[7px] font-bold text-white/60 uppercase tracking-widest leading-none">Access Matrix</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white block">Sign In</span>
+                        <span className="text-[6px] font-bold text-white/60 uppercase tracking-widest leading-none">Access Matrix</span>
                       </div>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </motion.div>
             </>
           )}

@@ -36,8 +36,6 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
 
   if (!isOpen || !user) return null;
 
-  const ownedBorders = user.ownedBorders || ['ink-master']; // Default owned for testing
-
   const handleEquip = async (borderId: string) => {
     setIsEquipping(borderId);
     try {
@@ -45,7 +43,7 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
       updateUserInStore({ equippedBorder: borderId });
       toast({
         title: "Protocol Synced",
-        description: `Identity frame updated to ${borderId.replace(/-/g, ' ').toUpperCase()}.`,
+        description: `Identity frame updated successfully.`,
       });
       setTimeout(onClose, 400);
     } catch (err) {
@@ -57,7 +55,7 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
 
   const isUnlocked = (id: string) => {
     if (user.role === 'owner') return true;
-    return ownedBorders.includes(id);
+    return user.ownedBorders?.includes(id) || false;
   };
 
   return (
@@ -114,7 +112,7 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
                         <div className="relative">
                           <AvatarDisplay src={user.photoURL} size="lg" borderId={border.id} />
                           {active && (
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
+                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full flex items-center justify-center shadow-lg animate-in zoom-in z-50">
                               <Check className="w-3.5 h-3.5 text-white" />
                             </div>
                           )}
@@ -150,21 +148,23 @@ export default function BorderGalleryModal({ isOpen, onClose }: BorderGalleryMod
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                  {RANK_BORDERS.map((border) => {
+                   const unlocked = isUnlocked(border.id) || border.id === 'bronze-glow'; // Everyone has bronze for demo
                    const active = user.equippedBorder === border.id;
+                   
                    return (
                     <button
                       key={border.id}
+                      disabled={!unlocked || isEquipping !== null}
                       onClick={() => handleEquip(border.id)}
                       className={cn(
                         "w-full p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col items-center gap-4 bg-white/[0.02]",
-                        active ? "border-accent bg-accent/5" : "border-white/5 hover:border-white/20"
+                        active ? "border-accent bg-accent/5" : "border-white/5 hover:border-white/20",
+                        !unlocked && "opacity-40 grayscale"
                       )}
                     >
                       <div className="relative">
-                        <div className={cn("w-14 h-14 rounded-full border-4 flex items-center justify-center overflow-hidden", border.color)}>
-                           <AvatarDisplay src={user.photoURL} size="md" borderId="none" />
-                        </div>
-                        {active && <Check className="absolute -top-1 -right-1 w-5 h-5 text-accent" />}
+                        <AvatarDisplay src={user.photoURL} size="md" borderId={border.id} />
+                        {active && <Check className="absolute -top-1 -right-1 w-5 h-5 text-accent z-50" />}
                       </div>
                       <p className="text-[9px] font-black text-white uppercase">{border.name}</p>
                     </button>

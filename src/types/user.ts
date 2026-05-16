@@ -30,7 +30,7 @@ export interface UserProfile {
   isPremium?: boolean;
   isBanned?: boolean;
   equippedBorder?: string | null;
-  ownedBorders?: string[];
+  ownedBorders?: string[]; // List of unlocked border IDs
   updatedAt?: string;
   joinedAt?: any; // Firestore Timestamp
   lastActive?: any; // Firestore Timestamp
