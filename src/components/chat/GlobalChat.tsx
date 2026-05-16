@@ -107,7 +107,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
               className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all text-[9px] font-black uppercase tracking-widest"
             >
               <Maximize2 className="w-3 h-3" />
-              Full Terminal
+              Full View
             </button>
           )}
         </div>
