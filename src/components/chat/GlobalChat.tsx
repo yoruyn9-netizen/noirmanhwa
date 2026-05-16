@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import ThreeBodyLoader from '../ui/ThreeBodyLoader';
 
 interface GlobalChatProps {
   previewMode?: boolean;
@@ -44,9 +45,14 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
     return () => unsubscribe();
   }, []);
 
+  // SCROLL FIX: Force scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollContainer = scrollRef.current;
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages, loading]);
 
@@ -82,15 +88,15 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
 
   return (
     <section className={cn(
-      "relative flex flex-col",
-      previewMode ? "mt-24 px-4 pb-20" : "h-full overflow-hidden flex-1"
+      "relative flex flex-col min-h-0",
+      previewMode ? "mt-24 px-4 pb-20" : "h-full flex-1"
     )}>
       <div className={cn(
-        "flex flex-col w-full mx-auto",
-        previewMode ? "max-w-4xl space-y-6" : "flex-1 max-w-5xl"
+        "flex flex-col w-full mx-auto min-h-0",
+        previewMode ? "max-w-4xl space-y-6" : "flex-1 max-w-5xl h-full"
       )}>
         
-        <div className="flex items-center justify-between px-2 py-4">
+        <div className="flex items-center justify-between px-2 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative p-2.5 bg-accent/5 rounded-xl border border-accent/10">
               <MessageSquare className="w-5 h-5 text-accent" />
@@ -112,18 +118,20 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
           )}
         </div>
 
+        {/* CHAT CONTAINER: Uses min-h-0 and flex-1 to enable internal scrolling */}
         <div className={cn(
-          "flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 overflow-hidden shadow-2xl relative",
+          "flex flex-col bg-[#0a0a0f]/40 backdrop-blur-3xl border border-white/5 overflow-hidden shadow-2xl relative min-h-0",
           previewMode ? "h-[450px] rounded-[2.5rem]" : "flex-1 rounded-[2.5rem] mb-6"
         )}>
+          {/* MESSAGES STREAM */}
           <div 
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar overscroll-contain"
           >
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
-                <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                <span className="text-[9px] font-black uppercase tracking-widest">Synchronizing Logs</span>
+                <ThreeBodyLoader />
+                <span className="text-[9px] font-black uppercase tracking-widest text-accent animate-pulse">Syncing Logs</span>
               </div>
             ) : displayedMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
@@ -142,13 +150,14 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
             )}
           </div>
 
+          {/* REPLY INDICATOR */}
           <AnimatePresence>
             {replyTarget && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="bg-white/5 border-t border-white/10 overflow-hidden"
+                className="bg-white/5 border-t border-white/10 overflow-hidden shrink-0"
               >
                 <div className="px-6 py-3 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 border-l-2 border-accent pl-3 overflow-hidden">
@@ -166,6 +175,7 @@ export default function GlobalChat({ previewMode = false }: GlobalChatProps) {
             )}
           </AnimatePresence>
 
+          {/* INPUT TERMINAL */}
           <div className="p-6 bg-white/5 border-t border-white/5 relative z-10 shrink-0">
             {!user ? (
               <div className="flex items-center justify-between">

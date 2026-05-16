@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -22,19 +21,13 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import AvatarBorderOverlay from '../profile/AvatarBorderOverlay';
 
 interface UserProfileModalProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const borderMap: Record<string, string> = {
-  'ink-master': 'https://i.ibb.co.com/DgDsKgVh/9b6b3710-d9a6-42ce-9237-0a4655ecd205-20260516-032637-0000.png',
-  'cyber-core': 'https://i.ibb.co.com/JR5FhyDW/f0d15853-c7ab-4a2a-a14e-8e0d2ba6c330-20260516-032602-0000.png',
-  'celestial-dream': 'https://i.ibb.co.com/n85NZRVB/c3d098ec-c12d-4ece-b742-adc657357290-20260516-032528-0000.png',
-  'stellar-compass': 'https://i.ibb.co.com/LdzzJtRW/823e8e96-4d93-49dc-be69-36c49b67a1b8-20260516-032451-0000.png'
-};
 
 export default function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalProps) {
   const { profile, loading } = useUserProfile(userId);
@@ -88,8 +81,9 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
 
               <div className="px-8 pb-10 -mt-16 relative z-10 space-y-8">
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="relative inline-block group overflow-visible">
-                    {/* AVATAR BASE - Layer 1 (z-10) */}
+                  {/* IDENTITY MATRIX: Avatar + Border + Badge */}
+                  <div className="relative inline-block overflow-visible">
+                    {/* AVATAR BASE (z-10) */}
                     <div className="relative z-10">
                       <AvatarDisplay 
                         src={profile.photoURL} 
@@ -98,18 +92,16 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                       />
                     </div>
                     
-                    {/* BORDER OVERLAY - Layer 2 (z-10 absolute) */}
-                    {profile.equippedBorder && borderMap[profile.equippedBorder] && (
-                      <img 
-                        src={borderMap[profile.equippedBorder]} 
-                        alt="Border"
-                        className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" 
-                        style={{ transform: 'scale(1.28)' }}
-                        draggable={false}
+                    {/* BORDER OVERLAY (z-40) - Higher priority for visibility */}
+                    {profile.equippedBorder && profile.equippedBorder !== 'none' && (
+                      <AvatarBorderOverlay 
+                        borderId={profile.equippedBorder} 
+                        size="huge" 
+                        className="z-40" 
                       />
                     )}
                     
-                    {/* AUTHORITY BADGE - Layer 3 (z-50) */}
+                    {/* AUTHORITY BADGE (z-50) - Frontmost Layer */}
                     {(profile.isPremium || profile.role !== 'user') && (
                       <div 
                         className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl animate-in zoom-in duration-300 flex items-center justify-center ring-4 ring-[#0a0a0f]"
