@@ -28,6 +28,7 @@ interface AuthState {
 const ADMIN_EMAIL = "jullyan382@gmail.com";
 const ADMIN_PASS = "YAN123";
 
+// System-wide unlocked borders for the owner signature
 const ALL_BORDERS = ['ink-master', 'cyber-core', 'celestial-dream', 'stellar-compass', 'bronze-glow', 'silver-shimmer', 'gold-admin', 'legend-owner'];
 
 export const useAuthStore = create<AuthState>()(

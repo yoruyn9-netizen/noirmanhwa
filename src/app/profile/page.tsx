@@ -6,6 +6,7 @@ import RequireAuth from '@/components/auth/RequireAuth';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from '@/components/profile/AvatarDisplay';
 import ProfileEditor from '@/components/profile/ProfileEditor';
+import BorderGalleryModal from '@/components/profile/BorderGalleryModal';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
   Edit3, LayoutGrid, Grid
@@ -23,6 +24,7 @@ function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { toast } = useToast();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -66,9 +68,10 @@ function ProfilePage() {
             </div>
             
             <button 
-              className="flex items-center gap-3 px-6 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest text-accent hover:bg-accent hover:text-white transition-all shadow-xl shadow-accent/5"
+              onClick={() => setIsGalleryOpen(true)}
+              className="flex items-center gap-3 px-8 py-3.5 bg-accent/10 border border-accent/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-accent hover:bg-accent hover:text-white transition-all shadow-xl shadow-accent/5 active:scale-95"
             >
-              <Grid className="w-3.5 h-3.5" /> All Borders
+              <Grid className="w-4 h-4" /> All Borders
             </button>
           </div>
           
@@ -141,11 +144,15 @@ function ProfilePage() {
         </button>
       </div>
 
+      {/* Profile Editor Sheet */}
       <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[4rem] p-0 overflow-hidden">
           <ProfileEditor onClose={() => setIsEditorOpen(false)} />
         </SheetContent>
       </Sheet>
+
+      {/* Border Gallery Modal */}
+      <BorderGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
     </div>
   );
 }
