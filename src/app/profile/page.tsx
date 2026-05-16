@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -6,10 +5,9 @@ import RequireAuth from '@/components/auth/RequireAuth';
 import { useAuthStore } from '@/store/authStore';
 import AvatarDisplay from '@/components/profile/AvatarDisplay';
 import ProfileEditor from '@/components/profile/ProfileEditor';
-import BorderGalleryModal from '@/components/profile/BorderGalleryModal';
 import { 
   LogOut, Zap, Globe, ShieldCheck, ArrowRight,
-  Edit3, LayoutGrid, Crown, Star, Grid, Box
+  Edit3, LayoutGrid, Grid
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -24,7 +22,6 @@ function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { toast } = useToast();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -61,17 +58,16 @@ function ProfilePage() {
                 borderId={user.equippedBorder}
               />
               {(user.isPremium || isOwner) && (
-                <div className="absolute -bottom-1 -right-1 p-2.5 bg-yellow-500 text-black rounded-full shadow-2xl z-50 ring-8 ring-[#020205]">
-                  <Zap className="w-5 h-5 fill-current" />
+                <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-50 ring-4 ring-[#020205]">
+                  <Zap className="w-4 h-4 fill-current" />
                 </div>
               )}
             </div>
             
             <button 
-              onClick={() => setIsGalleryOpen(true)}
               className="flex items-center gap-3 px-6 py-3 bg-accent/10 border border-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest text-accent hover:bg-accent hover:text-white transition-all shadow-xl shadow-accent/5"
             >
-              <Grid className="w-3.5 h-3.5" /> Identity Specs
+              <Grid className="w-3.5 h-3.5" /> All Borders
             </button>
           </div>
           
@@ -116,9 +112,9 @@ function ProfilePage() {
       {/* Stats Matrix */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
-          { icon: Box, label: 'ARTIFACTS', val: isOwner ? 'ALL' : (user.ownedBorders?.length || 0) },
+          { icon: Zap, label: 'ENERGY', val: user.isPremium || isOwner ? 'MAX' : '99%' },
           { icon: Globe, label: 'REGION', val: 'Global Matrix' },
-          { icon: ShieldCheck, label: 'UPLINK', val: 'SECURE' },
+          { icon: ShieldCheck, label: 'STATUS', val: user.role.toUpperCase() },
         ].map((stat, i) => (
           <div key={i} className="p-8 bg-[#0a0a0f]/60 border border-white/5 rounded-[2.5rem] text-center space-y-1 shadow-2xl backdrop-blur-xl">
             <stat.icon className="w-5 h-5 text-accent mx-auto mb-2 opacity-40" />
@@ -143,8 +139,6 @@ function ProfilePage() {
           <ArrowRight className="w-5 h-5 text-neutral-800 group-hover:text-white group-hover:translate-x-2 transition-all" />
         </button>
       </div>
-
-      <BorderGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
 
       <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <SheetContent side="bottom" className="h-[85vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[4rem] p-0 overflow-hidden">
