@@ -27,7 +27,7 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
 
   const src = borderMap[borderId] || null;
 
-  // If it's a CSS-based border, we handle it differently (or skip if only images are requested)
+  // If it's a CSS-based border, we can add class mappings here
   if (!src) return null;
 
   return (
