@@ -130,11 +130,11 @@ export default function HeaderProfile() {
                             size="md" 
                             borderId={user.equippedBorder}
                           />
-                          {/* AUTHORITY BADGE - FORCED FOREGROUND (z-30) */}
+                          {/* AUTHORITY BADGE - FORCED FOREGROUND (z-50) */}
                           {(user.isPremium || user.role !== 'user') && (
                             <div 
                               className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300"
-                              style={{ zIndex: 30 }}
+                              style={{ zIndex: 50 }}
                             >
                               <Zap className="w-3.5 h-3.5 text-black fill-current" />
                             </div>

@@ -29,7 +29,7 @@ export default function AvatarBorderOverlay({ borderId, size = 'md', className }
         "absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible",
         className
       )}
-      style={{ zIndex: 20 }}
+      style={{ zIndex: 40 }} // Middle layer (above avatar, below badge)
     >
       <img 
         src={src} 

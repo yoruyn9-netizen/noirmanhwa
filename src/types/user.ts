@@ -28,6 +28,7 @@ export interface UserProfile {
   role: UserRole;
   isPremium?: boolean;
   isBanned?: boolean;
+  equippedBorder?: string | null;
   updatedAt?: string;
   joinedAt?: any; // Firestore Timestamp
   lastActive?: any; // Firestore Timestamp
