@@ -1,57 +1,32 @@
-import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
+import { NextResponse } from 'next/server';
+import { Chapter } from '@/types/manga';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
-  if (!id) {
-    return NextResponse.json({ success: false, error: 'Manga ID is required', data: [] }, { status: 400 });
-  }
-
-  const limit = 10;
-  let offset = 0;
-  let total = 0;
-  const chapters: any[] = [];
+  const mangaId = params.id;
 
   try {
-    do {
-      const url = `https://api.mangadex.org/manga/${id}/feed?limit=${limit}&offset=${offset}&order[chapter]=asc`;
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/json'
-        }
-      });
+    const res = await fetch(`https://api.sansekai.my.id/api/komik/${mangaId}/chapters`, {
+      next: { revalidate: 300 },
+    });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`MangaDex feed error: ${response.status} ${errorBody}`);
-      }
+    const sansekaiData = await res.json();
 
-      const payload = await response.json();
-      const pageItems = Array.isArray(payload?.data) ? payload.data : [];
+    if (sansekaiData.retcode !== 0) {
+      return NextResponse.json({ success: false, data: [], error: 'API Error' }, { status: 200 });
+    }
 
-      if (pageItems.length === 0) break;
+    const mappedData: Chapter[] = sansekaiData.data.map((chapter: any) => ({
+      id: chapter.id,
+      mangaId: mangaId,
+      number: chapter.chapter,
+      title: chapter.title,
+      source: 'unknown',
+      publishAt: chapter.release_date,
+    }));
 
-      const normalized = pageItems.map((item: any) => ({
-        id: item.id,
-        mangaId: id,
-        number: item.attributes?.chapter || item.attributes?.title || '0',
-        title: item.attributes?.title || `Chapter ${item.attributes?.chapter || '?'}`,
-        publishAt: item.attributes?.publishAt || null,
-        source: 'mangadex'
-      }));
-
-      chapters.push(...normalized);
-      total = typeof payload.total === 'number' ? payload.total : chapters.length;
-      offset += pageItems.length;
-    } while (offset < total && offset < 100);
-
-    return NextResponse.json({ success: true, data: chapters }, { status: 200, next: { revalidate: 300 } });
-  } catch (error: any) {
-    console.error('[CHAPTERS ROUTE ERROR]', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch chapters', data: [] },
-      { status: 500, next: { revalidate: 300 } }
-    );
+    return NextResponse.json({ success: true, data: mappedData });
+  } catch (error) {
+    return NextResponse.json({ success: false, data: [], error: 'Failed to fetch data' }, { status: 200 });
   }
 }
