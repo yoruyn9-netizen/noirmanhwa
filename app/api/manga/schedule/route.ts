@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const response = await fetch('https://api.jikan.moe/v4/top/manga?type=manhwa&filter=airing&limit=20', {
+    const response = await fetch('https://api.jikan.moe/v4/manga?order_by=published&sort=asc&status=publishing&type=manga&limit=20', {
       headers: {
         Accept: 'application/json'
       }
@@ -19,16 +19,11 @@ export async function GET() {
     const items = Array.isArray(payload?.data) ? payload.data : [];
 
     const schedule = items.map((item: any) => ({
-      id: item.mal_id ? String(item.mal_id) : item.url,
+      id: item.mal_id ? String(item.mal_id) : item.url || null,
       title: item.title || 'Untitled',
-      imageUrl: item.images?.jpg?.large_image_url || item.images?.webp?.large_image_url || '',
+      image: item.images?.jpg?.large_image_url || item.images?.webp?.large_image_url || '',
       publishedFrom: item.published?.from || null,
-      publishedTo: item.published?.to || null,
-      score: typeof item.score === 'number' ? item.score : null,
-      members: typeof item.members === 'number' ? item.members : null,
-      url: item.url || '',
-      chapters: typeof item.chapters === 'number' ? item.chapters : null,
-      status: 'AIRING'
+      score: typeof item.score === 'number' ? item.score : null
     }));
 
     return NextResponse.json({ success: true, data: schedule }, { status: 200, next: { revalidate: 300 } });
