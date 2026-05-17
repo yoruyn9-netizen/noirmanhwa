@@ -4,10 +4,17 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q');
+
+  if (!query) {
+    return NextResponse.json({ success: false, data: [], error: 'Search query required' }, { status: 400 });
+  }
+
   try {
     const res = await fetch(
-      'https://api.sansekai.my.id/api/komik?type=manhwa&sort=updated&page=1&limit=20',
+      `https://api.sansekai.my.id/api/komik?type=manhwa&q=${query}&page=1&limit=20`,
       { next: { revalidate: 300 } }
     );
     

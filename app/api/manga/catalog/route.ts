@@ -1,74 +1,40 @@
+
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-
-const ANILIST_QUERY = `
-query ($page: Int, $perPage: Int, $search: String, $genres: [String]) {
-  Page(page: $page, perPage: $perPage) {
-    media(type: MANGA, format: MANHWA, sort: POPULARITY_DESC, search: $search, genre_in: $genres) {
-      id
-      title {
-        english
-        romaji
-      }
-      coverImage {
-        large
-      }
-      averageScore
-      status
-      genres
-      description
-    }
-  }
-}
-`;
+export const revalidate = 300;
 
 export async function GET() {
   try {
-    const response = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify({
-        query: ANILIST_QUERY,
-        variables: {
-          page: 1,
-          perPage: 50
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`AniList API Error: ${response.status} ${errorBody}`);
-    }
-
-    const payload = await response.json();
-    const media = payload?.data?.Page?.media;
-
-    if (!Array.isArray(media) || media.length === 0) {
-      throw new Error('AniList returned no media entries');
-    }
-
-    const normalized = media.map((item: any) => ({
-      id: String(item.id),
-      title: item.title?.english || item.title?.romaji || 'Unknown Title',
-      cover: item.coverImage?.large || '',
-      averageScore: typeof item.averageScore === 'number' ? item.averageScore : null,
-      status: item.status || 'UNKNOWN',
-      genres: Array.isArray(item.genres) ? item.genres : [],
-      description: item.description || '',
-      source: 'anilist'
-    }));
-
-    return NextResponse.json({ success: true, data: normalized }, { status: 200, next: { revalidate: 300 } });
-  } catch (error: any) {
-    console.error('[CATALOG ROUTE ERROR]', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch catalog data', data: [] },
-      { status: 500, next: { revalidate: 300 } }
+    const res = await fetch(
+      'https://api.sansekai.my.id/api/komik?type=manhwa&page=1&limit=50',
+      { next: { revalidate: 300 } }
     );
+    
+    const json = await res.json();
+    
+    if (json.retcode !== 0) {
+      return NextResponse.json({ success: false, data: [], error: json.message }, { status: 200 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: json.data.map((m: any) => ({
+        id: m.manga_id,
+        title: m.title.toUpperCase(),
+        cover: m.cover_portrait_url || m.cover_image_url,
+        status: m.status === 1 ? 'ongoing' : 'completed',
+        type: m.taxonomy?.Format?.[0]?.name || 'MANHWA',
+        source: 'sansekai',
+        rating: m.user_rate,
+        genres: m.taxonomy?.Genre?.map((g: any) => g.name) || [],
+        latestChapter: m.latest_chapter_number,
+        updatedAt: m.latest_chapter_time,
+        views: m.view_count
+      })),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, data: [], error: error.message }, { status: 200 });
   }
 }
