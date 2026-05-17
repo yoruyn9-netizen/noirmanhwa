@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import HeroSlider from '@/components/HeroSlider';
 import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
@@ -10,7 +9,8 @@ import GlobalChat from '@/components/chat/GlobalChat';
 import HeaderProfile from '@/components/HeaderProfile';
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { Search, X, ChevronDown, RefreshCw } from 'lucide-react';
+import { HomeSearchFilter } from '@/components/home/HomeSearchFilter';
+import { Search, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const GENRES = [
@@ -40,9 +40,6 @@ const SORT_OPTIONS = [
 const normalizeQuery = (value: string) => value.trim().toLowerCase();
 
 export default function Home() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const [trending, setTrending] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,21 +47,12 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState('popular');
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const initialSearch = searchParams.get('search') || '';
-    const genreParams = searchParams
-      .getAll('genre')
-      .map((value) => GENRES.find((genre) => genre.toLowerCase() === value.toLowerCase()) || value)
-      .filter(Boolean) as string[];
-    const sortParam = searchParams.get('sort') || 'popular';
-
-    setSearch(initialSearch);
-    setSelectedGenres(genreParams.length ? genreParams : []);
-    setSortOption(SORT_OPTIONS.some((option) => option.value === sortParam) ? sortParam : 'popular');
-    setMounted(true);
-  }, [searchParams]);
+  const handleInitialFilters = useCallback((values: { search: string; selectedGenres: string[]; sortOption: string }) => {
+    setSearch(values.search);
+    setSelectedGenres(values.selectedGenres);
+    setSortOption(values.sortOption);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,17 +80,6 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-
-    const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (selectedGenres.length > 0) selectedGenres.forEach((genre) => params.append('genre', genre.toLowerCase()));
-    if (sortOption) params.set('sort', sortOption);
-    const queryString = params.toString();
-
-    router.replace(queryString ? `/?${queryString}` : '/', { scroll: false });
-  }, [search, selectedGenres, sortOption, mounted, router]);
 
   const filteredManga = useMemo(() => {
     if (!trending.length) return [];
@@ -173,98 +150,20 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="rounded-[2.5rem] border border-white/10 bg-[#06060c]/80 p-6 shadow-2xl backdrop-blur-xl">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by title..."
-                className="w-full rounded-3xl border border-white/10 bg-[#0b0b12] py-4 pl-12 pr-4 text-sm font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
-              />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.2fr_1fr]">
-              <div className="rounded-3xl border border-white/10 bg-[#09090f] p-4">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-accent">Genres</p>
-                    <p className="text-[11px] text-neutral-400">Select one or more</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-neutral-500" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {GENRES.map((genre) => {
-                    const active = selectedGenres.includes(genre);
-                    return (
-                      <button
-                        key={genre}
-                        type="button"
-                        onClick={() => toggleGenre(genre)}
-                        className={cn(
-                          'rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.35em] transition-all',
-                          active
-                            ? 'border-accent bg-accent/10 text-white'
-                            : 'border-white/10 bg-white/5 text-neutral-400 hover:border-white/20 hover:text-white'
-                        )}
-                      >
-                        {genre}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-[#09090f] p-4">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-accent">Sort</p>
-                    <p className="text-[11px] text-neutral-400">Choose a sort option</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-neutral-500" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {SORT_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setSortOption(option.value)}
-                      className={cn(
-                        'rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.35em] transition-all',
-                        sortOption === option.value
-                          ? 'border-accent bg-accent/10 text-white'
-                          : 'border-white/10 bg-white/5 text-neutral-400 hover:border-white/20 hover:text-white'
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {search && <span className="rounded-full bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.35em] text-white">Search: {search}</span>}
-              {selectedGenres.map((genre) => (
-                <span key={genre} className="rounded-full bg-accent/10 px-3 py-2 text-[10px] uppercase tracking-[0.35em] text-accent">{genre}</span>
-              ))}
-              {sortOption !== 'popular' && (
-                <span className="rounded-full bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.35em] text-neutral-300">Sort: {SORT_OPTIONS.find((item) => item.value === sortOption)?.label}</span>
-              )}
-            </div>
-            <button
-              onClick={clearFilters}
-              disabled={!search && !selectedGenres.length && sortOption === 'popular'}
-              className="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-[10px] font-black uppercase tracking-[0.35em] text-neutral-300 transition hover:bg-white/10 disabled:opacity-40"
-            >
-              <X className="h-4 w-4" /> Clear Filters
-            </button>
-          </div>
-        </section>
+        <Suspense fallback={<div className="min-h-[25vh] flex items-center justify-center"><ThreeBodyLoader /></div>}>
+          <HomeSearchFilter
+            genres={GENRES}
+            sortOptions={SORT_OPTIONS}
+            search={search}
+            selectedGenres={selectedGenres}
+            sortOption={sortOption}
+            onSearchChange={setSearch}
+            onToggleGenre={toggleGenre}
+            onSortChange={setSortOption}
+            onClearFilters={clearFilters}
+            onInitialFilters={handleInitialFilters}
+          />
+        </Suspense>
 
         <section className="w-full overflow-x-hidden">
           <HeroSlider trending={trending} />
