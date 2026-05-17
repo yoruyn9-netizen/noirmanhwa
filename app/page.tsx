@@ -10,7 +10,8 @@ import GlobalChat from '@/components/chat/GlobalChat';
 import HeaderProfile from '@/components/HeaderProfile';
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
+import ContinueReading from '@/components/manga/ContinueReading'; // Import the new component
 
 export default function Home() {
   const [trending, setTrending] = useState<Manga[]>([]);
@@ -77,30 +78,37 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="rounded-[2.5rem] border border-white/10 bg-[#06060c]/80 p-6 shadow-2xl backdrop-blur-xl">
-          <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+        {/* New Search Section */}
+        <section className="w-full max-w-2xl mx-auto">
+          <form onSubmit={handleSearchSubmit}>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                <Search className="h-5 w-5 text-neutral-400" />
+              </div>
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search manga titles..."
-                className="w-full rounded-3xl border border-white/10 bg-[#0b0b12] py-4 pl-12 pr-4 text-sm font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
+                className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-12 pr-4 text-white placeholder-neutral-400 transition-colors focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/20 backdrop-blur-sm"
               />
             </div>
-            <button
-              type="submit"
-              className="rounded-3xl bg-accent px-6 py-4 text-[10px] font-black uppercase tracking-[0.35em] text-black transition hover:brightness-110"
-            >
-              Search
-            </button>
           </form>
+        </section>
+
+        {/* Filters Button Section */}
+        <section className="w-full max-w-2xl mx-auto flex justify-center -mt-12">
+            <button className="h-10 px-6 flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+            </button>
         </section>
 
         <section className="w-full overflow-x-hidden">
           <HeroSlider trending={trending} />
         </section>
+
+        <ContinueReading mangaList={[]} /> 
 
         <section className="w-full overflow-x-hidden">
           <PopularManhwaCarousel />
