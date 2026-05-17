@@ -14,7 +14,7 @@ interface ScheduleItem {
   url?: string;
 }
 
-type ScheduleGroup = 'Today' | 'Tomorrow' | 'This Week' | 'Upcoming';
+type ScheduleGroup = 'Today' | 'Tomorrow' | 'This Week' | 'Later';
 
 function formatPublishedDate(value?: string | null) {
   if (!value) return 'Unknown date';
@@ -26,10 +26,10 @@ function formatPublishedDate(value?: string | null) {
 }
 
 function getScheduleGroup(value?: string | null): ScheduleGroup {
-  if (!value) return 'Upcoming';
+  if (!value) return 'Later';
 
   const date = parseISO(value);
-  if (Number.isNaN(date.getTime())) return 'Upcoming';
+  if (Number.isNaN(date.getTime())) return 'Later';
 
   const today = startOfDay(new Date());
   const tomorrow = addDays(today, 1);
@@ -38,7 +38,7 @@ function getScheduleGroup(value?: string | null): ScheduleGroup {
   if (isSameDay(date, tomorrow)) return 'Tomorrow';
   if (isThisWeek(date, { weekStartsOn: 1 })) return 'This Week';
 
-  return 'Upcoming';
+  return 'Later';
 }
 
 export default function SchedulePage() {
@@ -162,7 +162,7 @@ export default function SchedulePage() {
           </div>
         ) : groupedSchedule.length === 0 ? (
           <div className="rounded-[2rem] border border-white/10 bg-white/5 p-14 text-center">
-            <p className="text-base font-black uppercase tracking-[0.35em] text-white">No schedule data available</p>
+            <p className="text-base font-black uppercase tracking-[0.35em] text-white">No releases scheduled</p>
             <p className="mt-3 text-[11px] text-neutral-500">Please check back later for updates.</p>
           </div>
         ) : (

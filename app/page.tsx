@@ -1,6 +1,7 @@
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
 import HeroSlider from '@/components/HeroSlider';
 import PopularManhwaCarousel from '@/components/manga/PopularManhwaCarousel';
@@ -9,50 +10,14 @@ import GlobalChat from '@/components/chat/GlobalChat';
 import HeaderProfile from '@/components/HeaderProfile';
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { HomeSearchFilter } from '@/components/home/HomeSearchFilter';
-import { Search, X, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-const GENRES = [
-  'Action',
-  'Adventure',
-  'Comedy',
-  'Drama',
-  'Ecchi',
-  'Fantasy',
-  'Horror',
-  'Isekai',
-  'Mystery',
-  'Romance',
-  'Sci-Fi',
-  'Slice of Life',
-  'Supernatural',
-  'Thriller'
-];
-
-const SORT_OPTIONS = [
-  { value: 'popular', label: 'Popular' },
-  { value: 'latest', label: 'Latest' },
-  { value: 'az', label: 'A-Z' },
-  { value: 'rating', label: 'Rating' }
-];
-
-const normalizeQuery = (value: string) => value.trim().toLowerCase();
+import { Search } from 'lucide-react';
 
 export default function Home() {
   const [trending, setTrending] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [search, setSearch] = useState('');
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [sortOption, setSortOption] = useState('popular');
-
-  const handleInitialFilters = useCallback((values: { search: string; selectedGenres: string[]; sortOption: string }) => {
-    setSearch(values.search);
-    setSelectedGenres(values.selectedGenres);
-    setSortOption(values.sortOption);
-  }, []);
+  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -80,55 +45,10 @@ export default function Home() {
     };
   }, []);
 
-
-  const filteredManga = useMemo(() => {
-    if (!trending.length) return [];
-
-    const normalizedSearch = normalizeQuery(search);
-    const selectedGenreSet = new Set(selectedGenres.map((genre) => genre.toLowerCase()));
-
-    const result = trending.filter((manga) => {
-      const titleMatch = normalizedSearch
-        ? normalizeQuery(manga.title).includes(normalizedSearch)
-        : true;
-
-      const genreMatch = selectedGenreSet.size > 0
-        ? manga.genres.some((genre) => selectedGenreSet.has(genre.toLowerCase()))
-        : true;
-
-      return titleMatch && genreMatch;
-    });
-
-    return result.sort((a, b) => {
-      if (sortOption === 'latest') {
-        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        return bTime - aTime;
-      }
-      if (sortOption === 'rating') {
-        const aRating = typeof a.rating === 'number' ? a.rating : -1;
-        const bRating = typeof b.rating === 'number' ? b.rating : -1;
-        return bRating - aRating;
-      }
-      if (sortOption === 'az') {
-        return a.title.localeCompare(b.title);
-      }
-      return 0;
-    });
-  }, [trending, search, selectedGenres, sortOption]);
-
-  const toggleGenre = (genre: string) => {
-    setSelectedGenres((current) =>
-      current.includes(genre)
-        ? current.filter((item) => item !== genre)
-        : [...current, genre]
-    );
-  };
-
-  const clearFilters = () => {
-    setSearch('');
-    setSelectedGenres([]);
-    setSortOption('popular');
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const sanitized = searchTerm.trim();
+    router.push(sanitized ? `/search?q=${encodeURIComponent(sanitized)}` : '/search');
   };
 
   if (loading && !trending.length) {
@@ -141,7 +61,14 @@ export default function Home() {
   }
 
   return (
-    <ErrorBoundary fallback={<div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6"><Search className="w-12 h-12 text-neutral-800" /><p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Something went wrong. Try refreshing.</p></div>}>
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-6">
+          <Search className="w-12 h-12 text-neutral-800" />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Something went wrong. Try refreshing.</p>
+        </div>
+      }
+    >
       <div className="space-y-16 pb-40 max-w-[1600px] mx-auto px-4 relative overflow-x-hidden animate-in fade-in duration-1000">
         <header className="flex flex-col gap-6 pt-6 lg:flex-row lg:items-end lg:justify-between px-1">
           <HeaderProfile />
@@ -150,20 +77,26 @@ export default function Home() {
           </div>
         </header>
 
-        <Suspense fallback={<div className="min-h-[25vh] flex items-center justify-center"><ThreeBodyLoader /></div>}>
-          <HomeSearchFilter
-            genres={GENRES}
-            sortOptions={SORT_OPTIONS}
-            search={search}
-            selectedGenres={selectedGenres}
-            sortOption={sortOption}
-            onSearchChange={setSearch}
-            onToggleGenre={toggleGenre}
-            onSortChange={setSortOption}
-            onClearFilters={clearFilters}
-            onInitialFilters={handleInitialFilters}
-          />
-        </Suspense>
+        <section className="rounded-[2.5rem] border border-white/10 bg-[#06060c]/80 p-6 shadow-2xl backdrop-blur-xl">
+          <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search manga titles..."
+                className="w-full rounded-3xl border border-white/10 bg-[#0b0b12] py-4 pl-12 pr-4 text-sm font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
+              />
+            </div>
+            <button
+              type="submit"
+              className="rounded-3xl bg-accent px-6 py-4 text-[10px] font-black uppercase tracking-[0.35em] text-black transition hover:brightness-110"
+            >
+              Search
+            </button>
+          </form>
+        </section>
 
         <section className="w-full overflow-x-hidden">
           <HeroSlider trending={trending} />
@@ -175,8 +108,8 @@ export default function Home() {
 
         <section className="space-y-10 overflow-x-hidden">
           <div className="space-y-2 px-1">
-            <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Filtered Manga Feed</h2>
-            <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Search, filter, and sort your live discovery results.</p>
+            <h2 className="text-xl font-black uppercase tracking-tighter text-white text-glow">Trending Manga</h2>
+            <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-[0.4em]">Browse the latest curated recommendations.</p>
           </div>
 
           {loading ? (
@@ -187,7 +120,7 @@ export default function Home() {
             </div>
           ) : error ? (
             <div className="rounded-[2rem] border border-red-500/20 bg-red-500/5 p-10 text-center">
-              <p className="text-sm font-black uppercase tracking-[0.4em] text-red-400">Filter Error</p>
+              <p className="text-sm font-black uppercase tracking-[0.4em] text-red-400">Unable to load trending manga</p>
               <p className="mt-3 text-[11px] text-neutral-400">{error}</p>
               <button
                 onClick={() => window.location.reload()}
@@ -196,14 +129,9 @@ export default function Home() {
                 Reload
               </button>
             </div>
-          ) : filteredManga.length === 0 ? (
-            <div className="rounded-[2rem] border border-white/10 bg-white/5 p-14 text-center">
-              <p className="text-base font-black uppercase tracking-[0.35em] text-white">No titles match your filters</p>
-              <p className="mt-3 text-[11px] text-neutral-500">Try clearing search or picking fewer genres.</p>
-            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredManga.map((manga) => (
+              {trending.map((manga) => (
                 <MangaCard key={`${manga.source}-${manga.id}`} manga={manga} />
               ))}
             </div>

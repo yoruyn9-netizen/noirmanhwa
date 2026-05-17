@@ -1,16 +1,16 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Play, List, Loader2 } from 'lucide-react';
+import { ArrowLeft, List, Loader2, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 
 type MangaDetail = {
+  id: string;
   title: string;
   cover: string;
-  author: string;
+  authors: string[];
+  artists: string[];
   status: string;
   genres: string[];
   description: string;
@@ -23,16 +23,19 @@ type ChapterItem = {
   publishedAt?: string | null;
 };
 
+function normalizeMangaId(value: string) {
+  const match = value.match(/^(?:mangadex-)?(.+)$/i);
+  return match ? match[1] : value;
+}
+
 export default function MangaDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const mangaId = normalizeMangaId(params.id);
   const router = useRouter();
 
   const [detail, setDetail] = useState<MangaDetail | null>(null);
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [atHomeStatus, setAtHomeStatus] = useState<string>('');
-  const [fetchingChapterId, setFetchingChapterId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadManga = async () => {
@@ -40,54 +43,73 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
       setError(null);
 
       try {
-        const detailResponse = await fetch(`https://api.mangadex.org/manga/${encodeURIComponent(id)}?includes[]=cover_art&includes[]=author`);
+        const [detailResponse, chapterResponse] = await Promise.all([
+          fetch(`https://api.mangadex.org/manga/${encodeURIComponent(mangaId)}?includes[]=cover_art&includes[]=author&includes[]=artist`),
+          fetch(`https://api.mangadex.org/manga/${encodeURIComponent(mangaId)}/feed?limit=100&order[chapter]=desc&translatedLanguage[]=en`)
+        ]);
+
         if (!detailResponse.ok) {
-          throw new Error(`MangaDex detail request failed: ${detailResponse.status}`);
+          throw new Error(`MangaDex detail request failed with status ${detailResponse.status}`);
+        }
+
+        if (!chapterResponse.ok) {
+          throw new Error(`MangaDex chapter request failed with status ${chapterResponse.status}`);
         }
 
         const detailJson = await detailResponse.json();
+        const chapterJson = await chapterResponse.json();
         const detailData = detailJson.data;
-        const title = detailData.attributes?.title?.en || Object.values(detailData.attributes?.title || {})?.[0] || 'Unknown Title';
 
-        const authorNames = Array.isArray(detailData.relationships)
-          ? detailData.relationships
-              .filter((relationship: any) => relationship.type === 'author')
-              .map((author: any) => author.attributes?.name)
-              .filter(Boolean)
-          : [];
+        if (!detailData) {
+          throw new Error('MangaDex returned empty manga data.');
+        }
 
-        const coverRelationship = Array.isArray(detailData.relationships)
-          ? detailData.relationships.find((relationship: any) => relationship.type === 'cover_art')
-          : null;
+        const title =
+          detailData.attributes?.title?.en ||
+          detailData.attributes?.title?.en_jp ||
+          Object.values(detailData.attributes?.title || {})?.[0] ||
+          'Unknown Title';
 
+        const relationshipItems = Array.isArray(detailData.relationships) ? detailData.relationships : [];
+        const authors = relationshipItems
+          .filter((relationship: any) => relationship.type === 'author')
+          .map((author: any) => author.attributes?.name)
+          .filter(Boolean);
+        const artists = relationshipItems
+          .filter((relationship: any) => relationship.type === 'artist')
+          .map((artist: any) => artist.attributes?.name)
+          .filter(Boolean);
+
+        const coverRelationship = relationshipItems.find((relationship: any) => relationship.type === 'cover_art');
         const coverFileName = coverRelationship?.attributes?.fileName;
         const cover = coverFileName
-          ? `https://uploads.mangadex.org/covers/${id}/${coverFileName}.512.jpg`
+          ? `https://uploads.mangadex.org/covers/${detailData.id}/${coverFileName}`
           : '';
 
         const genres = Array.isArray(detailData.attributes?.tags)
           ? detailData.attributes.tags
-              .map((tag: any) => tag.attributes?.name?.en || '')
-              .filter((name: string) => Boolean(name))
+              .filter((tag: any) => tag.attributes?.category === 'genre')
+              .map((tag: any) => tag.attributes?.name?.en || tag.attributes?.name)
+              .filter(Boolean)
           : [];
 
+        const description =
+          detailData.attributes?.description?.en ||
+          Object.values(detailData.attributes?.description || {})?.[0] ||
+          'No description available.';
+
         setDetail({
+          id: detailData.id,
           title,
           cover,
-          author: authorNames.length ? authorNames.join(', ') : 'Unknown Author',
+          authors,
+          artists,
           status: detailData.attributes?.status || 'unknown',
           genres,
-          description: detailData.attributes?.description?.en || 'No description available.'
+          description
         });
 
-        const chaptersResponse = await fetch(`https://api.mangadex.org/manga/${encodeURIComponent(id)}/feed?limit=50&order[chapter]=desc`);
-        if (!chaptersResponse.ok) {
-          throw new Error(`MangaDex chapters request failed: ${chaptersResponse.status}`);
-        }
-
-        const chaptersJson = await chaptersResponse.json();
-        const chapterData = Array.isArray(chaptersJson.data) ? chaptersJson.data : [];
-
+        const chapterData = Array.isArray(chapterJson.data) ? chapterJson.data : [];
         setChapters(
           chapterData.map((chapter: any) => ({
             id: chapter.id,
@@ -96,44 +118,16 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
             publishedAt: chapter.attributes?.publishAt || null
           }))
         );
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load MangaDex data. Please check the manga ID or try again later.');
+      } catch (err: any) {
+        console.error('[MangaDetail]', err);
+        setError(err?.message || 'Failed to load MangaDex data. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     loadManga();
-  }, [id]);
-
-  const handleReadChapter = async (chapterId: string) => {
-    setFetchingChapterId(chapterId);
-    setAtHomeStatus('Fetching chapter pages...');
-
-    try {
-      const response = await fetch(`https://api.mangadex.org/at-home/server/${encodeURIComponent(chapterId)}`);
-      if (!response.ok) {
-        throw new Error(`At-home request failed: ${response.status}`);
-      }
-
-      const json = await response.json();
-      const pageCount = Array.isArray(json.chapter?.dataSaver)
-        ? json.chapter.dataSaver.length
-        : Array.isArray(json.chapter?.data)
-        ? json.chapter.data.length
-        : 0;
-
-      setAtHomeStatus(
-        `Fetched ${pageCount} pages from MangaDex at-home server. Base URL: ${json.baseUrl}`
-      );
-    } catch (err) {
-      console.error(err);
-      setAtHomeStatus('Unable to fetch chapter pages from MangaDex at-home server.');
-    } finally {
-      setFetchingChapterId(null);
-    }
-  };
+  }, [mangaId]);
 
   if (loading) {
     return (
@@ -170,7 +164,7 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
         </button>
         <div className="text-right">
           <p className="text-xs uppercase tracking-[0.4em] text-neutral-500">MangaDex</p>
-          <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-400">ID {id}</p>
+          <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-400">ID {mangaId}</p>
         </div>
       </header>
 
@@ -187,8 +181,15 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
 
           <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/5 p-6">
             <p className="text-xs text-neutral-400 uppercase tracking-[0.4em]">Author</p>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-white">{detail.author}</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-white">{detail.authors.length ? detail.authors.join(', ') : 'Unknown Author'}</p>
           </div>
+
+          {detail.artists.length > 0 && (
+            <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/5 p-6">
+              <p className="text-xs text-neutral-400 uppercase tracking-[0.4em]">Artist</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-white">{detail.artists.join(', ')}</p>
+            </div>
+          )}
 
           <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/5 p-6">
             <p className="text-xs text-neutral-400 uppercase tracking-[0.4em]">Genres</p>
@@ -214,27 +215,21 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
 
           <div className="grid gap-4 md:grid-cols-2">
             {latestChapter ? (
-              <button
-                onClick={() => handleReadChapter(latestChapter.id)}
-                disabled={Boolean(fetchingChapterId)}
-                className="flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.25em] text-black transition hover:bg-neutral-100 disabled:opacity-50"
+              <a
+                href={`https://mangadex.org/chapter/${latestChapter.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.25em] text-black transition hover:bg-neutral-100"
               >
                 <Play className="w-4 h-4" />
                 Read Latest Chapter
-              </button>
+              </a>
             ) : (
               <div className="rounded-2xl bg-white/5 px-6 py-4 text-sm font-black uppercase tracking-[0.25em] text-neutral-400">
                 No chapters available yet
               </div>
             )}
           </div>
-
-          {atHomeStatus ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-neutral-300">
-              <p className="font-black uppercase tracking-[0.25em] text-neutral-400">At-Home Fetch Status</p>
-              <p className="mt-2 break-all">{atHomeStatus}</p>
-            </div>
-          ) : null}
 
           <section className="space-y-5">
             <div className="flex items-center justify-between">
@@ -257,18 +252,17 @@ export default function MangaDetailPage({ params }: { params: { id: string } }) 
                       <p className="text-sm font-black text-white">{chapter.title}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        onClick={() => handleReadChapter(chapter.id)}
-                        className="rounded-2xl bg-accent/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-accent transition hover:bg-accent hover:text-black"
+                      <span className="rounded-full bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-neutral-400">
+                        {chapter.publishedAt ? new Date(chapter.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No release date'}
+                      </span>
+                      <a
+                        href={`https://mangadex.org/chapter/${chapter.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl bg-accent px-5 py-3 text-[10px] font-black uppercase tracking-[0.35em] text-black transition hover:bg-accent/90"
                       >
-                        Read Chapter
-                      </button>
-                      <Link
-                        href={`/reader/${id}/${chapter.id}`}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-neutral-200 transition hover:bg-white/10"
-                      >
-                        Open Reader
-                      </Link>
+                        Read
+                      </a>
                     </div>
                   </div>
                 ))

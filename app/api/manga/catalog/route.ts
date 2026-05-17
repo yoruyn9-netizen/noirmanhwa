@@ -35,7 +35,7 @@ export async function GET() {
         query: ANILIST_QUERY,
         variables: {
           page: 1,
-          perPage: 20
+          perPage: 50
         }
       })
     });

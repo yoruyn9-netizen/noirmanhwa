@@ -12,7 +12,7 @@ export async function getMangaDexData() {
   try {
     const endpoint = 'https://api.mangadex.org/manga';
     const params = new URLSearchParams();
-    params.append('limit', '20');
+    params.append('limit', '50');
     params.append('includes[]', 'cover_art');
     params.append('includes[]', 'author');
     params.append('order[latestUploadedChapter]', 'desc');
@@ -22,10 +22,10 @@ export async function getMangaDexData() {
     const response = await fetch(`${endpoint}?${params}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Accept-Language': 'en-US,en;q=0.9',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        Pragma: 'no-cache'
       },
       signal: controller.signal,
       next: { revalidate: 300 }
@@ -92,9 +92,9 @@ export async function getAsuraData() {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.9',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Referer': 'https://asuracomic.net/',
-        'Origin': 'https://asuracomic.net',
+        Pragma: 'no-cache',
+        Referer: 'https://asuracomic.net/',
+        Origin: 'https://asuracomic.net',
         'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
@@ -150,9 +150,9 @@ export async function getFlameData() {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.9',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Referer': 'https://flamecomics.com/',
-        'Origin': 'https://flamecomics.com',
+        Pragma: 'no-cache',
+        Referer: 'https://flamecomics.com/',
+        Origin: 'https://flamecomics.com',
         'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
