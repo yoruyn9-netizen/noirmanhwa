@@ -13,9 +13,6 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { Search, X, ChevronDown, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 const GENRES = [
   'Action',
   'Adventure',
