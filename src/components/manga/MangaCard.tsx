@@ -31,7 +31,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
       whileHover={{ y: -5 }}
       className="group relative w-full h-full"
     >
-      <Link href={`/manga/${manga.id}?source=${manga.source}`} className="block select-none">
+      <Link href={`/manga/${manga.id}`} className="block select-none">
         {/* Poster Matrix */}
         <div className={cn(
           "shinigami-card aspect-[2/3] relative rounded-3xl overflow-hidden bg-[#0a0a0f] border transition-all duration-700 shadow-2xl",

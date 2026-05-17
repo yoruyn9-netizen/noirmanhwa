@@ -38,7 +38,7 @@ export default function BookmarksPage() {
     return (
       <Link 
         key={manga.id} 
-        href={`/manga/${manga.id}?source=${manga.source}`}
+        href={`/manga/${manga.id}`}
         className="group flex items-center gap-4 p-3 bg-[#0a0a0f]/40 backdrop-blur-md border border-white/5 rounded-2xl hover:border-accent/40 transition-all duration-500 shadow-xl"
       >
         <div className="relative w-16 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-white/10">

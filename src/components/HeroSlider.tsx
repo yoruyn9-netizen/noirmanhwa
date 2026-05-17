@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { Manga } from '@/lib/types';
+import { Manga } from '@/types/manga';
 import { getCoverUrl, getMangaTitle } from '@/lib/utils';
 import Link from 'next/link';
 import { Activity, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -50,11 +50,11 @@ export default function HeroSlider({ trending }: HeroSliderProps) {
           {slides.map((manga) => (
             <Link 
               key={manga.id} 
-              href={`/manga/${manga.id}?source=${(manga as any).source || 'asura'}`}
+              href={`/manga/${manga.id}`}
               className="flex-[0_0_100%] min-w-0 relative aspect-[16/8] sm:aspect-[21/8] cursor-pointer"
             >
               <MangaImage 
-                src={(manga as any).cover || getCoverUrl(manga, 'original')} 
+                src={manga.cover || getCoverUrl(manga, 'original')} 
                 alt={manga.title || getMangaTitle(manga)} 
                 className="w-full h-full object-cover brightness-[0.4] transition-all duration-[3000ms] group-hover:scale-105"
                 priority

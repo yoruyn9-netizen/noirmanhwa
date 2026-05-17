@@ -1,68 +1,60 @@
 
 import { NextResponse } from 'next/server';
 
+const MANGADEX_BASE = 'https://api.mangadex.org';
+
 export const dynamic = 'force-dynamic';
 
-/**
- * Robust Combined API Route for Production
- * Aggregates Asura and Flame scans signals.
- */
+function getCoverUrl(manga: any) {
+  const coverRel = Array.isArray(manga.relationships)
+    ? manga.relationships.find((rel: any) => rel.type === 'cover_art')
+    : null;
+  const fileName = coverRel?.attributes?.fileName;
+  if (!fileName) return '';
+  return `https://uploads.mangadex.org/covers/${manga.id}/${fileName}.512.jpg`;
+}
+
 export async function GET() {
   try {
-    // Dynamically determine base URL for internal API hits
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'localhost:9002';
-    const baseUrl = `${protocol}://${host}`;
-    
-    console.log('🔄 [COMBINED] Fetching from base:', baseUrl);
+    const response = await fetch(
+      `${MANGADEX_BASE}/manga?limit=100&includes[]=cover_art&includes[]=author&order[latestUploadedChapter]=desc&contentRating[]=safe&originalLanguage[]=ko&originalLanguage[]=ja&originalLanguage[]=zh`,
+      { headers: { Accept: 'application/json' }, cache: 'no-store' }
+    );
 
-    // Internal fetch calls to individual source proxies
-    const [asuraRes, flameRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/api/manga/asura`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/manga/flame`, { cache: 'no-store' })
-    ]);
-
-    const allManga: any[] = [];
-    const sources: Record<string, number> = { asura: 0, flame: 0 };
-
-    if (asuraRes.status === 'fulfilled' && asuraRes.value.ok) {
-      const data = await asuraRes.value.json();
-      if (data.success && Array.isArray(data.data)) {
-        allManga.push(...data.data);
-        sources.asura = data.data.length;
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`MangaDex error ${response.status}: ${errorText}`);
     }
 
-    if (flameRes.status === 'fulfilled' && flameRes.value.ok) {
-      const data = await flameRes.value.json();
-      if (data.success && Array.isArray(data.data)) {
-        allManga.push(...data.data);
-        sources.flame = data.data.length;
-      }
-    }
+    const payload = await response.json();
+    const results = Array.isArray(payload?.data) ? payload.data : [];
 
-    if (allManga.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Total Signal Loss: All primary discovery nodes unreachable',
-        sources,
-        data: []
-      }, { status: 503 });
-    }
+    const mangaList = results.map((item: any) => ({
+      id: item.id,
+      title: item.attributes?.title?.en || item.attributes?.title?.en_jp || Object.values(item.attributes?.title || {})?.[0] || 'Unknown Title',
+      cover: getCoverUrl(item),
+      status: item.attributes?.status || 'ongoing',
+      type: item.attributes?.publicationDemographic || 'manhwa',
+      source: 'mangadex',
+      genres: Array.isArray(item.attributes?.tags)
+        ? item.attributes.tags.map((tag: any) => tag.attributes?.name?.en || 'Unknown')
+        : [],
+      rating: null,
+      description: item.attributes?.description?.en || '',
+      language: item.attributes?.originalLanguage || 'unknown',
+      year: item.attributes?.year || null,
+      updatedAt: item.attributes?.updatedAt || null
+    }));
 
-    return NextResponse.json({
-      success: true,
-      data: allManga,
-      sources,
-      total: allManga.length,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('❌ [COMBINED] Matrix Crash:', error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown matrix error',
-      data: []
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: true, data: mangaList.slice(0, 100), total: mangaList.length },
+      { status: 200, next: { revalidate: 300 } }
+    );
+  } catch (error: any) {
+    console.error('[COMBINED ROUTE ERROR]', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to fetch combined manga data', data: [] },
+      { status: 500, next: { revalidate: 300 } }
+    );
   }
 }

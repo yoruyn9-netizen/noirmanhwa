@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import { mangaApi } from '@/lib/mangaApi';
 import { MangaDetail, MangaSource } from '@/types/manga';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Play, Calendar, Clock, List, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
@@ -14,9 +14,8 @@ import { useMangaStore } from '@/store/mangaStore';
 
 export default function MangaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const source = (searchParams.get('source') as MangaSource) || 'mangadex';
+  const source: MangaSource = 'mangadex';
   
   const [data, setData] = useState<MangaDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +103,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             <div className="grid grid-cols-2 gap-4">
               {data.chapters.length > 0 && (
                 <Link 
-                  href={`/reader/${id}/${data.chapters[0].id}?source=${source}`}
+                  href={`/reader/${id}/${data.chapters[0].id}`}
                   className="flex items-center justify-center gap-3 py-5 bg-white text-black rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
                 >
                   <Play className="w-4 h-4 fill-current" /> START READING
@@ -138,7 +137,7 @@ export default function MangaDetailPage({ params }: { params: Promise<{ id: stri
             {data.chapters.map((chapter) => (
               <Link 
                 key={chapter.id} 
-                href={`/reader/${id}/${chapter.id}?source=${source}`}
+                href={`/reader/${id}/${chapter.id}`}
                 className="flex items-center justify-between p-5 bg-[#0a0a0f] rounded-2xl border border-white/5 hover:border-accent/40 hover:bg-accent/5 transition-all group shadow-xl"
               >
                 <div className="flex items-center gap-5">

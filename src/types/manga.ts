@@ -1,5 +1,5 @@
 
-export type MangaSource = 'asura' | 'flame' | 'komiku';
+export type MangaSource = 'anilist' | 'mangadex' | 'jikan' | 'unknown';
 
 export interface Manga {
   id: string;
@@ -8,13 +8,12 @@ export interface Manga {
   status: string;
   genres: string[];
   source: MangaSource;
-  language: string;
-  rating?: number;
+  language?: string;
+  rating?: number | null;
   description?: string;
-  author?: string;
-  year?: string | number;
+  year?: string | number | null;
   type?: string;
-  updatedAt?: string;
+  updatedAt?: string | null;
 }
 
 export interface Chapter {
@@ -23,7 +22,7 @@ export interface Chapter {
   number: string;
   title: string;
   source: MangaSource;
-  publishAt?: string;
+  publishAt?: string | null;
 }
 
 export interface MangaDetail extends Manga {
