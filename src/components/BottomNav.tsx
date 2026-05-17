@@ -11,7 +11,8 @@ import {
   Bookmark, 
   LayoutGrid, 
   Fingerprint, 
-  User 
+  User,
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui';
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/', icon: Home, label: 'HOME' },
   { href: '/search', icon: Search, label: 'SEARCH' },
   { href: '/top', icon: Trophy, label: 'TOP' },
+  { href: '/schedule', icon: CalendarDays, label: 'SCHEDULE' },
   { href: '/bookmarks', icon: Bookmark, label: 'LIBRARY' },
   { href: '/genre', icon: LayoutGrid, label: 'GENRES' },
   { href: '/login', icon: Fingerprint, label: 'LOGIN' },
