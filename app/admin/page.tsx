@@ -12,7 +12,8 @@ import {
   ArrowLeft,
   LayoutGrid,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +21,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import NotificationManager from '@/components/admin/NotificationManager';
 import BorderManager from '@/components/admin/BorderManager';
 import ReportDashboard from '@/components/owner/ReportDashboard';
+import MangaManagement from '@/components/admin/MangaManagement';
 
 function AdminDashboard() {
   const { user } = useAuthStore();
@@ -60,6 +62,9 @@ function AdminDashboard() {
             <TabsTrigger value="users" className="px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
               <Users className="w-4 h-4 mr-2" /> User Grid
             </TabsTrigger>
+            <TabsTrigger value="manga" className="px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-green-600 data-[state=active]:text-white transition-all">
+              <BookOpen className="w-4 h-4 mr-2" /> Manga
+            </TabsTrigger>
             <TabsTrigger value="borders" className="px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
               <ImageIcon className="w-4 h-4 mr-2" /> Fabrication
             </TabsTrigger>
@@ -73,6 +78,7 @@ function AdminDashboard() {
         </div>
 
         <TabsContent value="users" className="animate-in fade-in slide-in-from-bottom-4"><UserManagement /></TabsContent>
+        <TabsContent value="manga" className="animate-in fade-in slide-in-from-bottom-4"><MangaManagement /></TabsContent>
         <TabsContent value="borders" className="animate-in fade-in slide-in-from-bottom-4"><BorderManager /></TabsContent>
         <TabsContent value="broadcast" className="animate-in fade-in slide-in-from-bottom-4"><NotificationManager /></TabsContent>
         <TabsContent value="reports" className="animate-in fade-in slide-in-from-bottom-4"><ReportDashboard /></TabsContent>
