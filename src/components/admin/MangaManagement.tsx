@@ -1,43 +1,60 @@
+
 "use client";
-
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import React, { useState, useEffect } from 'react';
+import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '@/firebase';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import AddMangaForm from './AddMangaForm';
-import { PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import MangaTable from './MangaTable';
+import { Manga } from '@/types/manga';
 
-const MangaManagement = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const MangaManagement: React.FC = () => {
+  const [manga, setManga] = useState<Manga[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'manga'), (snapshot) => {
+      const mangaData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Manga[];
+      setManga(mangaData);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleDeleteManga = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this manga?')) {
+      try {
+        await deleteDoc(doc(db, 'manga', id));
+        toast.success('Manga deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete manga');
+      }
+    }
+  };
 
   return (
-    <div>
-      <div className="flex justify-end mb-4">
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary hover:bg-primary/80">
-              <PlusCircle className="w-4 h-4" />
-              Add New Title
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-[#0a0a0f] border-white/10 text-white">
-            <DialogHeader>
-              <DialogTitle>Add New Manga/Manhwa</DialogTitle>
-              <DialogDescription>
-                Fill in the details below to add a new title to the database.
-              </DialogDescription>
-            </DialogHeader>
-            <AddMangaForm setModalOpen={setIsModalOpen} />
-          </DialogContent>
-        </Dialog>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Manga Management</h1>
+        <Button onClick={() => setIsFormOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Add Manga
+        </Button>
       </div>
-      {/* TODO: Add a grid to display existing manga here */}
+
+      {isFormOpen && (
+        <AddMangaForm 
+          onClose={() => setIsFormOpen(false)} 
+          onSuccess={() => {
+            setIsFormOpen(false);
+            toast.success('Manga added successfully!');
+          }}
+        />
+      )}
+
+      <MangaTable manga={manga} loading={loading} onDelete={handleDeleteManga} />
     </div>
   );
 };
