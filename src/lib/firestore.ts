@@ -24,6 +24,8 @@ import { Report } from '@/types/report';
 
 const { db } = initializeFirebase();
 
+export { db };
+
 /**
  * USERS MANAGEMENT
  */
