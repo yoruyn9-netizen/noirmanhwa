@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getMangaList, getMangaDetails } from '@/src/lib/mangadex';
+import { getMangaList, getMangaDetails } from '@/lib/mangadex';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getChapterFeed } from '@/src/lib/mangadex';
+import { getChapterFeed } from '@/lib/mangadex';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
