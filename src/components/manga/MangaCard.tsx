@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Manga } from '@/types/manga';
 import SafeImage from '@/components/SafeImage';
@@ -104,7 +104,7 @@ export default function MangaCard({ manga, isRecommended, compact }: MangaCardPr
                ))}
              </div>
              <span className="w-0.5 h-0.5 rounded-full bg-neutral-800 shrink-0" />
-             <span className="text-[7px] font-bold text-neutral-700 uppercase tracking-[0.1em] shrink-0">
+             <span className="text-[7px] font-bold text-neutral-700 uppercase tracking-[0.1em]">
                {manga.year || '2024'}
              </span>
           </div>
@@ -130,4 +130,53 @@ export function MangaCardSkeleton() {
       </div>
     </div>
   );
+}
+
+/**
+ * EXAMPLE: API Consumer Component
+ * This component demonstrates fetching data from the `/api/manga` endpoint
+ * and rendering the presentational `MangaCard` component with the result.
+ * It is self-contained and does not alter the behavior of the main MangaCard.
+ */
+export function MangaCardApiExample({ mangaId }: { mangaId: string }) {
+  const [manga, setManga] = useState<Manga | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchManga = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/manga?id=${mangaId}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to fetch manga');
+        }
+        const data: Manga = await res.json();
+        setManga(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (mangaId) {
+      fetchManga();
+    }
+  }, [mangaId]);
+
+  if (isLoading) {
+    return <MangaCardSkeleton />;
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error: {error}</div>;
+  }
+
+  if (!manga) {
+    return null;
+  }
+
+  return <MangaCard manga={manga} />;
 }
