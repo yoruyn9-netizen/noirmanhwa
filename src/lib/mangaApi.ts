@@ -33,26 +33,36 @@ const API_HEADERS = { 'Content-Type': 'application/json' };
 
 export async function fetchMangaList(): Promise<Manga[]> {
   try {
-    const response = await fetch('/api/manga/combined', {
+    const response = await fetch('/api/manga', {
       cache: 'no-store',
       headers: API_HEADERS
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('[API ERROR]:', errorData.error || `HTTP ${response.status}`);
-      throw new Error(errorData.error || `API Error: ${response.status}`);
+      throw new Error(`API Error: ${response.status}`);
     }
 
-    const result = await response.json();
-    if (!result.success || !Array.isArray(result.data)) {
-      throw new Error(result.error || 'No manga data available');
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      return [];
     }
-
-    return result.data;
+    return data.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      cover: item.coverUrl,
+      status: item.status,
+      source: item.source || 'mangadex',
+      genres: item.tags || [],
+      language: item.language,
+      rating: item.rating ?? null,
+      year: item.year ?? null,
+      description: item.description,
+      updatedAt: item.updatedAt ?? null,
+    }));
   } catch (error) {
     console.error('[API]: Uplink synchronization failure.', error);
-    throw error;
+    return [];
   }
 }
 
@@ -62,75 +72,65 @@ export async function fetchCuratedManhwa(): Promise<Manga[]> {
 
 export async function fetchChapters(mangaId: string): Promise<Chapter[]> {
   try {
-    const response = await fetch(`/api/manga/chapters/${encodeURIComponent(mangaId)}`, {
+    const response = await fetch(`/api/chapter?mangaId=${encodeURIComponent(mangaId)}`, {
       cache: 'no-store',
       headers: API_HEADERS
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Chapter fetch failed: ${response.status}`);
+      return [];
     }
 
-    const payload = await response.json();
-    if (!payload.success || !Array.isArray(payload.data)) {
-      throw new Error(payload.error || 'Invalid chapter payload');
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      return [];
     }
 
-    return payload.data;
+    return data.map((item: any) => ({
+      id: item.id,
+      mangaId: mangaId,
+      number: item.chapter || '0',
+      title: item.title || '',
+      publishAt: item.publishAt || null,
+      source: 'mangadex',
+    }));
   } catch (error) {
     console.error(`[Chapters]: ${mangaId} unreachable.`, error);
-    throw error;
+    return [];
   }
 }
 
 export async function fetchMangaDetail(mangaId: string): Promise<MangaDetail> {
   try {
-    const [detailRes, chapterRes] = await Promise.all([
-      fetch(`/api/manga?type=details&id=${encodeURIComponent(mangaId)}`, {
-        cache: 'no-store',
-        headers: API_HEADERS
-      }),
-      fetch(`/api/manga/chapters/${encodeURIComponent(mangaId)}`, {
-        cache: 'no-store',
-        headers: API_HEADERS
-      })
-    ]);
+    const response = await fetch(`/api/manga?id=${encodeURIComponent(mangaId)}`, {
+      cache: 'no-store',
+      headers: API_HEADERS
+    });
 
-    if (!detailRes.ok) {
-      const errorData = await detailRes.json().catch(() => ({}));
-      throw new Error(errorData.error || `Detail fetch failed: ${detailRes.status}`);
+    if (!response.ok) {
+      throw new Error(`Detail fetch failed: ${response.status}`);
     }
 
-    if (!chapterRes.ok) {
-      const errorData = await chapterRes.json().catch(() => ({}));
-      throw new Error(errorData.error || `Chapter fetch failed: ${chapterRes.status}`);
+    const item = await response.json();
+    
+    if (!item || !item.id) {
+      throw new Error('Invalid manga detail response');
     }
-
-    const detailPayload = await detailRes.json();
-    const chapterPayload = await chapterRes.json();
-
-    const coverRel = Array.isArray(detailPayload?.data?.relationships)
-      ? detailPayload.data.relationships.find((rel: any) => rel.type === 'cover_art')
-      : null;
-    const fileName = coverRel?.attributes?.fileName;
-    const coverUrl = fileName ? `https://uploads.mangadex.org/covers/${detailPayload.data.id}/${fileName}.512.jpg` : '';
 
     const manga: MangaDetail = {
-      id: detailPayload.data.id,
-      title: detailPayload.data.attributes?.title?.en || detailPayload.data.attributes?.title?.en_jp || Object.values(detailPayload.data.attributes?.title || {})?.[0] || 'Unknown Title',
-      cover: coverUrl,
-      status: detailPayload.data.attributes?.status || 'ongoing',
-      source: 'mangadex',
-      genres: Array.isArray(detailPayload.data.attributes?.tags)
-        ? detailPayload.data.attributes.tags.map((tag: any) => tag.attributes?.name?.en || 'Unknown')
-        : [],
-      language: detailPayload.data.attributes?.originalLanguage || 'unknown',
-      rating: null,
-      year: detailPayload.data.attributes?.year || null,
-      description: detailPayload.data.attributes?.description?.en || '',
-      updatedAt: detailPayload.data.attributes?.updatedAt || null,
-      chapters: Array.isArray(chapterPayload.data) ? chapterPayload.data : []
+      id: item.id,
+      title: item.title,
+      cover: item.coverUrl,
+      status: item.status,
+      source: item.source || 'mangadex',
+      genres: item.tags || [],
+      language: item.language,
+      rating: item.rating ?? null,
+      year: item.year ?? null,
+      description: item.description,
+      updatedAt: item.updatedAt ?? null,
+      chapters: []
     };
 
     return manga;
