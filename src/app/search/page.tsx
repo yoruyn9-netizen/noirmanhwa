@@ -1,180 +1,381 @@
 "use client";
 
-import React, { useEffect, useState, use, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { fetchMangaList, Manga } from '@/lib/mangaApi';
-import MangaCard from '@/components/manga/MangaCard';
+import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search as SearchIcon, 
-  Loader2, 
-  SearchIcon as SearchIconLucide, 
+  X, 
   AlertCircle,
   RotateCcw,
-  Filter
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { useUIStore } from '@/store/ui';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import ThreeBodyLoader from '@/components/ui/ThreeBodyLoader';
 
+// Components
+import SearchBar from '@/components/search/SearchBar';
+import GenreFilter from '@/components/search/GenreFilter';
+import SortFilter from '@/components/search/SortFilter';
+import SearchMangaGrid from '@/components/search/SearchMangaGrid';
+
+// Genre options
+const GENRES = [
+  'Action', 'Romance', 'Comedy', 'Drama', 'Fantasy', 
+  'Isekai', 'Horror', 'Mystery', 'Sci-Fi', 'Slice of Life',
+  'Adventure', 'Martial Arts', 'School Life', 'Supernatural'
+];
+
+// Sort options
+const SORT_OPTIONS = [
+  { label: 'Popular', value: 'popular' },
+  { label: 'Latest', value: 'latest' },
+  { label: 'A-Z', value: 'az' },
+  { label: 'Rating', value: 'rating' },
+];
+
+// Status options
 const STATUS_OPTIONS = [
+  { label: 'All', value: 'all' },
   { label: 'Ongoing', value: 'ongoing' },
   { label: 'Completed', value: 'completed' },
-  { label: 'Hiatus', value: 'hiatus' },
 ];
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
-  const { openPanel, closePanel } = useUIStore();
   
+  // States
   const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState('popular');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [results, setResults] = useState<Manga[]>([]);
+  const [allManga, setAllManga] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Debounce search query
   useEffect(() => {
-    const fetchResults = async () => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Fetch all manga on mount
+  useEffect(() => {
+    const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const res = await fetchMangaList();
-        let filtered = res;
-
-        if (query) {
-          filtered = filtered.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
-        }
-
-        if (selectedStatus.length > 0) {
-          filtered = filtered.filter(m => selectedStatus.includes(m.status.toLowerCase()));
-        }
-
-        setResults(filtered);
-      } catch (error) {
-        console.error("Search error:", error);
+        const data = await fetchMangaList();
+        setAllManga(data);
+      } catch (err) {
+        setError('Failed to load manga. Please try again.');
+        console.error('[Search]: Error fetching manga', err);
       } finally {
         setLoading(false);
       }
     };
+    fetchData();
+  }, []);
 
-    const timer = setTimeout(fetchResults, 400);
-    return () => clearTimeout(timer);
-  }, [query, selectedStatus]);
+  // Filter and sort results
+  useEffect(() => {
+    let filtered = [...allManga];
 
-  const toggleStatus = (status: string) => {
-    setSelectedStatus(prev => 
-      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
-    );
-  };
-
-  const resetFilters = () => {
-    setSelectedStatus([]);
-    setQuery('');
-  };
-
-  const handleFilterOpenChange = (open: boolean) => {
-    setIsFilterOpen(open);
-    if (open) {
-      openPanel('search');
-    } else {
-      closePanel();
+    // Text search filter
+    if (debouncedQuery) {
+      const searchLower = debouncedQuery.toLowerCase();
+      filtered = filtered.filter(m => 
+        m.title.toLowerCase().includes(searchLower)
+      );
     }
-  };
+
+    // Genre filter
+    if (selectedGenres.length > 0) {
+      filtered = filtered.filter(m => 
+        selectedGenres.some(g => 
+          m.genres.map(genre => genre.toLowerCase()).includes(g.toLowerCase())
+        )
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(m => 
+        m.status.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
+    // Sorting
+    switch (sortBy) {
+      case 'latest':
+        filtered.sort((a, b) => {
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        break;
+      case 'az':
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'rating':
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'popular':
+      default:
+        // Keep original order (assumed popular)
+        break;
+    }
+
+    setResults(filtered);
+  }, [allManga, debouncedQuery, selectedGenres, sortBy, statusFilter]);
+
+  // Toggle genre selection
+  const toggleGenre = useCallback((genre: string) => {
+    setSelectedGenres(prev => 
+      prev.includes(genre) 
+        ? prev.filter(g => g !== genre)
+        : [...prev, genre]
+    );
+  }, []);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setQuery('');
+    setDebouncedQuery('');
+    setSelectedGenres([]);
+    setSortBy('popular');
+    setStatusFilter('all');
+  }, []);
+
+  // Retry fetch
+  const handleRetry = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchMangaList();
+      setAllManga(data);
+    } catch (err) {
+      setError('Failed to load manga. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const hasActiveFilters = query || selectedGenres.length > 0 || statusFilter !== 'all';
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-5xl mx-auto">
-      <div className="space-y-1 ml-1">
-        <h1 className="text-xl font-black tracking-tighter flex items-center gap-3 uppercase text-glow">
-          <SearchIconLucide className="w-5 h-5 text-accent" /> Search Manga
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7 }}
+      className="space-y-6 max-w-6xl mx-auto"
+    >
+      {/* Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="space-y-1 px-1"
+      >
+        <h1 className="text-2xl md:text-3xl font-black tracking-tighter flex items-center gap-3 uppercase text-glow">
+          <Sparkles className="w-6 h-6 text-purple-500" />
+          Discover Manga
         </h1>
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-40 ml-1">
-          Find your next favorite title
+        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-[0.3em] ml-1">
+          Search through thousands of titles
         </p>
-      </div>
+      </motion.div>
 
-      <div className="flex items-center gap-3 px-2">
-        <div className="flex-1 relative group">
-          <SearchIcon className={cn(
-            "absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 transition-all duration-500 z-20",
-            loading ? "text-accent animate-pulse" : "text-muted-foreground group-focus-within:text-accent"
-          )} />
-          <input 
-            type="text" 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search titles..." 
-            className="w-full bg-[#0a0a0f] border border-white/5 rounded-2xl pl-12 pr-5 py-3.5 focus:outline-none focus:ring-1 focus:ring-accent/40 text-[12px] font-black placeholder:text-muted-foreground/30 relative z-10 transition-all shadow-2xl"
-          />
-        </div>
-        
-        <Sheet open={isFilterOpen} onOpenChange={handleFilterOpenChange}>
-          <SheetTrigger asChild>
-            <button className={cn(
-              "p-4 bg-[#0a0a0f] border border-white/5 rounded-2xl hover:bg-white/5 transition-all active:scale-95 relative shadow-2xl",
-              selectedStatus.length > 0 && "border-accent/40 bg-accent/5"
-            )}>
-              <Filter className="w-5 h-5" />
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[50vh] bg-[#020205]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-10">
-            <SheetHeader className="flex flex-row items-center justify-between mb-8">
-              <SheetTitle className="text-xl font-black tracking-tight uppercase">Filters</SheetTitle>
-              <button onClick={resetFilters} className="text-[10px] font-black uppercase text-accent">Reset</button>
-            </SheetHeader>
-            <div className="space-y-6">
-               <h3 className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Status</h3>
-               <div className="flex flex-wrap gap-2">
-                 {STATUS_OPTIONS.map(opt => (
-                   <button 
-                     key={opt.value}
-                     onClick={() => toggleStatus(opt.value)}
-                     className={cn(
-                       "px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                       selectedStatus.includes(opt.value) ? "bg-accent border-accent text-white" : "bg-white/5 border-white/5 text-neutral-500"
-                     )}
-                   >
-                     {opt.label}
-                   </button>
-                 ))}
-               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <SearchBar 
+          value={query}
+          onChange={setQuery}
+          onClear={() => setQuery('')}
+          loading={loading && debouncedQuery !== ''}
+        />
+      </motion.div>
 
-      {loading && results.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 space-y-4">
-          <ThreeBodyLoader />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Syncing Library...</p>
-        </div>
-      ) : results.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 text-center space-y-8 glass rounded-[3rem] border-dashed mx-2">
-           <AlertCircle className="w-12 h-12 text-accent opacity-20" />
-           <div className="space-y-2">
-             <h3 className="text-base font-black uppercase tracking-tight">No Results Found</h3>
-             <p className="text-muted-foreground font-medium text-[11px] opacity-50">Try adjusting your search query.</p>
-           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 px-2 sm:px-4">
-          {results.map((manga) => (
-            <MangaCard key={`${manga.id}-${manga.source}`} manga={manga} />
-          ))}
-        </div>
+      {/* Genre Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <GenreFilter 
+          genres={GENRES}
+          selectedGenres={selectedGenres}
+          onToggle={toggleGenre}
+        />
+      </motion.div>
+
+      {/* Sort & Status Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <SortFilter 
+          sortOptions={SORT_OPTIONS}
+          statusOptions={STATUS_OPTIONS}
+          sortBy={sortBy}
+          statusFilter={statusFilter}
+          onSortChange={setSortBy}
+          onStatusChange={setStatusFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+      </motion.div>
+
+      {/* Results Info */}
+      {!loading && !error && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          className="flex flex-wrap items-center justify-between gap-4 px-1"
+        >
+          <div className="flex items-center gap-3">
+            {debouncedQuery && (
+              <p className="text-[8px] uppercase tracking-widest text-neutral-600">
+                Search results for: <span className="text-purple-400">&quot;{debouncedQuery}&quot;</span>
+              </p>
+            )}
+          </div>
+          <div className="rounded-full bg-white/5 border border-white/10 px-3 py-1.5 backdrop-blur-md">
+            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
+              {results.length} manga found
+            </span>
+          </div>
+        </motion.div>
       )}
-    </div>
+
+      {/* Content */}
+      <AnimatePresence mode="wait">
+        {/* Loading State */}
+        {loading && allManga.length === 0 && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-24 space-y-6"
+          >
+            <ThreeBodyLoader />
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 animate-pulse">
+              Scanning Library...
+            </p>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="mx-2"
+          >
+            <div className="rounded-3xl border border-red-500/20 bg-red-500/5 backdrop-blur-md p-8 text-center space-y-4">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+              <div className="space-y-2">
+                <h3 className="text-base font-black uppercase tracking-tight text-red-400">
+                  Connection Error
+                </h3>
+                <p className="text-xs text-neutral-500">
+                  {error}
+                </p>
+              </div>
+              <button
+                onClick={handleRetry}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Retry Connection
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && results.length === 0 && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="mx-2"
+          >
+            <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.02] backdrop-blur-md p-12 text-center space-y-6">
+              <BookOpen className="w-16 h-16 text-neutral-800 mx-auto" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-black uppercase tracking-tight">
+                  No Manga Found
+                </h3>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  Try different keywords or adjust your filters to discover more titles.
+                </p>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Results Grid */}
+        {!loading && !error && results.length > 0 && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <SearchMangaGrid manga={results} />
+          </motion.div>
+        )}
+
+        {/* Loading skeleton when filtering */}
+        {loading && allManga.length > 0 && (
+          <motion.div
+            key="filtering"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <SearchMangaGrid manga={[]} loading />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <ThreeBodyLoader />
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 animate-pulse">
+          Loading Search...
+        </p>
+      </div>
+    }>
       <SearchPageContent />
     </Suspense>
   );
