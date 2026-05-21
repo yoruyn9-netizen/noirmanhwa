@@ -23,6 +23,7 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import ProfileBannerView from '../profile/ProfileBannerView';
 
 interface UserProfileModalProps {
   userId: string;
@@ -79,16 +80,12 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
               </button>
 
               {/* Banner Layer */}
-              <div className="mt-6 mx-6 h-48 sm:h-56 rounded-2xl overflow-hidden relative">
-                {profile.bannerURL ? (
-                  <img src={profile.bannerURL} className="w-full h-full object-cover aspect-[16/9]" alt="User banner" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-transparent aspect-[16/9]" />
-                )}
+              <div className="mt-6 h-48 sm:h-56 rounded-2xl overflow-hidden">
+                <ProfileBannerView bannerURL={profile.bannerURL} />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a0a0f]/80" />
               </div>
 
-              <div className="px-8 pb-8 pt-6 relative z-10 space-y-8">
+              <div className="px-8 pb-8 relative z-10 space-y-8 mb-20">
                 <div className="flex flex-col items-center text-center space-y-5">
                   <div className="relative inline-block">
                     <AvatarDisplay 
@@ -96,7 +93,7 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
                       name={profile.displayName} 
                       size="huge" 
                       borderId={profile.equippedBorder}
-                      className="rounded-full ring-4 ring-[#0a0a0f] bg-[#0a0a0f] object-cover"
+                      className="rounded-full ring-4 ring-[#0a0a0f] border-0"
                     />
                     {(profile.isPremium || profile.role !== 'user') && (
                       <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-[100] ring-4 ring-[#0a0a0f]">
