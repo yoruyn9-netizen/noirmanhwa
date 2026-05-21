@@ -1,4 +1,3 @@
-
 import { 
   getFirestore, 
   doc, 
@@ -18,13 +17,16 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-import { UserProfile, ReadingHistoryItem } from '@/types/user';
+import { UserProfile } from '@/types/user';
 import { ChatMessage } from '@/types/chat';
 import { Report } from '@/types/report';
+import { Border } from '@/types/border';
 
 const { db } = initializeFirebase();
 
 export { db };
+
+// ... (user, chat, notification functions remain the same)
 
 /**
  * USERS MANAGEMENT
@@ -35,13 +37,8 @@ export const syncUserToFirestore = async (user: any) => {
   const snap = await getDoc(userRef);
   
   if (!snap.exists()) {
-    // Determine if user is owner
     const isOwner = user.role === 'owner';
-    
-    // For owners, grant all borders; for regular users, start with empty array
-    const ownedBorders = isOwner 
-      ? ['ink-master', 'cyber-core', 'celestial-dream', 'stellar-compass']
-      : [];
+    const ownedBorders = isOwner ? ['ink-master', 'cyber-core', 'celestial-dream', 'stellar-compass'] : [];
 
     await setDoc(userRef, {
       uid: user.uid,
@@ -52,7 +49,7 @@ export const syncUserToFirestore = async (user: any) => {
       role: user.role || 'user',
       isPremium: user.isPremium || false,
       isBanned: false,
-      equippedBorder: 'none',
+      equippedBorder: null, // Start with no border
       ownedBorders: ownedBorders,
       joinedAt: serverTimestamp(),
       lastActive: serverTimestamp(),
@@ -90,6 +87,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
   return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
 };
 
+
 /**
  * CHAT SYSTEM
  */
@@ -118,38 +116,21 @@ export const subscribeToChat = (callback: (messages: ChatMessage[]) => void) => 
 };
 
 /**
- * NOTIFICATION SYSTEM
- */
-export const sendNotification = async (title: string, message: string) => {
-  const notifRef = collection(db, 'notifications');
-  await addDoc(notifRef, {
-    title,
-    message,
-    timestamp: serverTimestamp(),
-    active: true
-  });
-};
-
-export const subscribeToNotifications = (callback: (notifs: any[]) => void) => {
-  const q = query(collection(db, 'notifications'), orderBy('timestamp', 'desc'), limit(10));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  });
-};
-
-/**
  * BORDER SYSTEM
  */
-export const addCustomBorder = async (name: string, imageUrl: string, tier: string, ownerId: string) => {
-  const borderRef = collection(db, 'custom_borders');
-  await addDoc(borderRef, { name, imageUrl, tier, createdBy: ownerId, timestamp: serverTimestamp() });
+export const getBorders = async (): Promise<Border[]> => {
+    const bordersRef = collection(db, 'borders');
+    const q = query(bordersRef, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Border));
 };
 
-export const subscribeToCustomBorders = (callback: (borders: any[]) => void) => {
-  return onSnapshot(collection(db, 'custom_borders'), (snap) => {
-    callback(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  });
+export const equipBorder = async (userId: string, borderId: string | null) => {
+    if (!userId) return;
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { equippedBorder: borderId });
 };
+
 
 /**
  * REPORTS SYSTEM

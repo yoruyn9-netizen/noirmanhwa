@@ -1,64 +1,58 @@
-
 "use client";
-
 import React from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import AvatarBorderOverlay from './AvatarBorderOverlay';
 
 interface AvatarDisplayProps {
-  src?: string | null;
-  name?: string | null;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
+  src: string | null | undefined;
+  name: string | null | undefined;
+  size?: 'small' | 'medium' | 'large' | 'huge';
   className?: string;
-  borderId?: string | null;
+  borderUrl?: string | null; // Changed from borderId to borderUrl
 }
 
-/**
- * Enhanced Avatar Node
- * STRICT Z-LAYER ENFORCING:
- * - Avatar Base: z-10
- * - Border Overlay: z-20 (must be visible over avatar but below badge)
- * - Badge (handled by parent): z-50 minimum
- * Parent MUST have overflow-visible to prevent badge clipping
- */
-export default function AvatarDisplay({ src, name, size = 'md', className, borderId }: AvatarDisplayProps) {
-  const sizeMap = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-14 h-14',
-    xl: 'w-24 h-24',
-    huge: 'w-32 h-32'
-  };
+const sizeMap = {
+  small: 'w-10 h-10',
+  medium: 'w-16 h-16',
+  large: 'w-24 h-24',
+  huge: 'w-32 h-32',
+};
 
-  const initials = name ? name.substring(0, 2).toUpperCase() : '?';
+export default function AvatarDisplay({ 
+  src, 
+  name, 
+  size = 'medium', 
+  className, 
+  borderUrl 
+}: AvatarDisplayProps) {
+  const initials = name?.charAt(0).toUpperCase() || '?';
+  const avatarSize = sizeMap[size] || sizeMap.medium;
 
   return (
-    <div className={cn(
-      "relative flex items-center justify-center select-none",
-      "overflow-visible shrink-0", // CRITICAL: Must allow badge overflow
-      sizeMap[size],
-      className
-    )}>
-      {/* Border Overlay - Layer 20 (below badge z-50) */}
-      <AvatarBorderOverlay borderId={borderId} size={size} />
-
-      {/* Avatar Image Node - Base Layer 10 */}
-      <div 
-        className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/5 relative"
-        style={{ zIndex: 10 }}
-      >
+    <div className={cn('relative aspect-square', avatarSize, className)}>
+      <div className="relative z-10 w-full h-full rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center">
         {src ? (
-          <img 
+          <Image 
             src={src} 
-            alt={name || "User Avatar"} 
-            className="w-full h-full object-cover transition-opacity duration-500" 
+            alt={name || 'User Avatar'} 
+            layout="fill" 
+            objectFit="cover" 
+            className="w-full h-full"
           />
         ) : (
-          <div className="bg-accent/10 w-full h-full flex items-center justify-center">
-            <span className="text-[10px] font-black text-accent">{initials}</span>
-          </div>
+          <span className="font-bold text-2xl text-white">{initials}</span>
         )}
       </div>
+      {borderUrl && (
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-20">
+          <Image 
+            src={borderUrl} 
+            alt="Avatar Border" 
+            layout="fill" 
+            objectFit="contain" 
+          />
+        </div>
+      )}
     </div>
   );
 }
