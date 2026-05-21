@@ -74,28 +74,29 @@ export default function UserProfileModal({ userId, isOpen, onClose }: UserProfil
             </div>
           ) : (
             <>
-              {/* Banner Layer */}
-              <div className="h-32 bg-white/[0.02] relative overflow-hidden">
-                {profile.bannerURL ? (
-                  <img src={profile.bannerURL} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-transparent" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] to-transparent opacity-80" />
-                <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 backdrop-blur-md rounded-2xl hover:bg-white/10 transition-all z-[100]">
+              <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 backdrop-blur-md rounded-2xl hover:bg-white/10 transition-all z-[100]">
                   <X className="w-5 h-5 text-white" />
-                </button>
+              </button>
+
+              {/* Banner Layer */}
+              <div className="mt-6 mx-6 h-48 sm:h-56 rounded-2xl overflow-hidden relative">
+                {profile.bannerURL ? (
+                  <img src={profile.bannerURL} className="w-full h-full object-cover aspect-[16/9]" alt="User banner" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-transparent aspect-[16/9]" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a0a0f]/80" />
               </div>
 
-              <div className="px-8 pb-10 -mt-16 relative z-10 space-y-8">
+              <div className="px-8 pb-8 pt-6 relative z-10 space-y-8">
                 <div className="flex flex-col items-center text-center space-y-5">
-                  <div className="relative inline-block overflow-visible">
+                  <div className="relative inline-block">
                     <AvatarDisplay 
                       src={profile.photoURL} 
                       name={profile.displayName} 
                       size="huge" 
                       borderId={profile.equippedBorder}
-                      className="ring-[12px] ring-[#0a0a0f]"
+                      className="rounded-full ring-4 ring-[#0a0a0f] bg-[#0a0a0f] object-cover"
                     />
                     {(profile.isPremium || profile.role !== 'user') && (
                       <div className="absolute -bottom-1 -right-1 p-2 bg-yellow-500 text-black rounded-full shadow-2xl z-[100] ring-4 ring-[#0a0a0f]">
