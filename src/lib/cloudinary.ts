@@ -4,7 +4,7 @@
  */
 
 export const CLOUDINARY_CONFIG = {
-  cloudName: 'noirmanhwa',
+  cloudName: 'dx0bsrs3z',
   uploadPreset: 'noirmanhwa-avatar'
 };
 
