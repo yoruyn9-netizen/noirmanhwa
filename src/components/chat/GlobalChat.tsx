@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import ThreeBodyLoader from '../ui/ThreeBodyLoader';
 import { Manga } from '@/types/manga';
 import Image from 'next/image';
-import { useDebounce } from 'use-debounce';
+import { useDebounceValue } from 'use-debounce';
 
 // --- Helper Components ---
 
