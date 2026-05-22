@@ -1,6 +1,14 @@
 
 import { FieldValue } from 'firebase/firestore';
 
+// Defined based on user's specification for the mention object
+export interface MangaMention {
+  type: "manga_mention";
+  mangaId: string;
+  title: string;
+  coverUrl: string;
+}
+
 export interface ChatMessage {
   id: string;
   text: string;
@@ -12,8 +20,5 @@ export interface ChatMessage {
   replyTo?: string | null;
   replyToUser?: string | null;
   replyToText?: string | null;
-  mangaMention?: {
-    mangaId: string;
-    title: string;
-  } | null;
+  mentions?: MangaMention[];
 }

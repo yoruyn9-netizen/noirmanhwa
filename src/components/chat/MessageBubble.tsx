@@ -3,10 +3,52 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { ChatMessage } from '@/types/chat';
+import { ChatMessage, MangaMention } from '@/types/chat';
 import { cn } from '@/lib/utils';
-import { Crown, Sparkles, Reply, ShieldCheck, Zap } from 'lucide-react';
+import { Crown, Sparkles, Reply } from 'lucide-react';
 import AvatarDisplay from '../profile/AvatarDisplay';
+import Link from 'next/link';
+import Image from 'next/image';
+
+// --- Helper Components ---
+
+const MangaMentionCard = ({ mention }: { mention: MangaMention }) => (
+  <Link href={`/manga/${mention.mangaId}`} passHref>
+    <a className="inline-flex items-center gap-2 p-2 rounded-xl border border-white/10 bg-white/5 hover:scale-105 hover:shadow-glow transition-all transform duration-150 cursor-pointer my-1">
+      <Image src={mention.coverUrl} alt={mention.title} width={30} height={45} className="rounded-md object-cover" />
+      <div className="flex-1">
+        <p className="font-bold text-white text-xs line-clamp-2">{mention.title}</p>
+      </div>
+    </a>
+  </Link>
+);
+
+const renderMessageContent = (message: ChatMessage) => {
+  if (!message.mentions || message.mentions.length === 0) {
+    return message.text;
+  }
+
+  // Create a map for quick lookup
+  const mentionMap = new Map<string, MangaMention>();
+  message.mentions.forEach(mention => {
+    // Use a placeholder for rendering
+    mentionMap.set(`📖 ${mention.title}`, mention);
+  });
+
+  const regex = new RegExp(`(${Array.from(mentionMap.keys()).join('|')})`, 'g');
+  const parts = message.text.split(regex);
+
+  return parts.map((part, index) => {
+    const mention = mentionMap.get(part);
+    if (mention) {
+      return <MangaMentionCard key={`${mention.mangaId}-${index}`} mention={mention} />;
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
+
+// --- Main Component ---
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -31,7 +73,6 @@ export default function MessageBubble({ message, isMe, onUserClick, onReplyClick
       className={cn(
         "flex gap-3 mb-2 w-full",
         isMe ? "flex-row-reverse" : "flex-row",
-        isOwner && "my-6"
       )}
     >
       <div 
@@ -41,14 +82,8 @@ export default function MessageBubble({ message, isMe, onUserClick, onReplyClick
         <AvatarDisplay 
           src={message.senderPhoto} 
           name={message.senderName} 
-          size={isOwner ? "md" : "sm"} 
-          borderId={isOwner ? "ink-master" : "none"}
+          size="sm"
         />
-        {isOwner && (
-          <div className="absolute -top-1 -left-1 bg-yellow-500 rounded-full p-1 shadow-lg animate-bounce">
-             <Crown className="w-2 h-2 text-black fill-current" />
-          </div>
-        )}
       </div>
 
       <div className={cn(
@@ -63,55 +98,27 @@ export default function MessageBubble({ message, isMe, onUserClick, onReplyClick
           >
             <span className={cn(
               "text-[9px] font-black uppercase tracking-widest", 
-              isOwner ? "text-yellow-500 text-glow" : "text-neutral-500"
+              isOwner ? "text-yellow-400" : "text-neutral-500"
             )}>
               {message.senderName}
             </span>
-            {isOwner && <Sparkles className="w-2.5 h-2.5 text-yellow-500 animate-pulse" />}
+            {isOwner && <Crown className="w-2.5 h-2.5 text-yellow-400" />}
           </div>
-          <span className="text-[6px] text-neutral-800 font-bold uppercase tracking-widest">{timestamp}</span>
+          <span className="text-[7px] text-neutral-700 font-bold uppercase tracking-widest">{timestamp}</span>
         </div>
 
         <div className={cn("relative group", isMe ? "text-right" : "text-left")}>
-          
-          {!isOwner && (
-            <button 
-              onClick={onReplyClick}
-              className={cn(
-                "absolute top-1/2 -translate-y-1/2 p-2 bg-white/5 border border-white/10 rounded-lg text-neutral-600 hover:text-accent hover:border-accent/40 opacity-0 group-hover:opacity-100 transition-all active:scale-90 z-20",
-                isMe ? "-left-12" : "-right-12"
-              )}
-            >
-              <Reply className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button 
+            onClick={onReplyClick}
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 p-2 bg-white/5 border border-white/10 rounded-lg text-neutral-600 hover:text-accent hover:border-accent/40 opacity-0 group-hover:opacity-100 transition-all active:scale-90 z-20",
+              isMe ? "-left-12" : "-right-12"
+            )}
+          >
+            <Reply className="w-3.5 h-3.5" />
+          </button>
 
-          {isOwner ? (
-            <div className="relative cursor-default">
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 to-purple-500/10 blur-md opacity-50" />
-              <div className={cn(
-                "relative px-5 py-4 text-[12px] font-bold leading-relaxed text-white shadow-2xl overflow-hidden w-fit",
-                "bg-gradient-to-br from-[#1a1a1f] to-[#0a0a0f] border border-yellow-500/30",
-                "rounded-2xl",
-                isMe ? "rounded-tr-none" : "rounded-tl-none"
-              )}>
-                {hasReply && (
-                  <div className="mb-3 p-3 bg-black/40 border-l-2 border-yellow-500 rounded-lg text-left opacity-70">
-                    <p className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">{message.replyToUser}</p>
-                    <p className="text-[10px] text-neutral-400 line-clamp-1 italic">{message.replyToText}</p>
-                  </div>
-                )}
-                <div className="relative z-10 flex flex-col gap-2">
-                  <p className="tracking-wide">{message.text}</p>
-                  <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/5 opacity-40">
-                     <div className="w-1 h-1 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,1)]" />
-                     <span className="text-[6px] font-black uppercase tracking-[0.3em]">Celestial Legend</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className={cn(
+          <div className={cn(
               "flex flex-col rounded-2xl border text-[11px] font-medium leading-relaxed shadow-lg transition-all duration-300 w-fit overflow-hidden",
               isMe 
                 ? "bg-accent text-white border-accent/20 rounded-tr-none" 
@@ -126,15 +133,14 @@ export default function MessageBubble({ message, isMe, onUserClick, onReplyClick
                     "text-[8px] font-black uppercase tracking-widest",
                     isMe ? "text-white/60" : "text-accent"
                   )}>{message.replyToUser}</p>
-                  <p className="text-[9px] text-neutral-400 line-clamp-1 truncate max-w-[200px] italic">"{message.replyToText}"</p>
+                  <p className="text-[9px] text-neutral-400 line-clamp-1 truncate max-w-[200px] italic">\"{message.replyToText}\"</p>
                 </div>
               )}
               
-              <div className="px-4 py-3">
-                {message.text}
+              <div className="px-4 py-3 whitespace-pre-wrap">
+                {renderMessageContent(message)}
               </div>
             </div>
-          )}
         </div>
       </div>
     </motion.div>
