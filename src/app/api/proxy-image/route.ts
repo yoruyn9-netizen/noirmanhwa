@@ -1,6 +1,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+const MANGADEX_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Referer': 'https://mangadex.org/',
+  'Origin': 'https://mangadex.org',
+  'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+};
+
 /**
  * Proxy route to bypass CORS for external images (MangaDex).
  * Uses high-fidelity browser headers to avoid server rejection.
@@ -15,10 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(url, {
-      headers: {
-        // Essential for MangaDex At-Home servers
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
+      headers: MANGADEX_HEADERS,
     });
 
     if (!response.ok) {

@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { loadImageWithRetry } from '@/lib/mangaDexChapter';
 import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,25 +15,31 @@ export default function ImagePage({ url, index }: ImagePageProps) {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '1000px' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [src, setSrc] = useState<string | null>(null);
+
+  const proxyUrl = `/api/image?url=${encodeURIComponent(url)}&retry=${retryCount}`;
 
   useEffect(() => {
     if (inView && !src) {
-      load();
+      setError(false);
+      setSrc(proxyUrl);
     }
-  }, [inView, src]);
+  }, [inView, src, proxyUrl]);
 
-  const load = async () => {
-    setLoading(true);
+  useEffect(() => {
     setError(false);
-    try {
-      const verifiedUrl = await loadImageWithRetry(url);
-      setSrc(verifiedUrl);
-    } catch (err) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    setSrc(null);
+  }, [url]);
+
+  const onLoad = () => {
+    setLoading(false);
+  };
+
+  const onError = () => {
+    setLoading(false);
+    setError(true);
   };
 
   return (
@@ -50,7 +55,11 @@ export default function ImagePage({ url, index }: ImagePageProps) {
         <div className="py-20 flex flex-col items-center justify-center space-y-6 text-center">
           <AlertTriangle className="w-8 h-8 text-red-500/40" />
           <p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Network Interruption</p>
-          <button onClick={load} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[8px] font-black uppercase text-white hover:bg-white/10 transition-all">
+          <button onClick={() => {
+            setError(false);
+            setLoading(true);
+            setRetryCount((current) => current + 1);
+          }} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[8px] font-black uppercase text-white hover:bg-white/10 transition-all">
             <RefreshCw className="w-3 h-3" /> Retry Sync
           </button>
         </div>
@@ -59,7 +68,8 @@ export default function ImagePage({ url, index }: ImagePageProps) {
           src={src} 
           alt={`Page ${index + 1}`}
           className={cn("w-full h-auto block select-none transition-opacity duration-700", loading ? "opacity-0" : "opacity-100")}
-          onLoad={() => setLoading(false)}
+          onLoad={onLoad}
+          onError={onError}
         />
       ) : null}
       

@@ -1,6 +1,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+const MANGADEX_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Referer': 'https://mangadex.org/',
+  'Origin': 'https://mangadex.org',
+  'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+};
+
 /**
  * FINAL Image Proxy Route
  * Bypasses CORS and Referer restrictions by spoofing browser headers.
@@ -17,12 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch image from MangaDex with proper browser headers
     const response = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://mangadex.org/',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-      },
-      // Cache for 24 hours to reduce external requests
+      headers: MANGADEX_HEADERS,
       next: { revalidate: 86400 }
     });
 

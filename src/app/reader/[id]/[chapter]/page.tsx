@@ -34,11 +34,12 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
         if (!serverData) throw new Error("Server Unreachable");
 
         const { baseUrl, chapter } = serverData;
-        const imgs = (chapter.dataSaver || []).map((f: string) => `${baseUrl}/data-saver/${chapter.hash}/${f}`);
-        
-        setImages(imgs);
-        
-        // SYNC NARRATIVE HISTORY
+      const pageFiles = (chapter.dataSaver && chapter.dataSaver.length > 0)
+        ? chapter.dataSaver
+        : chapter.data || [];
+      if (pageFiles.length === 0) throw new Error('No pages available');
+
+      const imgs = pageFiles.map((fileName: string) => `${baseUrl}/data-saver/${chapter.hash}/${fileName}`);
         const historyItem = {
           mangaId,
           chapterId,

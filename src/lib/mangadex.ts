@@ -98,11 +98,12 @@ export interface MangaDexImageServer {
 
 const MANGADEX_API_BASE = 'https://api.mangadex.org';
 
-const SPOOFED_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+const MANGADEX_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Accept': 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
-  'Referer': 'https://mangadex.org/'
+  'Referer': 'https://mangadex.org/',
+  'Origin': 'https://mangadex.org'
 };
 
 // -----------------------------------------------------------------------------
@@ -110,30 +111,36 @@ const SPOOFED_HEADERS = {
 // -----------------------------------------------------------------------------
 
 /**
- * Fetches data from MangaDex with retry logic for rate limiting.
+ * Fetches data from MangaDex with retry logic for rate limiting and transient errors.
  * @param url Full URL to fetch.
  * @param retries Number of retries on failure.
  * @returns A promise that resolves to the response or null on persistent failure.
  */
-export async function fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<Response | null> {
-  for (let i = 0; i < retries; i++) {
+export async function fetchWithRetry(url: string, retries = 4, delay = 1200): Promise<Response | null> {
+  for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const res = await fetch(url, { headers: SPOOFED_HEADERS, cache: 'no-store' });
+      const res = await fetch(url, { headers: MANGADEX_HEADERS, cache: 'no-store' });
       if (res.ok) {
         return res;
       }
-      if (res.status === 429) { // Rate limit
-        console.warn(`[MangaDex] Rate limited. Retrying in ${delay / 1000}s...`);
-        await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
-      } else {
-        // For other errors, log and retry
-         console.warn(`[MangaDex] Fetch failed with status ${res.status}. Retrying...`);
-         await new Promise(r => setTimeout(r, delay));
+
+      const shouldRetry = res.status === 429 || res.status >= 500;
+      if (!shouldRetry) {
+        console.warn(`[MangaDex] Fetch failed for ${url} with status ${res.status}. Not retrying.`);
+        return res;
       }
+
+      const wait = delay * Math.pow(2, attempt);
+      console.warn(`[MangaDex] Retrying ${url} (${attempt + 1}/${retries}) after ${wait}ms due to status ${res.status}`);
+      await new Promise((resolve) => setTimeout(resolve, wait));
     } catch (error) {
-      console.error('[MangaDex] Fetch caught exception:', error);
-      if (i === retries - 1) return null; // Return null on last retry
-       await new Promise(r => setTimeout(r, delay));
+      if (attempt >= retries - 1) {
+        console.error(`[MangaDex] Fetch failed permanently for ${url}:`, error);
+        return null;
+      }
+      const wait = delay * Math.pow(2, attempt);
+      console.warn(`[MangaDex] Fetch exception for ${url}. Retrying in ${wait}ms`, error);
+      await new Promise((resolve) => setTimeout(resolve, wait));
     }
   }
   return null;
@@ -158,7 +165,7 @@ export async function fetchMangaDetail(id: string) {
 }
 
 export async function fetchChapters(id: string) {
-    const url = `${MANGADEX_API_BASE}/manga/${id}/feed?limit=500&includes[]=scanlation_group&order[chapter]=asc&translatedLanguage[]=en`;
+    const url = `${MANGADEX_API_BASE}/manga/${id}/feed?limit=500&includes[]=scanlation_group&order[chapter]=asc&translatedLanguage[]=en&translatedLanguage[]=id&translatedLanguage[]=ko`;
     const res = await fetchWithRetry(url);
     if (!res) return null;
     return res.json();
@@ -168,6 +175,10 @@ export async function fetchImageServerUrl(chapterId: string): Promise<MangaDexIm
     const url = `${MANGADEX_API_BASE}/at-home/server/${chapterId}`;
     const res = await fetchWithRetry(url);
     if (!res) return null;
+    if (!res.ok) {
+      console.warn(`[MangaDex] Image server request failed for ${chapterId}: ${res.status}`);
+      return null;
+    }
     const data = await res.json();
     if (data.result !== 'ok') return null;
     return data;
