@@ -7,6 +7,8 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
 
+const firebaseApp = initializeFirebase();
+
 export function initializeFirebase() {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -15,6 +17,10 @@ export function initializeFirebase() {
 
   return { app, db, auth, storage };
 }
+
+export const db = firebaseApp.db;
+export const auth = firebaseApp.auth;
+export const storage = firebaseApp.storage;
 
 export * from './provider';
 export * from './auth/use-user';

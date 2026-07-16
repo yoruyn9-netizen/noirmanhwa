@@ -54,10 +54,7 @@ export default function ReaderDynamicPage({ params }: { params: Promise<{ id: st
 
         // 2. Remote Synchronization (Firestore)
         if (user) {
-          syncHistoryToFirestore(user.uid, {
-            ...historyItem,
-            lastRead: serverTimestamp() as any
-          });
+          syncHistoryToFirestore(user.uid, historyItem);
         }
       } catch (err) {
         setError(true);

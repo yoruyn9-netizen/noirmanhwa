@@ -81,10 +81,84 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
   await updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
 };
 
+export const syncHistoryToFirestore = async (uid: string, historyEntry: any) => {
+  if (!uid) return;
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return;
+
+  const history = (userSnap.data().readingHistory || []) as any[];
+  const updatedHistory = [historyEntry, ...history.filter((item: any) => item.mangaId !== historyEntry.mangaId)].slice(0, 20);
+
+  await updateDoc(userRef, {
+    readingHistory: updatedHistory,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   const usersRef = collection(db, 'users');
   const snap = await getDocs(usersRef);
   return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
+};
+
+export const findUserByEmail = async (email: string): Promise<UserProfile | null> => {
+  if (!email) return null;
+  const usersRef = collection(db, 'users');
+  const emailQuery = query(usersRef, where('email', '==', email));
+  const displayNameQuery = query(usersRef, where('displayName', '==', email));
+
+  const snap = await getDocs(emailQuery);
+  if (!snap.empty) {
+    const userDoc = snap.docs[0];
+    return { uid: userDoc.id, ...userDoc.data() } as UserProfile;
+  }
+
+  const snapAlt = await getDocs(displayNameQuery);
+  if (!snapAlt.empty) {
+    const userDoc = snapAlt.docs[0];
+    return { uid: userDoc.id, ...userDoc.data() } as UserProfile;
+  }
+
+  return null;
+};
+
+export const subscribeToNotifications = (callback: (notifications: any[]) => void) => {
+  const q = query(
+    collection(db, 'notifications'),
+    orderBy('timestamp', 'desc'),
+    limit(50)
+  );
+
+  return onSnapshot(q, (snap) => {
+    const notifications = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(notifications);
+  });
+};
+
+export const addCustomBorder = async (name: string, imageUrl: string, tier: string, creatorId: string) => {
+  const borderRef = await addDoc(collection(db, 'borders'), {
+    name,
+    imageUrl,
+    tier,
+    createdBy: creatorId,
+    createdAt: serverTimestamp(),
+  });
+
+  const userRef = doc(db, 'users', creatorId);
+  await updateDoc(userRef, {
+    ownedBorders: arrayUnion(borderRef.id),
+  });
+
+  return borderRef.id;
+};
+
+export const sendNotification = async (title: string, message: string) => {
+  await addDoc(collection(db, 'notifications'), {
+    title,
+    message,
+    createdAt: serverTimestamp(),
+  });
 };
 
 

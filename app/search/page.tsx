@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search as SearchIcon, X, AlertCircle, Frown } from 'lucide-react';
-import { MangaCard } from '@/components/manga/MangaCard';
+import MangaCard from '@/components/manga/MangaCard';
 import { Manga } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
