@@ -58,7 +58,7 @@ export default function SearchPage() {
         throw new Error(errorData.message || 'An unknown error occurred');
       }
       const data = await res.json();
-      setResults(data.results || data || []);
+      setResults(data?.data || data?.results || data || []);
     } catch (e: any) {
       setError(e.message || 'An error occurred. Please try again.');
       console.error(e);
